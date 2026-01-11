@@ -9,13 +9,32 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        ZStack {
+            MeshGradient(
+                width: 3,
+                height: 3,
+                points: [
+                    [0.0, 0.0], [0.5, 0.0], [1.0, 0.0],
+                    [0.0, 0.5], [0.5, 0.5], [1.0, 0.5],
+                    [0.0, 1.0], [0.5, 1.0], [1.0, 1.0]
+                ],
+                colors: [
+                    .blue, .cyan, .teal,
+                    .cyan, .mint, .cyan,
+                    .teal, .cyan, .blue
+                ]
+            )
+            .ignoresSafeArea()
+
+            VStack {
+                Image(systemName: "globe")
+                    .imageScale(.large)
+                    .foregroundStyle(.white)
+                Text("Hello, world!")
+                    .foregroundStyle(.white)
+            }
+            .padding()
         }
-        .padding()
     }
 }
 
