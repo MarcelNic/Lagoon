@@ -8,57 +8,93 @@
 import SwiftUI
 
 struct WaveView: View {
-    @State private var isAnimating = false
+    // Horizontale Bewegung
+    @State private var phase1: CGFloat = 0
+    @State private var phase2: CGFloat = 0
+    @State private var phase3: CGFloat = 0
+    @State private var phase4: CGFloat = 0
+
+    // Vertikales Wippen
+    @State private var bob1: CGFloat = 0
+    @State private var bob2: CGFloat = 0
+    @State private var bob3: CGFloat = 0
+    @State private var bob4: CGFloat = 0
+
+    let waveColor = Color(red: 0x00/255, green: 0x23/255, blue: 0xA1/255) // #0023A1
 
     var body: some View {
         GeometryReader { geometry in
             let size = geometry.size
 
-            let waveColor = Color(red: 0x00/255, green: 0x23/255, blue: 0xA1/255) // #0023A1
-
             ZStack {
-                // Wave 1 - (furthest back, most blur)
-                getSinWave(interval: size.width, amplitude: 100, baseline: size.height / 2, size: size)
+                // Wave 1 - (furthest back, most blur) - langsam, sanftes Wippen
+                getSinWave(interval: size.width, amplitude: 50, baseline: size.height / 2 + bob1, size: size)
                     .fill(
-                        waveGradient(amplitude: 100, baseline: size.height / 2, totalHeight: size.height,
+                        waveGradient(amplitude: 50, baseline: size.height / 2, totalHeight: size.height,
                                      topColor: Color.white.opacity(0.5), bottomColor: waveColor.opacity(0.5))
                     )
                     .blur(radius: 6)
-                    .offset(x: isAnimating ? -size.width : 0)
-                    .animation(.linear(duration: 4).repeatForever(autoreverses: false), value: isAnimating)
+                    .offset(x: phase1)
 
-                // Wave 2
-                getSinWave(interval: size.width * 1.2, amplitude: 150, baseline: 50 + size.height / 2, size: size)
+                // Wave 2 - etwas schneller, anderer Rhythmus
+                getSinWave(interval: size.width * 1.2, amplitude: 80, baseline: 50 + size.height / 2 + bob2, size: size)
                     .fill(
-                        waveGradient(amplitude: 150, baseline: 50 + size.height / 2, totalHeight: size.height,
+                        waveGradient(amplitude: 80, baseline: 50 + size.height / 2, totalHeight: size.height,
                                      topColor: Color.white.opacity(0.6), bottomColor: waveColor.opacity(0.6))
                     )
                     .blur(radius: 3)
-                    .offset(x: isAnimating ? -size.width * 1.2 : 0)
-                    .animation(.linear(duration: 5).repeatForever(autoreverses: false), value: isAnimating)
+                    .offset(x: phase2)
 
-                // Wave 3
-                getSinWave(interval: size.width * 1.5, amplitude: 50, baseline: 75 + size.height / 2, size: size)
+                // Wave 3 - mittlere Geschwindigkeit
+                getSinWave(interval: size.width * 1.5, amplitude: 50, baseline: 75 + size.height / 2 + bob3, size: size)
                     .fill(
                         waveGradient(amplitude: 50, baseline: 75 + size.height / 2, totalHeight: size.height,
                                      topColor: Color.white.opacity(0.7), bottomColor: waveColor.opacity(0.7))
                     )
                     .blur(radius: 1)
-                    .offset(x: isAnimating ? -size.width * 1.5 : 0)
-                    .animation(.linear(duration: 6).repeatForever(autoreverses: false), value: isAnimating)
+                    .offset(x: phase3)
 
-                // Wave 4 - (frontmost, sharpest)
-                getSinWave(interval: size.width * 3, amplitude: 200, baseline: 95 + size.height / 2, size: size)
+                // Wave 4 - (frontmost, sharpest) - am langsamsten, majestätisch
+                getSinWave(interval: size.width * 3, amplitude: 200, baseline: 95 + size.height / 2 + bob4, size: size)
                     .fill(
                         waveGradient(amplitude: 200, baseline: 95 + size.height / 2, totalHeight: size.height,
                                      topColor: Color.white, bottomColor: waveColor)
                     )
-                    .offset(x: isAnimating ? -size.width * 3 : 0)
-                    .animation(.linear(duration: 8).repeatForever(autoreverses: false), value: isAnimating)
+                    .offset(x: phase4)
             }
             .onAppear {
-                isAnimating = true
+                startAnimations(size: size)
             }
+        }
+    }
+
+    private func startAnimations(size: CGSize) {
+        // Horizontale Bewegungen - unterschiedliche Geschwindigkeiten, linear
+        withAnimation(.linear(duration: 7).repeatForever(autoreverses: false)) {
+            phase1 = -size.width
+        }
+        withAnimation(.linear(duration: 9).repeatForever(autoreverses: false)) {
+            phase2 = -size.width * 1.2
+        }
+        withAnimation(.linear(duration: 11).repeatForever(autoreverses: false)) {
+            phase3 = -size.width * 1.5
+        }
+        withAnimation(.linear(duration: 14).repeatForever(autoreverses: false)) {
+            phase4 = -size.width * 3
+        }
+
+        // Vertikales Wippen - unterschiedliche Rhythmen, linear
+        withAnimation(.linear(duration: 3.2).repeatForever(autoreverses: true)) {
+            bob1 = 15
+        }
+        withAnimation(.linear(duration: 2.7).repeatForever(autoreverses: true)) {
+            bob2 = -12
+        }
+        withAnimation(.linear(duration: 4.1).repeatForever(autoreverses: true)) {
+            bob3 = 10
+        }
+        withAnimation(.linear(duration: 5.5).repeatForever(autoreverses: true)) {
+            bob4 = -20
         }
     }
 
