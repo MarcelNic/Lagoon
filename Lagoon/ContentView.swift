@@ -10,14 +10,19 @@ import SwiftUI
 struct ContentView: View {
     var body: some View {
         ZStack {
-            LinearGradient(
-                stops: [
-                    .init(color: Color(red: 0xAF/255, green: 0xB9/255, blue: 0xFC/255), location: 0),    // #AFB9FC oben
-                    .init(color: Color(red: 0xFF/255, green: 0xC9/255, blue: 0xAA/255), location: 0.5),  // #FFC9AA mitte
-                    .init(color: Color(red: 0xFF/255, green: 0xC9/255, blue: 0xAA/255), location: 1)     // #FFC9AA unten
+            MeshGradient(
+                width: 3,
+                height: 3,
+                points: [
+                    [0.0, 0.0], [0.5, 0.0], [1.0, 0.0],
+                    [0.0, 0.5], [0.5, 0.5], [1.0, 0.5],
+                    [0.0, 1.0], [0.5, 1.0], [1.0, 1.0]
                 ],
-                startPoint: .top,
-                endPoint: .bottom
+                colors: [
+                    .blue, .cyan, .teal,
+                    .cyan, .mint, .cyan,
+                    .teal, .cyan, .blue
+                ]
             )
             .ignoresSafeArea()
 

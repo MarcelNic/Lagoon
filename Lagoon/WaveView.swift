@@ -13,54 +13,73 @@ struct WaveView: View {
     @State private var phase2: CGFloat = 0
     @State private var phase3: CGFloat = 0
     @State private var phase4: CGFloat = 0
+    @State private var phase5: CGFloat = 0
+    @State private var phase6: CGFloat = 0
+    @State private var phase7: CGFloat = 0
+    @State private var phase8: CGFloat = 0
 
     // Vertikales Wippen
     @State private var bob1: CGFloat = 0
     @State private var bob2: CGFloat = 0
     @State private var bob3: CGFloat = 0
     @State private var bob4: CGFloat = 0
-
-    let waveColor = Color(red: 0x00/255, green: 0x23/255, blue: 0xA1/255) // #0023A1
+    @State private var bob5: CGFloat = 0
+    @State private var bob6: CGFloat = 0
+    @State private var bob7: CGFloat = 0
+    @State private var bob8: CGFloat = 0
 
     var body: some View {
         GeometryReader { geometry in
             let size = geometry.size
 
             ZStack {
-                // Wave 1 - (furthest back, most blur) - langsam, sanftes Wippen
-                getSinWave(interval: size.width, amplitude: 50, baseline: size.height / 2 + bob1, size: size)
-                    .fill(
-                        waveGradient(amplitude: 50, baseline: size.height / 2, totalHeight: size.height,
-                                     topColor: Color.white.opacity(0.5), bottomColor: waveColor.opacity(0.5))
-                    )
-                    .blur(radius: 6)
+                // Wave 1
+                getWaveLine(interval: size.width * 0.8, amplitude: 40, baseline: size.height * 0.05 + bob1)
+                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                    .blur(radius: 3)
                     .offset(x: phase1)
 
-                // Wave 2 - etwas schneller, anderer Rhythmus
-                getSinWave(interval: size.width * 1.2, amplitude: 80, baseline: 50 + size.height / 2 + bob2, size: size)
-                    .fill(
-                        waveGradient(amplitude: 80, baseline: 50 + size.height / 2, totalHeight: size.height,
-                                     topColor: Color.white.opacity(0.6), bottomColor: waveColor.opacity(0.6))
-                    )
+                // Wave 2
+                getWaveLine(interval: size.width * 1.1, amplitude: 60, baseline: size.height * 0.2 + bob2)
+                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
                     .blur(radius: 3)
                     .offset(x: phase2)
 
-                // Wave 3 - mittlere Geschwindigkeit
-                getSinWave(interval: size.width * 1.5, amplitude: 50, baseline: 75 + size.height / 2 + bob3, size: size)
-                    .fill(
-                        waveGradient(amplitude: 50, baseline: 75 + size.height / 2, totalHeight: size.height,
-                                     topColor: Color.white.opacity(0.7), bottomColor: waveColor.opacity(0.7))
-                    )
-                    .blur(radius: 1)
+                // Wave 3
+                getWaveLine(interval: size.width * 0.9, amplitude: 35, baseline: size.height * 0.35 + bob3)
+                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                    .blur(radius: 3)
                     .offset(x: phase3)
 
-                // Wave 4 - (frontmost, sharpest) - am langsamsten, majestätisch
-                getSinWave(interval: size.width * 3, amplitude: 200, baseline: 95 + size.height / 2 + bob4, size: size)
-                    .fill(
-                        waveGradient(amplitude: 200, baseline: 95 + size.height / 2, totalHeight: size.height,
-                                     topColor: Color.white, bottomColor: waveColor)
-                    )
+                // Wave 4
+                getWaveLine(interval: size.width * 1.3, amplitude: 70, baseline: size.height * 0.5 + bob4)
+                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                    .blur(radius: 3)
                     .offset(x: phase4)
+
+                // Wave 5
+                getWaveLine(interval: size.width * 1.0, amplitude: 50, baseline: size.height * 0.65 + bob5)
+                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                    .blur(radius: 3)
+                    .offset(x: phase5)
+
+                // Wave 6
+                getWaveLine(interval: size.width * 1.4, amplitude: 80, baseline: size.height * 0.8 + bob6)
+                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                    .blur(radius: 3)
+                    .offset(x: phase6)
+
+                // Wave 7
+                getWaveLine(interval: size.width * 1.2, amplitude: 55, baseline: size.height * 0.9 + bob7)
+                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                    .blur(radius: 3)
+                    .offset(x: phase7)
+
+                // Wave 8
+                getWaveLine(interval: size.width * 1.6, amplitude: 90, baseline: size.height * 1.0 + bob8)
+                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                    .blur(radius: 3)
+                    .offset(x: phase8)
             }
             .onAppear {
                 startAnimations(size: size)
@@ -69,32 +88,56 @@ struct WaveView: View {
     }
 
     private func startAnimations(size: CGSize) {
-        // Horizontale Bewegungen - unterschiedliche Geschwindigkeiten, linear
+        // Horizontale Bewegungen - unterschiedliche Geschwindigkeiten
+        withAnimation(.linear(duration: 6).repeatForever(autoreverses: false)) {
+            phase1 = -size.width * 0.8
+        }
+        withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
+            phase2 = -size.width * 1.1
+        }
         withAnimation(.linear(duration: 7).repeatForever(autoreverses: false)) {
-            phase1 = -size.width
+            phase3 = -size.width * 0.9
+        }
+        withAnimation(.linear(duration: 10).repeatForever(autoreverses: false)) {
+            phase4 = -size.width * 1.3
         }
         withAnimation(.linear(duration: 9).repeatForever(autoreverses: false)) {
-            phase2 = -size.width * 1.2
+            phase5 = -size.width * 1.0
         }
         withAnimation(.linear(duration: 11).repeatForever(autoreverses: false)) {
-            phase3 = -size.width * 1.5
+            phase6 = -size.width * 1.4
         }
-        withAnimation(.linear(duration: 14).repeatForever(autoreverses: false)) {
-            phase4 = -size.width * 3
+        withAnimation(.linear(duration: 10).repeatForever(autoreverses: false)) {
+            phase7 = -size.width * 1.2
+        }
+        withAnimation(.linear(duration: 13).repeatForever(autoreverses: false)) {
+            phase8 = -size.width * 1.6
         }
 
-        // Vertikales Wippen - unterschiedliche Rhythmen, linear
-        withAnimation(.linear(duration: 3.2).repeatForever(autoreverses: true)) {
-            bob1 = 15
+        // Vertikales Wippen - unterschiedliche Rhythmen
+        withAnimation(.linear(duration: 3.0).repeatForever(autoreverses: true)) {
+            bob1 = 12
         }
-        withAnimation(.linear(duration: 2.7).repeatForever(autoreverses: true)) {
-            bob2 = -12
+        withAnimation(.linear(duration: 2.5).repeatForever(autoreverses: true)) {
+            bob2 = -15
         }
-        withAnimation(.linear(duration: 4.1).repeatForever(autoreverses: true)) {
+        withAnimation(.linear(duration: 3.5).repeatForever(autoreverses: true)) {
             bob3 = 10
         }
-        withAnimation(.linear(duration: 5.5).repeatForever(autoreverses: true)) {
-            bob4 = -20
+        withAnimation(.linear(duration: 4.0).repeatForever(autoreverses: true)) {
+            bob4 = -18
+        }
+        withAnimation(.linear(duration: 2.8).repeatForever(autoreverses: true)) {
+            bob5 = 14
+        }
+        withAnimation(.linear(duration: 4.5).repeatForever(autoreverses: true)) {
+            bob6 = -20
+        }
+        withAnimation(.linear(duration: 3.8).repeatForever(autoreverses: true)) {
+            bob7 = 16
+        }
+        withAnimation(.linear(duration: 5.0).repeatForever(autoreverses: true)) {
+            bob8 = -22
         }
     }
 
