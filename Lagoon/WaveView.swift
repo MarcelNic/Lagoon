@@ -15,67 +15,66 @@ struct WaveView: View {
             let size = geometry.size
 
             ZStack {
-                // Wave 1 - dark blue gradient (furthest back, most blur)
+                // Wave 1 - #013FD7 (furthest back, most blur)
                 getSinWave(interval: size.width, amplitude: 100, baseline: size.height / 2, size: size)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 0.4, green: 0.6, blue: 0.9).opacity(0.5),
-                                Color(red: 0.2, green: 0.4, blue: 0.7).opacity(0.3)
+                                Color.white,
+                                Color(red: 0x01/255, green: 0x3F/255, blue: 0xD7/255).opacity(0.7)
                             ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
-                    .blur(radius: 8)
+                    .blur(radius: 6)
                     .offset(x: isAnimating ? -size.width : 0)
                     .animation(.linear(duration: 4).repeatForever(autoreverses: false), value: isAnimating)
 
-                // Wave 2 - light blue gradient
+                // Wave 2 - #013FD7
                 getSinWave(interval: size.width * 1.2, amplitude: 150, baseline: 50 + size.height / 2, size: size)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 0.5, green: 0.8, blue: 1).opacity(0.5),
-                                Color(red: 0.3, green: 0.6, blue: 1).opacity(0.3)
+                                Color.white,
+                                Color(red: 0x01/255, green: 0x3F/255, blue: 0xD7/255).opacity(0.8)
                             ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
-                    .blur(radius: 4)
+                    .blur(radius: 3)
                     .offset(x: isAnimating ? -size.width * 1.2 : 0)
                     .animation(.linear(duration: 5).repeatForever(autoreverses: false), value: isAnimating)
 
-                // Wave 3 - cyan gradient
+                // Wave 3 - #013FD7
                 getSinWave(interval: size.width * 1.5, amplitude: 50, baseline: 75 + size.height / 2, size: size)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 0.7, green: 0.95, blue: 1).opacity(0.5),
-                                Color(red: 0.5, green: 0.85, blue: 1).opacity(0.3)
+                                Color.white,
+                                Color(red: 0x01/255, green: 0x3F/255, blue: 0xD7/255).opacity(0.9)
                             ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
-                    .blur(radius: 2)
+                    .blur(radius: 1)
                     .offset(x: isAnimating ? -size.width * 1.5 : 0)
                     .animation(.linear(duration: 6).repeatForever(autoreverses: false), value: isAnimating)
 
-                // Wave 4 - subtle dark gradient (frontmost, sharpest)
+                // Wave 4 - #013FD7 (frontmost, sharpest)
                 getSinWave(interval: size.width * 3, amplitude: 200, baseline: 95 + size.height / 2, size: size)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color.black.opacity(0.1),
-                                Color.black.opacity(0.2)
+                                Color.white,
+                                Color(red: 0x01/255, green: 0x3F/255, blue: 0xD7/255)
                             ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
-                    .blur(radius: 0.5)
                     .offset(x: isAnimating ? -size.width * 3 : 0)
                     .animation(.linear(duration: 8).repeatForever(autoreverses: false), value: isAnimating)
             }
