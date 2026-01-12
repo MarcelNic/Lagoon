@@ -26,11 +26,16 @@ struct ContentView: View {
             )
             .ignoresSafeArea()
 
+            WaveView()
+                .ignoresSafeArea()
+
             VStack {
-                Image(systemName: "globe")
+                Image(systemName: "drop.fill")
                     .imageScale(.large)
                     .foregroundStyle(.white)
-                Text("Hello, world!")
+                Text("Lagoon")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
                     .foregroundStyle(.white)
             }
             .padding()
