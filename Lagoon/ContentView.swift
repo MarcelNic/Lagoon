@@ -11,9 +11,10 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [
-                    Color(red: 0xAF/255, green: 0xB9/255, blue: 0xFC/255), // #AFB9FC oben
-                    Color(red: 0xFE/255, green: 0xDF/255, blue: 0xCE/255)  // #FEDFCE mitte/unten
+                stops: [
+                    .init(color: Color(red: 0xAF/255, green: 0xB9/255, blue: 0xFC/255), location: 0),    // #AFB9FC oben
+                    .init(color: Color(red: 0xFF/255, green: 0xC9/255, blue: 0xAA/255), location: 0.5),  // #FFC9AA mitte
+                    .init(color: Color(red: 0xFF/255, green: 0xC9/255, blue: 0xAA/255), location: 1)     // #FFC9AA unten
                 ],
                 startPoint: .top,
                 endPoint: .bottom
