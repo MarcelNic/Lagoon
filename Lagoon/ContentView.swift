@@ -8,8 +8,15 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var showMessenSheet = false
+    @State private var showDosierenSheet = false
+    @State private var showChecklist = false
+    @State private var showPoolSettings = false
+    @Namespace private var namespace
+
     var body: some View {
-        ZStack {
+        NavigationStack {
+            ZStack {
             MeshGradient(
                 width: 3,
                 height: 3,
@@ -61,31 +68,41 @@ struct ContentView: View {
                 // Bottom Bar
                 GlassEffectContainer(spacing: 12) {
                     HStack(spacing: 12) {
-                        // Linker Button - Pool Name + Checklist
-                        Button {
-                            // Action
-                        } label: {
-                            HStack(spacing: 0) {
+                        // Linker Button - Checklist + Pool Name
+                        HStack(spacing: 0) {
+                            Button {
+                                showChecklist = true
+                            } label: {
                                 Image(systemName: "checklist")
                                     .font(.system(size: 20, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .padding(.leading, 24)
+                                    .padding(.trailing, 12)
+                                    .frame(height: 52)
+                            }
+                            .matchedTransitionSource(id: "checklist", in: namespace)
 
-                                Rectangle()
-                                    .fill(.white.opacity(0.3))
-                                    .frame(width: 1, height: 26)
-                                    .padding(.horizontal, 12)
+                            Rectangle()
+                                .fill(.white.opacity(0.3))
+                                .frame(width: 1, height: 26)
 
+                            Button {
+                                showPoolSettings = true
+                            } label: {
                                 Text("Pool Name")
                                     .font(.system(size: 17, weight: .medium))
+                                    .foregroundStyle(.white)
+                                    .padding(.leading, 12)
+                                    .padding(.trailing, 24)
+                                    .frame(height: 52)
                             }
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 24)
-                            .frame(height: 52)
+                            .matchedTransitionSource(id: "poolSettings", in: namespace)
                         }
                         .glassEffect(.clear.interactive(), in: .capsule)
 
                         // Mittlerer Button - Messen
                         Button {
-                            // Action
+                            showMessenSheet = true
                         } label: {
                             Image(systemName: "testtube.2")
                                 .font(.system(size: 20, weight: .semibold))
@@ -96,7 +113,7 @@ struct ContentView: View {
 
                         // Rechter Button - Dosieren
                         Button {
-                            // Action
+                            showDosierenSheet = true
                         } label: {
                             Image(systemName: "circle.grid.cross")
                                 .font(.system(size: 20, weight: .semibold))
@@ -108,7 +125,103 @@ struct ContentView: View {
                 }
                 .padding(.bottom, 8)
             }
+            .navigationDestination(isPresented: $showChecklist) {
+                ChecklistView()
+                    .navigationTransition(.zoom(sourceID: "checklist", in: namespace))
+            }
+            .navigationDestination(isPresented: $showPoolSettings) {
+                PoolSettingsView()
+                    .navigationTransition(.zoom(sourceID: "poolSettings", in: namespace))
+            }
+            .toolbar(.hidden, for: .navigationBar)
+            }
         }
+        .sheet(isPresented: $showMessenSheet) {
+            MessenSheet()
+                .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showDosierenSheet) {
+            DosierenSheet()
+                .presentationDetents([.medium])
+        }
+    }
+}
+
+// MARK: - Messen Sheet
+
+struct MessenSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Text("Messen")
+                .navigationTitle("Messen")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button {
+                            // Speichern Action
+                            dismiss()
+                        } label: {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+        }
+    }
+}
+
+// MARK: - Dosieren Sheet
+
+struct DosierenSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Text("Dosieren")
+                .navigationTitle("Dosieren")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button {
+                            // Speichern Action
+                            dismiss()
+                        } label: {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+        }
+    }
+}
+
+// MARK: - Checklist View
+
+struct ChecklistView: View {
+    var body: some View {
+        Text("Checklist")
+            .navigationTitle("Checklist")
+    }
+}
+
+// MARK: - Pool Settings View
+
+struct PoolSettingsView: View {
+    var body: some View {
+        Text("Pool Einstellungen")
+            .navigationTitle("Pool")
     }
 }
 
