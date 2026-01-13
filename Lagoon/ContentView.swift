@@ -30,45 +30,30 @@ struct ContentView: View {
                 Spacer()
 
                 // pH und Chlor Trend Bars
-                VStack(spacing: 40) {
-                    // Titel mittig über beiden Bars
-                    HStack(spacing: 40) {
-                        Text("pH")
-                            .font(.system(size: 40, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.white)
+                HStack(spacing: 60) {
+                    VerticalTrendBar(
+                        title: "pH",
+                        value: 7.2,
+                        minValue: 6.8,
+                        maxValue: 8.0,
+                        idealMin: 7.2,
+                        idealMax: 7.6,
+                        tintColor: .green,
+                        trend: .up,
+                        scalePosition: .leading
+                    )
 
-                        Text("Cl")
-                            .font(.system(size: 40, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.white)
-                    }
-
-                    // Bars
-                    HStack(spacing: 60) {
-                        VerticalTrendBar(
-                            title: "pH",
-                            value: 7.2,
-                            minValue: 6.8,
-                            maxValue: 8.0,
-                            idealMin: 7.2,
-                            idealMax: 7.6,
-                            tintColor: .green,
-                            trend: .up,
-                            scalePosition: .leading
-                        )
-
-                        VerticalTrendBar(
-                            title: "Cl",
-                            value: 1.5,
-                            minValue: 0,
-                            maxValue: 5,
-                            idealMin: 1.0,
-                            idealMax: 3.0,
-                            tintColor: .blue,
-                            trend: .down,
-                            unit: "ppm",
-                            scalePosition: .trailing
-                        )
-                    }
+                    VerticalTrendBar(
+                        title: "Cl",
+                        value: 1.5,
+                        minValue: 0,
+                        maxValue: 5,
+                        idealMin: 1.0,
+                        idealMax: 3.0,
+                        tintColor: .blue,
+                        trend: .down,
+                        scalePosition: .trailing
+                    )
                 }
 
                 Spacer()
