@@ -69,7 +69,7 @@ struct ContentView: View {
                         Button {
                             // Action
                         } label: {
-                            Image(systemName: "drop.fill")
+                            Image(systemName: "circle.grid.cross")
                                 .font(.system(size: 20, weight: .semibold))
                                 .foregroundStyle(.white)
                         }
