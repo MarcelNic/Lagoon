@@ -253,24 +253,35 @@ struct VerticalTrendBar: View {
             // Action für Wert-Details
         } label: {
             HStack(spacing: 6) {
+                // Apple Intelligence Icon links bei leading (pH)
+                if scalePosition == .leading {
+                    appleIntelligenceIcon
+                }
+
                 Text(formatValue(value) + (unit.isEmpty ? "" : " \(unit)"))
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.black)
 
-                // Apple Intelligence Icon mit Regenbogen-Gradient
-                Image(systemName: "apple.intelligence")
-                    .font(.system(size: 14))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.red, .orange, .yellow, .green, .blue, .purple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                // Apple Intelligence Icon rechts bei trailing (Cl)
+                if scalePosition == .trailing {
+                    appleIntelligenceIcon
+                }
             }
             .frame(minWidth: 60, minHeight: 30)
         }
-        .glassEffect(.clear.interactive(), in: .capsule)
+        .glassEffect(.regular.tint(.white).interactive(), in: .capsule)
+    }
+
+    private var appleIntelligenceIcon: some View {
+        Image(systemName: "apple.intelligence")
+            .font(.system(size: 14))
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [.red, .orange, .yellow, .green, .blue, .purple],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
     }
 
     // MARK: - Helpers
