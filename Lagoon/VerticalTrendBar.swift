@@ -41,7 +41,7 @@ struct VerticalTrendBar: View {
     @Namespace private var namespace
 
     // Dimensionen
-    private let barWidth: CGFloat = 30
+    private let barWidth: CGFloat = 38
     private let barHeight: CGFloat = 400
     private let markerDiameter: CGFloat = 26
     private let markerPadding: CGFloat = 2
@@ -88,54 +88,42 @@ struct VerticalTrendBar: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Titel
-            Text(title)
-                .font(.system(size: 40, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white)
-                .padding(.bottom, 40)
-
-            HStack(alignment: .top, spacing: 0) {
-                // Links: Skala + Wert-Label (wenn scalePosition == .leading)
-                if scalePosition == .leading {
-                    VStack(alignment: .trailing, spacing: 0) {
-                        valueLabelView
-                            .offset(y: markerYPosition - 22)
-                    }
-                    .frame(height: barHeight)
+        HStack(alignment: .top, spacing: 0) {
+            // Links: Skala + Wert-Label (wenn scalePosition == .leading)
+            if scalePosition == .leading {
+                valueLabelView
+                    .frame(height: barHeight, alignment: .top)
+                    .offset(y: markerYPosition - 22)
                     .padding(.trailing, 8)
 
-                    scaleMarks(leading: true)
-                        .padding(.trailing, 12)
-                }
+                scaleMarks(leading: true)
+                    .padding(.trailing, 12)
+            }
 
-                // Bar mit Marker
-                ZStack(alignment: .top) {
-                    // Haupt-Bar (Hintergrund)
-                    RoundedRectangle(cornerRadius: barWidth / 2)
-                        .fill(.white.opacity(0.15))
-                        .frame(width: barWidth, height: barHeight)
+            // Bar mit Marker
+            ZStack(alignment: .top) {
+                // Haupt-Bar (Hintergrund)
+                RoundedRectangle(cornerRadius: barWidth / 2)
+                    .fill(.white.opacity(0.15))
+                    .frame(width: barWidth, height: barHeight)
 
-                    // Idealbereich
-                    idealRangeBar
+                // Idealbereich
+                idealRangeBar
 
-                    // Marker (aktueller Wert)
-                    markerView
-                        .offset(y: markerYPosition - markerDiameter / 2)
-                }
+                // Marker (aktueller Wert)
+                markerView
+                    .offset(y: markerYPosition - markerDiameter / 2)
+            }
 
-                // Rechts: Skala + Wert-Label (wenn scalePosition == .trailing)
-                if scalePosition == .trailing {
-                    scaleMarks(leading: false)
-                        .padding(.leading, 12)
+            // Rechts: Skala + Wert-Label (wenn scalePosition == .trailing)
+            if scalePosition == .trailing {
+                scaleMarks(leading: false)
+                    .padding(.leading, 12)
 
-                    VStack(alignment: .leading, spacing: 0) {
-                        valueLabelView
-                            .offset(y: markerYPosition - 22)
-                    }
-                    .frame(height: barHeight)
+                valueLabelView
+                    .frame(height: barHeight, alignment: .top)
+                    .offset(y: markerYPosition - 22)
                     .padding(.leading, 8)
-                }
             }
         }
     }
@@ -294,31 +282,44 @@ struct VerticalTrendBar: View {
         )
         .ignoresSafeArea()
 
-        HStack(spacing: 60) {
-            VerticalTrendBar(
-                title: "pH",
-                value: 7.2,
-                minValue: 6.8,
-                maxValue: 8.0,
-                idealMin: 7.2,
-                idealMax: 7.6,
-                tintColor: .green,
-                trend: .up,
-                scalePosition: .leading
-            )
+        VStack(spacing: 40) {
+            // Titel mittig über beiden Bars
+            HStack(spacing: 40) {
+                Text("pH")
+                    .font(.system(size: 40, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white)
 
-            VerticalTrendBar(
-                title: "Cl",
-                value: 1.5,
-                minValue: 0,
-                maxValue: 5,
-                idealMin: 1.0,
-                idealMax: 3.0,
-                tintColor: .blue,
-                trend: .down,
-                unit: "ppm",
-                scalePosition: .trailing
-            )
+                Text("Cl")
+                    .font(.system(size: 40, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white)
+            }
+
+            HStack(spacing: 60) {
+                VerticalTrendBar(
+                    title: "pH",
+                    value: 7.2,
+                    minValue: 6.8,
+                    maxValue: 8.0,
+                    idealMin: 7.2,
+                    idealMax: 7.6,
+                    tintColor: .green,
+                    trend: .up,
+                    scalePosition: .leading
+                )
+
+                VerticalTrendBar(
+                    title: "Cl",
+                    value: 1.5,
+                    minValue: 0,
+                    maxValue: 5,
+                    idealMin: 1.0,
+                    idealMax: 3.0,
+                    tintColor: .blue,
+                    trend: .down,
+                    unit: "ppm",
+                    scalePosition: .trailing
+                )
+            }
         }
     }
 }
