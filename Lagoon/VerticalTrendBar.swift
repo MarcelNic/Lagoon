@@ -101,19 +101,25 @@ struct VerticalTrendBar: View {
             }
 
             // Bar mit Marker
-            ZStack(alignment: .top) {
-                // Haupt-Bar (Hintergrund)
-                RoundedRectangle(cornerRadius: barWidth / 2)
-                    .fill(.white.opacity(0.15))
-                    .frame(width: barWidth, height: barHeight)
+            Button {
+                // Action für Bar-Details
+            } label: {
+                ZStack(alignment: .top) {
+                    // Haupt-Bar (Hintergrund)
+                    RoundedRectangle(cornerRadius: barWidth / 2)
+                        .fill(.clear)
+                        .frame(width: barWidth, height: barHeight)
 
-                // Idealbereich
-                idealRangeBar
+                    // Idealbereich
+                    idealRangeBar
 
-                // Marker (aktueller Wert)
-                markerView
-                    .offset(y: markerYPosition - markerDiameter / 2)
+                    // Marker (aktueller Wert)
+                    markerView
+                        .offset(y: markerYPosition - markerDiameter / 2)
+                }
             }
+            .buttonStyle(.plain)
+            .glassEffect(.clear.interactive(), in: .rect(cornerRadius: barWidth / 2))
 
             // Rechts: Skala + Wert-Label (wenn scalePosition == .trailing)
             if scalePosition == .trailing {
@@ -134,9 +140,9 @@ struct VerticalTrendBar: View {
         let idealHeight = (idealMaxNormalized - idealMinNormalized) * barHeight
         let idealYOffset = barHeight - (idealMaxNormalized * barHeight)
 
-        return RoundedRectangle(cornerRadius: (barWidth - 8) / 2)
-            .frame(width: barWidth - 8, height: idealHeight)
-            .glassEffect(.regular.tint(.white), in: .rect(cornerRadius: (barWidth - 8) / 2))
+        return RoundedRectangle(cornerRadius: (barWidth - 6) / 2)
+            .fill(.white)
+            .frame(width: barWidth - 6, height: idealHeight)
             .offset(y: idealYOffset)
     }
 
