@@ -229,30 +229,77 @@ public struct WaterTargets: Codable {
 
 // MARK: - Chlorine Targets
 
-/// Chlorine target range
+/// Chlorine ideal range (target is calculated as midpoint)
 public struct ChlorineTargets: Codable {
     public let min_ppm: Double
     public let max_ppm: Double
-    public let target_ppm: Double
 
-    public init(min_ppm: Double, max_ppm: Double, target_ppm: Double) {
+    /// Target is the midpoint of the ideal range
+    public var target_ppm: Double {
+        (min_ppm + max_ppm) / 2.0
+    }
+
+    public init(min_ppm: Double, max_ppm: Double) {
         self.min_ppm = min_ppm
         self.max_ppm = max_ppm
-        self.target_ppm = target_ppm
     }
 }
 
 // MARK: - pH Targets
 
-/// pH target range
+/// pH ideal range (target is calculated as midpoint)
 public struct PHTargets: Codable {
     public let min: Double
     public let max: Double
-    public let target: Double
 
-    public init(min: Double, max: Double, target: Double) {
+    /// Target is the midpoint of the ideal range
+    public var target: Double {
+        (min + max) / 2.0
+    }
+
+    public init(min: Double, max: Double) {
         self.min = min
         self.max = max
-        self.target = target
+    }
+}
+
+// MARK: - Default Products
+
+/// Standard pool chemicals with typical effectiveness values
+public enum DefaultProducts {
+    /// Chlorine granules (Calcium hypochlorite or similar)
+    /// Typical: 1g per m³ raises chlorine by ~1 ppm
+    public static let chlorine = ProductDefinition(
+        kind: .chlorine,
+        unit: "g",
+        ppmChangePerUnit_per_m3: 1.0,
+        pHChangePerUnit_per_m3: nil
+    )
+
+    /// pH-Minus (Sodium bisulfate or similar)
+    /// Typical: 10g per m³ lowers pH by ~0.1
+    public static let phMinus = ProductDefinition(
+        kind: .phMinus,
+        unit: "g",
+        ppmChangePerUnit_per_m3: nil,
+        pHChangePerUnit_per_m3: 0.01
+    )
+
+    /// pH-Plus (Sodium carbonate or similar)
+    /// Typical: 10g per m³ raises pH by ~0.1
+    public static let phPlus = ProductDefinition(
+        kind: .phPlus,
+        unit: "g",
+        ppmChangePerUnit_per_m3: nil,
+        pHChangePerUnit_per_m3: 0.01
+    )
+
+    /// All default products as a dictionary for engine input
+    public static var all: [String: ProductDefinition] {
+        [
+            "chlorine": chlorine,
+            "ph_minus": phMinus,
+            "ph_plus": phPlus
+        ]
     }
 }

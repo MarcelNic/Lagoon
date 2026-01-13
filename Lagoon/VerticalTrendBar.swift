@@ -95,7 +95,7 @@ struct VerticalTrendBar: View {
                     valueLabelView
                         .frame(height: barHeight + 40 + 48, alignment: .top)
                         .offset(y: 40 + 48 + markerYPosition - 22)
-                        .padding(.trailing, 8)
+                        .padding(.trailing, 4)
 
                     scaleMarks(leading: true)
                         .padding(.trailing, 12)
@@ -139,7 +139,7 @@ struct VerticalTrendBar: View {
                     valueLabelView
                         .frame(height: barHeight + 40 + 48, alignment: .top)
                         .offset(y: 40 + 48 + markerYPosition - 22)
-                        .padding(.leading, 8)
+                        .padding(.leading, 4)
                 }
             }
         }
@@ -182,19 +182,19 @@ struct VerticalTrendBar: View {
             ForEach(0...steps, id: \.self) { i in
                 let isMajor = i % majorInterval == 0
                 let normalizedPosition = CGFloat(steps - i) / CGFloat(steps)
-                let isIdealMin = abs(normalizedPosition - idealMinNormalized) < 0.05
-                let isIdealMax = abs(normalizedPosition - idealMaxNormalized) < 0.05
+                let scaleValue = minValue + Double(normalizedPosition) * (maxValue - minValue)
 
                 HStack(spacing: 4) {
                     if leading {
-                        // Idealbereich-Label links von der Markierung
-                        if isIdealMin {
-                            idealLabel(value: idealMin)
-                        } else if isIdealMax {
-                            idealLabel(value: idealMax)
+                        // Wert-Label bei major ticks
+                        if isMajor {
+                            Text(formatValue(scaleValue))
+                                .font(.system(size: 10, weight: .medium, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.6))
+                                .frame(width: 28, alignment: .trailing)
                         } else {
                             Color.clear
-                                .frame(width: 28, height: 28)
+                                .frame(width: 28)
                         }
 
                         Rectangle()
@@ -211,14 +211,15 @@ struct VerticalTrendBar: View {
                                 height: isMajor ? 2 : 1
                             )
 
-                        // Idealbereich-Label rechts von der Markierung
-                        if isIdealMin {
-                            idealLabel(value: idealMin)
-                        } else if isIdealMax {
-                            idealLabel(value: idealMax)
+                        // Wert-Label bei major ticks
+                        if isMajor {
+                            Text(formatValue(scaleValue))
+                                .font(.system(size: 10, weight: .medium, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.6))
+                                .frame(width: 28, alignment: .leading)
                         } else {
                             Color.clear
-                                .frame(width: 28, height: 28)
+                                .frame(width: 28)
                         }
                     }
                 }
@@ -229,21 +230,6 @@ struct VerticalTrendBar: View {
             }
         }
         .frame(height: barHeight)
-    }
-
-    // MARK: - Idealbereich Label
-
-    private func idealLabel(value: Double) -> some View {
-        Button {
-            // Action für Idealbereich-Details
-        } label: {
-            Text(formatValue(value))
-                .font(.system(size: 10, weight: .semibold, design: .rounded))
-                .foregroundStyle(.white)
-                .frame(width: 28, height: 28)
-        }
-        .buttonStyle(.plain)
-        .glassEffect(.clear.interactive(), in: .circle)
     }
 
     // MARK: - Wert Label mit Apple Intelligence Icon

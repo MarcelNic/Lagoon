@@ -11,31 +11,20 @@ Diese Datei dokumentiert alle UI-Komponenten, die für die Engine-Integration be
 | Feld | Typ | Beispiel | UI-Element |
 |------|-----|----------|------------|
 | `poolVolume_m3` | Double | 50.0 | Textfeld mit Stepper |
+| `filterRuntime_hours_per_day` | Double | 8.0 | Slider (0-24h) |
 
-### 2. Produkt-Konfiguration (einmalig, in Settings)
+### 2. Idealbereiche (einmalig, in Settings)
 
-| Feld | Typ | Beispiel | UI-Element |
-|------|-----|----------|------------|
-| `productId` | String | "chlor-granulat" | Textfeld |
-| `kind` | Enum | chlorine, ph_minus, ph_plus | Picker |
-| `unit` | String | "g" | Textfeld |
-| `ppmChangePerUnit_per_m3` | Double | 1.0 | Textfeld (nur Chlor) |
-| `pHChangePerUnit_per_m3` | Double | 0.01 | Textfeld (nur pH) |
-
-Liste von Produkten verwalten (hinzufügen, bearbeiten, löschen)
-
-### 3. Zielbereiche (einmalig, in Settings)
+Target wird automatisch als Mitte des Bereichs berechnet.
 
 | Feld | Typ | Beispiel | UI-Element |
 |------|-----|----------|------------|
 | Chlor min_ppm | Double | 0.5 | Slider oder Textfeld |
 | Chlor max_ppm | Double | 1.5 | Slider oder Textfeld |
-| Chlor target_ppm | Double | 1.0 | Slider oder Textfeld |
 | pH min | Double | 7.0 | Slider oder Textfeld |
 | pH max | Double | 7.4 | Slider oder Textfeld |
-| pH target | Double | 7.2 | Slider oder Textfeld |
 
-### 4. Letzte Messung (MessenSheet)
+### 3. Letzte Messung (MessenSheet)
 
 | Feld | Typ | Beispiel | UI-Element |
 |------|-----|----------|------------|
@@ -43,24 +32,34 @@ Liste von Produkten verwalten (hinzufügen, bearbeiten, löschen)
 | `pH` | Double | 7.3 | Slider/Stepper |
 | `timestampISO` | String | automatisch | Date() beim Speichern |
 
-### 5. Aktuelle Bedingungen (automatisch oder manuell)
+### 4. Wetter/Bedingungen (manuell, später WeatherKit)
+
+Aktuell: `ManualWeatherProvider` verwenden
+Später: Auf `WeatherKitProvider` umstellen (siehe `WeatherProvider.swift`)
 
 | Feld | Typ | Quelle | UI-Element |
 |------|-----|--------|------------|
-| `waterTemperature_c` | Double | WeatherKit / manuell | Textfeld oder automatisch |
-| `uvExposure` | Enum | WeatherKit / manuell | SegmentedControl (low/medium/high) |
+| `temperature_c` | Double | manuell / WeatherKit | Textfeld oder automatisch |
+| `uvIndex` | Double | manuell / WeatherKit | Slider (0-11) oder automatisch |
 | `poolCovered` | Bool | manuell | Toggle |
 | `batherLoad` | Enum | manuell | SegmentedControl (none/low/high) |
-| `filterRuntime_hours_per_day` | Double | Settings | Textfeld/Stepper |
 
-### 6. Dosier-Verlauf (DosierenSheet)
+UV-Index wird automatisch gemappt:
+- 0-2 → low
+- 3-5 → medium
+- 6+ → high
+
+### 5. Dosierung (DosierenSheet)
+
+Fixe Produkte (keine Konfiguration nötig):
+- **Chlor** (chlorine) - Granulat, g
+- **pH-Minus** (ph_minus) - Granulat, g
+- **pH-Plus** (ph_plus) - Granulat, g
 
 | Feld | Typ | Beispiel | UI-Element |
 |------|-----|----------|------------|
-| `productId` | String | aus Liste | Picker |
+| Produkt | Enum | chlorine, ph_minus, ph_plus | SegmentedControl oder Picker |
 | `amount` | Double | 150 | Textfeld/Stepper |
-| `unit` | String | aus Produkt | automatisch |
-| `kind` | Enum | aus Produkt | automatisch |
 | `timestampISO` | String | automatisch | Date() beim Speichern |
 
 ---
@@ -89,10 +88,10 @@ Liste von Produkten verwalten (hinzufügen, bearbeiten, löschen)
 | `parameter` | "Chlor" / "pH" | Header |
 | `action` | none -> Checkmark / dose -> Warning | Icon/Badge |
 | `reasonCode` | IN_RANGE, TOO_LOW, TOO_HIGH | Farbcodierung |
-| `productId` | "Chlor-Granulat" | Text |
+| `productId` | "chlorine" / "ph_minus" / "ph_plus" | Text/Icon |
 | `amount` | "150" | Prominente Zahl |
 | `unit` | "g" | Einheit |
-| `targetValue` | "-> 1.0 ppm" | Zielwert |
+| `targetValue` | "-> 1.0 ppm" | Zielwert (Mitte des Idealbereichs) |
 | `explanation` | "Chlor ist zu niedrig..." | Erklärungstext |
 
 ---
@@ -101,35 +100,86 @@ Liste von Produkten verwalten (hinzufügen, bearbeiten, löschen)
 
 ### Zu speichernde Entitäten
 
-1. **PoolSettings** - Volumen, Filterzeit, Zielbereiche
-2. **Product** - Liste der konfigurierten Produkte
-3. **Measurement** - Historische Messungen
-4. **DosingEvent** - Historische Dosierungen
+1. **PoolSettings** - Volumen, Filterzeit, Idealbereiche
+2. **Measurement** - Historische Messungen (Chlor, pH, Timestamp)
+3. **DosingEvent** - Historische Dosierungen (Produkt, Menge, Timestamp)
+4. **WeatherInput** - Manuelle Wettereingaben (Temperatur, UV-Index)
 
 ---
 
 ## AUFGABENLISTE
 
-### Phase 1: Settings & Konfiguration
+### Phase 1: Datenmodell & Settings
 
+- [ ] SwiftData Models erstellen (PoolSettings, Measurement, DosingEvent)
 - [ ] PoolSettingsView erstellen (Volumen, Filterzeit)
-- [ ] TargetRangesView erstellen (Chlor/pH Zielbereiche)
-- [ ] ProductListView erstellen (Produkte verwalten)
-- [ ] SwiftData Models für Persistenz
+- [ ] IdealRangesView erstellen (Chlor/pH min/max Slider)
 
-### Phase 2: Daten-Eingabe
+### Phase 2: Messungen & Dosierungen
 
-- [ ] MessenSheet erweitern (Chlor + pH Eingabe)
-- [ ] DosierenSheet erweitern (Produkt wählen, Menge eingeben)
-- [ ] ConditionsView erstellen (Temperatur, UV, Abdeckung, Badegäste)
+- [ ] MessenSheet erweitern (Chlor + pH Slider, speichern in SwiftData)
+- [ ] DosierenSheet erweitern (Produkt-Picker: Chlor/pH+/pH-, Menge, speichern)
 
-### Phase 3: Dashboard-Integration
+### Phase 3: Wetter/Bedingungen
 
-- [ ] Engine mit TrendBars verbinden (geschätzte Werte anzeigen)
-- [ ] Konfidenz-Indikator im Dashboard
-- [ ] Empfehlungs-Anzeige (Karten oder Badges)
+- [ ] ManualWeatherProvider in App integrieren
+- [ ] ConditionsView erstellen (Temperatur, UV-Index Slider, Abdeckung Toggle, Badegäste)
 
-### Phase 4: Automatisierung (optional)
+### Phase 4: Dashboard-Integration
 
-- [ ] WeatherKit für Temperatur/UV integrieren
-- [ ] Automatische Bedingungen basierend auf Tageszeit
+- [ ] Engine mit SwiftData verbinden (Messungen + Dosierungen laden)
+- [ ] TrendBars mit geschätzten Werten verbinden
+- [ ] Konfidenz-Indikator anzeigen
+- [ ] Empfehlungs-Karten oder Badges
+
+### Phase 5: WeatherKit (optional, später)
+
+- [ ] WeatherKit Capability aktivieren
+- [ ] WeatherKitProvider implementieren (siehe Placeholder in WeatherProvider.swift)
+- [ ] Location-Permission anfragen
+- [ ] Automatische Wetterdaten abrufen
+
+---
+
+## Code-Beispiel: Engine verwenden
+
+```swift
+// Einfachste Variante mit Defaults
+let input = PoolWaterEngineInput.create(
+    poolVolume_m3: 50.0,
+    lastChlorine_ppm: 1.2,
+    lastPH: 7.3,
+    lastMeasurementISO: ISO8601DateFormatter().string(from: lastMeasurement.date),
+    waterTemperature_c: 28.0,
+    uvExposure: .high,
+    poolCovered: false,
+    batherLoad: .low,
+    filterRuntime: 8.0,
+    dosingHistory: dosingEvents  // aus SwiftData
+)
+
+let engine = PoolWaterEngine()
+let output = engine.process(input)
+
+// Ergebnisse
+output.estimatedState.freeChlorine_ppm  // Geschätzter Chlorwert
+output.estimatedState.pH                 // Geschätzter pH
+output.confidence.confidence             // .high, .medium, .low
+output.recommendations[0].action         // .none oder .dose
+output.recommendations[0].amount         // Dosiermenge in g
+```
+
+---
+
+## Architektur-Hinweis: WeatherKit-Umstellung
+
+Die `WeatherProvider.swift` enthält:
+- `WeatherData` - Wetterdaten-Struct
+- `WeatherProvider` - Protocol
+- `ManualWeatherProvider` - Manuelle Eingabe (aktuell)
+- `WeatherKitProvider` - Placeholder (auskommentiert)
+
+Später einfach:
+1. WeatherKit Capability aktivieren
+2. `WeatherKitProvider` auskommentieren
+3. Statt `ManualWeatherProvider` den `WeatherKitProvider` verwenden

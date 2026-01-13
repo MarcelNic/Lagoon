@@ -102,6 +102,7 @@ public struct PoolWaterEngine {
 extension PoolWaterEngineInput {
 
     /// Create input from individual components with sensible defaults
+    /// Uses DefaultProducts (Chlor, pH-Plus, pH-Minus) automatically
     public static func create(
         poolVolume_m3: Double,
         lastChlorine_ppm: Double,
@@ -113,13 +114,13 @@ extension PoolWaterEngineInput {
         batherLoad: BatherLoadLevel = .none,
         filterRuntime: Double = 8.0,
         dosingHistory: [DosingEvent] = [],
-        products: [String: ProductDefinition] = [:],
-        targets: WaterTargets? = nil
+        idealRanges: WaterTargets? = nil
     ) -> PoolWaterEngineInput {
 
-        let defaultTargets = WaterTargets(
-            freeChlorine: ChlorineTargets(min_ppm: 0.5, max_ppm: 1.5, target_ppm: 1.0),
-            pH: PHTargets(min: 7.0, max: 7.4, target: 7.2)
+        // Default ideal ranges (target = midpoint)
+        let defaultRanges = WaterTargets(
+            freeChlorine: ChlorineTargets(min_ppm: 0.5, max_ppm: 1.5),
+            pH: PHTargets(min: 7.0, max: 7.4)
         )
 
         return PoolWaterEngineInput(
@@ -137,8 +138,37 @@ extension PoolWaterEngineInput {
                 filterRuntime_hours_per_day: filterRuntime
             ),
             dosingHistory: dosingHistory,
-            products: products,
-            targets: targets ?? defaultTargets
+            products: DefaultProducts.all,
+            targets: idealRanges ?? defaultRanges
+        )
+    }
+
+    /// Create input using a WeatherProvider for conditions
+    public static func create(
+        poolVolume_m3: Double,
+        lastChlorine_ppm: Double,
+        lastPH: Double,
+        lastMeasurementISO: String,
+        weather: WeatherData,
+        poolCovered: Bool = false,
+        batherLoad: BatherLoadLevel = .none,
+        filterRuntime: Double = 8.0,
+        dosingHistory: [DosingEvent] = [],
+        idealRanges: WaterTargets? = nil
+    ) -> PoolWaterEngineInput {
+
+        return create(
+            poolVolume_m3: poolVolume_m3,
+            lastChlorine_ppm: lastChlorine_ppm,
+            lastPH: lastPH,
+            lastMeasurementISO: lastMeasurementISO,
+            waterTemperature_c: weather.temperature_c,
+            uvExposure: weather.uvExposure,
+            poolCovered: poolCovered,
+            batherLoad: batherLoad,
+            filterRuntime: filterRuntime,
+            dosingHistory: dosingHistory,
+            idealRanges: idealRanges
         )
     }
 }
