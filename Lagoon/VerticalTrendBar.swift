@@ -90,16 +90,18 @@ struct VerticalTrendBar: View {
     var body: some View {
         GlassEffectContainer {
             HStack(alignment: .top, spacing: 0) {
-                // Links: Skala + Wert-Label (wenn scalePosition == .leading)
+                // Links: Skala mit Pille-Overlay (wenn scalePosition == .leading)
                 if scalePosition == .leading {
-                    valueLabelView
-                        .frame(height: barHeight + 40 + 48, alignment: .top)
-                        .offset(y: 40 + 48 + markerYPosition - 22)
-                        .padding(.trailing, 4)
+                    ZStack(alignment: .trailing) {
+                        scaleMarks(leading: true)
 
-                    scaleMarks(leading: true)
-                        .padding(.trailing, 12)
-                        .padding(.top, 40 + 48)
+                        valueLabelView
+                            .frame(height: barHeight, alignment: .top)
+                            .offset(y: markerYPosition - 15)
+                            .padding(.trailing, 4)
+                    }
+                    .padding(.trailing, 12)
+                    .padding(.top, 40 + 48)
                 }
 
                 // Titel + Bar mit Marker
@@ -130,16 +132,18 @@ struct VerticalTrendBar: View {
                     .glassEffect(.clear.interactive(), in: .rect(cornerRadius: barWidth / 2))
                 }
 
-                // Rechts: Skala + Wert-Label (wenn scalePosition == .trailing)
+                // Rechts: Skala mit Pille-Overlay (wenn scalePosition == .trailing)
                 if scalePosition == .trailing {
-                    scaleMarks(leading: false)
-                        .padding(.leading, 12)
-                        .padding(.top, 40 + 48)
+                    ZStack(alignment: .leading) {
+                        scaleMarks(leading: false)
 
-                    valueLabelView
-                        .frame(height: barHeight + 40 + 48, alignment: .top)
-                        .offset(y: 40 + 48 + markerYPosition - 22)
-                        .padding(.leading, 4)
+                        valueLabelView
+                            .frame(height: barHeight, alignment: .top)
+                            .offset(y: markerYPosition - 15)
+                            .padding(.leading, 4)
+                    }
+                    .padding(.leading, 12)
+                    .padding(.top, 40 + 48)
                 }
             }
         }
