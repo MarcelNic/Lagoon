@@ -111,19 +111,21 @@ Fixe Produkte (keine Konfiguration nötig):
 
 ### Phase 1: Datenmodell & Settings
 
+- [x] PoolSettingsView erstellen (Volumen, Filterzeit) ✅
+- [x] IdealRangesView erstellen (Chlor/pH min/max) ✅ (ChemistrySettingsView)
 - [ ] SwiftData Models erstellen (PoolSettings, Measurement, DosingEvent)
-- [ ] PoolSettingsView erstellen (Volumen, Filterzeit)
-- [ ] IdealRangesView erstellen (Chlor/pH min/max Slider)
 
 ### Phase 2: Messungen & Dosierungen
 
-- [ ] MessenSheet erweitern (Chlor + pH Slider, speichern in SwiftData)
+- [x] MessenSheet erweitern (pH, Chlor, Temperatur Slider, Badegäste, Datum/Zeit) ✅
+- [ ] MessenSheet: Speichern in SwiftData
 - [ ] DosierenSheet erweitern (Produkt-Picker: Chlor/pH+/pH-, Menge, speichern)
 
 ### Phase 3: Wetter/Bedingungen
 
-- [ ] ManualWeatherProvider in App integrieren
-- [ ] ConditionsView erstellen (Temperatur, UV-Index Slider, Abdeckung Toggle, Badegäste)
+- [x] WeatherSettingsView erstellen (UV-Index Slider, manuelle Eingabe) ✅
+- [x] Abdeckung Toggle in PoolSettingsView ✅
+- [x] Badegäste im MessenSheet ✅
 
 ### Phase 4: Dashboard-Integration
 

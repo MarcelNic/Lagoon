@@ -139,7 +139,7 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showMessenSheet) {
             MessenSheet()
-                .presentationDetents([.medium])
+                .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showDosierenSheet) {
             DosierenSheet()
@@ -153,27 +153,98 @@ struct ContentView: View {
 struct MessenSheet: View {
     @Environment(\.dismiss) private var dismiss
 
+    @State private var phValue: Double = 7.2
+    @State private var chlorineValue: Double = 1.0
+    @State private var waterTemperature: Double = 26.0
+    @State private var batherLoad: BatherLoadLevel = .none
+    @State private var measurementDate: Date = Date()
+
     var body: some View {
         NavigationStack {
-            Text("Messen")
-                .navigationTitle("Messen")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button {
-                            dismiss()
-                        } label: {
-                            Image(systemName: "xmark")
+            Form {
+                Section("Messwerte") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Label("pH-Wert", systemImage: "drop.fill")
+                            Spacer()
+                            Text(String(format: "%.1f", phValue))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                                .contentTransition(.numericText())
+                                .animation(.snappy, value: phValue)
                         }
+                        Slider(value: $phValue, in: 6.0...9.0, step: 0.1)
+                            .tint(.green)
                     }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button {
-                            // Speichern Action
-                            dismiss()
-                        } label: {
-                            Image(systemName: "checkmark")
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Label("Chlor", systemImage: "allergens.fill")
+                            Spacer()
+                            Text(String(format: "%.1f mg/l", chlorineValue))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                                .contentTransition(.numericText())
+                                .animation(.snappy, value: chlorineValue)
                         }
+                        Slider(value: $chlorineValue, in: 0.0...5.0, step: 0.1)
+                            .tint(.cyan)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Label("Wassertemperatur", systemImage: "thermometer.medium")
+                            Spacer()
+                            Text(String(format: "%.0f °C", waterTemperature))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                                .contentTransition(.numericText())
+                                .animation(.snappy, value: waterTemperature)
+                        }
+                        Slider(value: $waterTemperature, in: 10.0...40.0, step: 1.0)
+                            .tint(.orange)
                     }
                 }
+
+                Section("Bedingungen") {
+                    Picker(selection: $batherLoad) {
+                        Text("Keine").tag(BatherLoadLevel.none)
+                        Text("Wenig").tag(BatherLoadLevel.low)
+                        Text("Viel").tag(BatherLoadLevel.high)
+                    } label: {
+                        Label("Badegäste", systemImage: "figure.pool.swim")
+                    }
+                }
+
+                Section("Zeitpunkt") {
+                    DatePicker(
+                        selection: $measurementDate,
+                        in: ...Date(),
+                        displayedComponents: [.date, .hourAndMinute]
+                    ) {
+                        Label("Messung", systemImage: "clock")
+                    }
+                }
+            }
+            .navigationTitle("Messen")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        // TODO: Save measurement to SwiftData
+                        dismiss()
+                    } label: {
+                        Text("Speichern")
+                    }
+                    .buttonStyle(.glassProminent)
+                }
+            }
         }
     }
 }
@@ -307,15 +378,36 @@ struct PoolSettingsSheet: View {
 
     var body: some View {
         NavigationStack {
-            Text("Pool Einstellungen")
-                .navigationTitle("Einstellungen")
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Fertig") {
-                            dismiss()
-                        }
+            Form {
+                Section {
+                    NavigationLink {
+                        PoolSettingsView()
+                    } label: {
+                        Label("Pool", systemImage: "drop.fill")
+                    }
+
+                    NavigationLink {
+                        ChemistrySettingsView()
+                    } label: {
+                        Label("Chemie", systemImage: "flask.fill")
+                    }
+
+                    NavigationLink {
+                        WeatherSettingsView()
+                    } label: {
+                        Label("Wetter", systemImage: "sun.max.fill")
                     }
                 }
+            }
+            .navigationTitle("Einstellungen")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fertig") {
+                        dismiss()
+                    }
+                    .buttonStyle(.glassProminent)
+                }
+            }
         }
     }
 }

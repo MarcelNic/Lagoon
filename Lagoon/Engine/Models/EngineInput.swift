@@ -119,7 +119,7 @@ public enum UVExposureLevel: String, Codable {
 // MARK: - Bather Load Level
 
 /// Bather load levels
-public enum BatherLoadLevel: String, Codable {
+public enum BatherLoadLevel: String, Codable, CaseIterable {
     case none
     case low
     case high
