@@ -261,27 +261,94 @@ struct MessenSheet: View {
 struct DosierenSheet: View {
     @Environment(\.dismiss) private var dismiss
 
+    @State private var phType: PHType = .minus
+    @State private var phAmount: Double = 0
+    @State private var chlorineAmount: Double = 0
+    @State private var dosingDate: Date = Date()
+
+    enum PHType: String, CaseIterable {
+        case minus, plus
+
+        var label: String {
+            switch self {
+            case .minus: return "pH-"
+            case .plus: return "pH+"
+            }
+        }
+    }
+
     var body: some View {
         NavigationStack {
-            Text("Dosieren")
-                .navigationTitle("Dosieren")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button {
-                            dismiss()
-                        } label: {
-                            Image(systemName: "xmark")
+            Form {
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Label("pH", systemImage: "drop.fill")
+                            Spacer()
+                            Text(String(format: "%.0f g", phAmount))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                                .contentTransition(.numericText())
+                                .animation(.snappy, value: phAmount)
                         }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button {
-                            // Speichern Action
-                            dismiss()
-                        } label: {
-                            Image(systemName: "checkmark")
+                        Picker("pH", selection: $phType) {
+                            Text("pH-").tag(PHType.minus)
+                            Text("pH+").tag(PHType.plus)
                         }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        Slider(value: $phAmount, in: 0...300, step: 5)
+                            .tint(phType == .minus ? .orange : .purple)
                     }
                 }
+
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Label("Chlor", systemImage: "allergens.fill")
+                            Spacer()
+                            Text(String(format: "%.0f g", chlorineAmount))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                                .contentTransition(.numericText())
+                                .animation(.snappy, value: chlorineAmount)
+                        }
+                        Slider(value: $chlorineAmount, in: 0...500, step: 5)
+                            .tint(.cyan)
+                    }
+                }
+
+                Section {
+                    DatePicker(
+                        selection: $dosingDate,
+                        in: ...Date(),
+                        displayedComponents: [.date, .hourAndMinute]
+                    ) {
+                        Label("Zeitpunkt", systemImage: "clock")
+                    }
+                }
+            }
+            .contentMargins(.top, 0)
+            .navigationTitle("Dosieren")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        // TODO: Save dosing to SwiftData
+                        dismiss()
+                    } label: {
+                        Image(systemName: "checkmark")
+                    }
+                    .buttonStyle(.glassProminent)
+                }
+            }
         }
     }
 }

@@ -117,9 +117,10 @@ Fixe Produkte (keine Konfiguration nötig):
 
 ### Phase 2: Messungen & Dosierungen
 
-- [x] MessenSheet erweitern (pH, Chlor, Temperatur Slider, Badegäste, Datum/Zeit) ✅
+- [x] MessenSheet erweitern (pH, Chlor, Temperatur Slider, Nutzung, Datum/Zeit) ✅
+- [x] DosierenSheet erweitern (Produkt-Picker: Chlor/pH+/pH-, Menge, Datum/Zeit) ✅
 - [ ] MessenSheet: Speichern in SwiftData
-- [ ] DosierenSheet erweitern (Produkt-Picker: Chlor/pH+/pH-, Menge, speichern)
+- [ ] DosierenSheet: Speichern in SwiftData
 
 ### Phase 3: Wetter/Bedingungen
 
