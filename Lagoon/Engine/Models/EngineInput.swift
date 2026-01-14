@@ -118,17 +118,17 @@ public enum UVExposureLevel: String, Codable {
 
 // MARK: - Bather Load Level
 
-/// Bather load levels
+/// Pool usage levels
 public enum BatherLoadLevel: String, Codable, CaseIterable {
     case none
-    case low
+    case normal
     case high
 
     /// Chlorine consumption multiplier
     public var consumptionMultiplier: Double {
         switch self {
         case .none: return 1.0
-        case .low: return 1.2
+        case .normal: return 1.2
         case .high: return 1.5
         }
     }

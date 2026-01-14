@@ -156,13 +156,13 @@ struct MessenSheet: View {
     @State private var phValue: Double = 7.2
     @State private var chlorineValue: Double = 1.0
     @State private var waterTemperature: Double = 26.0
-    @State private var batherLoad: BatherLoadLevel = .none
+    @State private var batherLoad: BatherLoadLevel = .normal
     @State private var measurementDate: Date = Date()
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("Messwerte") {
+                Section {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Label("pH-Wert", systemImage: "drop.fill")
@@ -206,27 +206,34 @@ struct MessenSheet: View {
                     }
                 }
 
-                Section("Bedingungen") {
-                    Picker(selection: $batherLoad) {
-                        Text("Keine").tag(BatherLoadLevel.none)
-                        Text("Wenig").tag(BatherLoadLevel.low)
-                        Text("Viel").tag(BatherLoadLevel.high)
-                    } label: {
-                        Label("Badegäste", systemImage: "figure.pool.swim")
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("Nutzung", systemImage: "figure.pool.swim")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Picker("Nutzung", selection: $batherLoad) {
+                            Text("Keine").tag(BatherLoadLevel.none)
+                            Text("Normal").tag(BatherLoadLevel.normal)
+                            Text("Viel").tag(BatherLoadLevel.high)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
                     }
                 }
 
-                Section("Zeitpunkt") {
+                Section {
                     DatePicker(
                         selection: $measurementDate,
                         in: ...Date(),
                         displayedComponents: [.date, .hourAndMinute]
                     ) {
-                        Label("Messung", systemImage: "clock")
+                        Label("Zeitpunkt", systemImage: "clock")
                     }
                 }
             }
+            .contentMargins(.top, 0)
             .navigationTitle("Messen")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button {
@@ -240,7 +247,7 @@ struct MessenSheet: View {
                         // TODO: Save measurement to SwiftData
                         dismiss()
                     } label: {
-                        Text("Speichern")
+                        Image(systemName: "checkmark")
                     }
                     .buttonStyle(.glassProminent)
                 }
