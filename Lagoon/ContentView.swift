@@ -14,6 +14,8 @@ struct ContentView: View {
     @State private var showPoolOverview = false
     @Namespace private var namespace
 
+    @State private var poolState = PoolWaterState()
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -41,25 +43,25 @@ struct ContentView: View {
                     HStack(spacing: 60) {
                         VerticalTrendBar(
                             title: "pH",
-                            value: 7.2,
+                            value: poolState.estimatedPH,
                             minValue: 6.8,
                             maxValue: 8.0,
-                            idealMin: 7.2,
-                            idealMax: 7.6,
+                            idealMin: poolState.idealPHMin,
+                            idealMax: poolState.idealPHMax,
                             tintColor: .green,
-                            trend: .up,
+                            trend: poolState.phTrend,
                             scalePosition: .leading
                         )
 
                         VerticalTrendBar(
                             title: "Cl",
-                            value: 1.5,
+                            value: poolState.estimatedChlorine,
                             minValue: 0,
                             maxValue: 5,
-                            idealMin: 1.0,
-                            idealMax: 3.0,
+                            idealMin: poolState.idealChlorineMin,
+                            idealMax: poolState.idealChlorineMax,
                             tintColor: .blue,
-                            trend: .down,
+                            trend: poolState.chlorineTrend,
                             scalePosition: .trailing
                         )
                     }
@@ -138,7 +140,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showMessenSheet) {
-            MessenSheet()
+            MessenSheet(poolState: poolState)
                 .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showDosierenSheet) {
@@ -152,12 +154,20 @@ struct ContentView: View {
 
 struct MessenSheet: View {
     @Environment(\.dismiss) private var dismiss
+    var poolState: PoolWaterState
 
     @State private var phValue: Double = 7.2
     @State private var chlorineValue: Double = 1.0
     @State private var waterTemperature: Double = 26.0
     @State private var batherLoad: BatherLoadLevel = .normal
     @State private var measurementDate: Date = Date()
+
+    init(poolState: PoolWaterState) {
+        self.poolState = poolState
+        // Initialize with last measurement values
+        _phValue = State(initialValue: poolState.lastPH)
+        _chlorineValue = State(initialValue: poolState.lastChlorine)
+    }
 
     var body: some View {
         NavigationStack {
@@ -244,7 +254,12 @@ struct MessenSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
-                        // TODO: Save measurement to SwiftData
+                        // Save measurement to PoolWaterState
+                        poolState.recordMeasurement(
+                            chlorine: chlorineValue,
+                            pH: phValue,
+                            date: measurementDate
+                        )
                         dismiss()
                     } label: {
                         Image(systemName: "checkmark")
