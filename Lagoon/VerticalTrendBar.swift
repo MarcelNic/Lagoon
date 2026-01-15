@@ -41,10 +41,21 @@ struct VerticalTrendBar: View {
     @Namespace private var namespace
 
     // Dimensionen
-    private let barWidth: CGFloat = 38
+    private let barWidth: CGFloat = 44
     private let barHeight: CGFloat = 400
-    private let markerDiameter: CGFloat = 26
+    private let markerDiameter: CGFloat = 34
     private let markerPadding: CGFloat = 2
+    private let markerEndPadding: CGFloat = 5  // Abstand Marker-Rand zu Bar-Ende
+
+    // Berechnete Skala-Höhe (wo min bis max abgebildet wird)
+    private var scaleHeight: CGFloat {
+        barHeight - 2 * scaleTopOffset
+    }
+
+    // Offset vom Bar-Anfang bis zum Skala-Anfang (max)
+    private var scaleTopOffset: CGFloat {
+        (markerDiameter + 2 * markerPadding) / 2 + markerEndPadding
+    }
 
     init(
         title: String,
@@ -84,7 +95,7 @@ struct VerticalTrendBar: View {
     }
 
     private var markerYPosition: CGFloat {
-        barHeight - (normalizedValue * barHeight)
+        scaleTopOffset + (1 - normalizedValue) * scaleHeight
     }
 
     var body: some View {
@@ -96,7 +107,7 @@ struct VerticalTrendBar: View {
                         scaleMarks(leading: true)
 
                         valueLabelView
-                            .frame(height: barHeight, alignment: .top)
+                            .frame(height: scaleHeight, alignment: .top)
                             .offset(y: markerYPosition - 15)
                             .padding(.trailing, 4)
                     }
@@ -125,7 +136,7 @@ struct VerticalTrendBar: View {
 
                             // Marker (aktueller Wert)
                             markerView
-                                .offset(y: markerYPosition - markerDiameter / 2)
+                                .offset(y: markerYPosition - (markerDiameter + 2 * markerPadding) / 2)
                         }
                     }
                     .buttonStyle(.plain)
@@ -138,7 +149,7 @@ struct VerticalTrendBar: View {
                         scaleMarks(leading: false)
 
                         valueLabelView
-                            .frame(height: barHeight, alignment: .top)
+                            .frame(height: scaleHeight, alignment: .top)
                             .offset(y: markerYPosition - 15)
                             .padding(.leading, 4)
                     }
@@ -152,8 +163,8 @@ struct VerticalTrendBar: View {
     // MARK: - Idealbereich Bar
 
     private var idealRangeBar: some View {
-        let idealHeight = (idealMaxNormalized - idealMinNormalized) * barHeight
-        let idealYOffset = barHeight - (idealMaxNormalized * barHeight)
+        let idealHeight = (idealMaxNormalized - idealMinNormalized) * scaleHeight
+        let idealYOffset = scaleTopOffset + (1 - idealMaxNormalized) * scaleHeight
 
         return RoundedRectangle(cornerRadius: (barWidth - 6) / 2)
             .fill(.white)
@@ -182,11 +193,12 @@ struct VerticalTrendBar: View {
         let steps = 10
         let majorInterval = 2
 
-        return VStack(spacing: 0) {
+        return ZStack {
             ForEach(0...steps, id: \.self) { i in
                 let isMajor = i % majorInterval == 0
                 let normalizedPosition = CGFloat(steps - i) / CGFloat(steps)
                 let scaleValue = minValue + Double(normalizedPosition) * (maxValue - minValue)
+                let yPosition = scaleTopOffset + (1 - normalizedPosition) * scaleHeight - barHeight / 2 + 2
 
                 HStack(spacing: 4) {
                     if leading {
@@ -227,10 +239,7 @@ struct VerticalTrendBar: View {
                         }
                     }
                 }
-
-                if i < steps {
-                    Spacer()
-                }
+                .offset(y: yPosition)
             }
         }
         .frame(height: barHeight)
