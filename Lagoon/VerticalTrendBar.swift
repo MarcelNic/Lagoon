@@ -26,6 +26,16 @@ enum ScalePosition {
     case trailing
 }
 
+/// Data model for prediction popover
+struct PredictionData {
+    let estimatedValue: Double
+    let confidence: ConfidenceLevel
+    let confidenceReason: String
+    let lastMeasuredValue: Double
+    let lastMeasurementTime: Date
+    let recommendation: DosingRecommendation?
+}
+
 struct VerticalTrendBar: View {
     let title: String
     let value: Double
@@ -37,7 +47,9 @@ struct VerticalTrendBar: View {
     let trend: TrendDirection
     let unit: String
     let scalePosition: ScalePosition
+    let prediction: PredictionData?
 
+    @State private var showPredictionPopover = false
     @Namespace private var namespace
 
     // Dimensionen
@@ -76,7 +88,8 @@ struct VerticalTrendBar: View {
         tintColor: Color,
         trend: TrendDirection = .stable,
         unit: String = "",
-        scalePosition: ScalePosition = .leading
+        scalePosition: ScalePosition = .leading,
+        prediction: PredictionData? = nil
     ) {
         self.title = title
         self.value = value
@@ -88,6 +101,7 @@ struct VerticalTrendBar: View {
         self.trend = trend
         self.unit = unit
         self.scalePosition = scalePosition
+        self.prediction = prediction
     }
 
     private var normalizedValue: CGFloat {
@@ -256,11 +270,13 @@ struct VerticalTrendBar: View {
 
     private var valueLabelView: some View {
         Button {
-            // Action für Wert-Details
+            if prediction != nil {
+                showPredictionPopover = true
+            }
         } label: {
             HStack(spacing: 2) {
                 // Apple Intelligence Icon links bei leading (pH)
-                if scalePosition == .leading {
+                if scalePosition == .leading && prediction != nil {
                     appleIntelligenceIcon
                 }
 
@@ -268,14 +284,29 @@ struct VerticalTrendBar: View {
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
 
                 // Apple Intelligence Icon rechts bei trailing (Cl)
-                if scalePosition == .trailing {
+                if scalePosition == .trailing && prediction != nil {
                     appleIntelligenceIcon
                 }
             }
             .padding(.horizontal, 4)
+            .matchedTransitionSource(id: "PREDICTION_\(title)", in: namespace)
         }
-        .buttonStyle(.glass)
+        .buttonStyle(.glass(.clear.interactive()))
         .fixedSize()
+        .popover(isPresented: $showPredictionPopover) {
+            if let prediction = prediction {
+                PopoverHelper {
+                    PredictionPopoverContent(
+                        title: title,
+                        prediction: prediction,
+                        tintColor: tintColor,
+                        unit: unit,
+                        trend: trend
+                    )
+                }
+                .navigationTransition(.zoom(sourceID: "PREDICTION_\(title)", in: namespace))
+            }
+        }
     }
 
     private var appleIntelligenceIcon: some View {
@@ -298,6 +329,175 @@ struct VerticalTrendBar: View {
         } else {
             return String(format: "%.1f", value)
         }
+    }
+}
+
+// MARK: - Popover Helper (für Zoom-Transition)
+
+fileprivate struct PopoverHelper<Content: View>: View {
+    @ViewBuilder var content: Content
+    @State private var isVisible: Bool = false
+
+    var body: some View {
+        content
+            .opacity(isVisible ? 1 : 0)
+            .task {
+                try? await Task.sleep(for: .seconds(0.1))
+                withAnimation(.snappy(duration: 0.3, extraBounce: 0)) {
+                    isVisible = true
+                }
+            }
+            .presentationCompactAdaptation(.popover)
+    }
+}
+
+// MARK: - Prediction Popover Content
+
+struct PredictionPopoverContent: View {
+    let title: String
+    let prediction: PredictionData
+    let tintColor: Color
+    let unit: String
+    let trend: TrendDirection
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header mit Titel und Apple Intelligence
+            HStack {
+                Image(systemName: "apple.intelligence")
+                    .font(.system(size: 20))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.red, .orange, .yellow, .green, .blue, .purple],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+
+                Text("\(title) Vorhersage")
+                    .font(.headline)
+            }
+
+            Divider()
+
+            // Geschätzter Wert
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Geschätzter aktueller Wert")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 8) {
+                    Text(formatValue(prediction.estimatedValue) + (unit.isEmpty ? "" : " \(unit)"))
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(tintColor)
+
+                    Image(systemName: trend.chevronName)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(trendColor)
+                }
+            }
+
+            // Letzte Messung
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Letzte Messung")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                HStack {
+                    Text(formatValue(prediction.lastMeasuredValue) + (unit.isEmpty ? "" : " \(unit)"))
+                        .font(.system(size: 17, weight: .medium, design: .rounded))
+
+                    Spacer()
+
+                    Text(relativeTimeString(from: prediction.lastMeasurementTime))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Divider()
+
+            // Confidence
+            HStack {
+                confidenceIcon
+                    .font(.system(size: 14))
+
+                Text("Konfidenz: \(confidenceText)")
+                    .font(.subheadline)
+
+                Spacer()
+            }
+
+            Text(prediction.confidenceReason)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            // Empfehlung (falls vorhanden)
+            if let recommendation = prediction.recommendation,
+               recommendation.action != .none {
+                Divider()
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Empfehlung")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    Text(recommendation.explanation)
+                        .font(.callout)
+                }
+            }
+        }
+        .padding()
+        .frame(width: 280)
+    }
+
+    // MARK: - Helpers
+
+    private var confidenceText: String {
+        switch prediction.confidence {
+        case .high: return "Hoch"
+        case .medium: return "Mittel"
+        case .low: return "Niedrig"
+        }
+    }
+
+    private var confidenceIcon: some View {
+        Group {
+            switch prediction.confidence {
+            case .high:
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            case .medium:
+                Image(systemName: "exclamationmark.circle.fill")
+                    .foregroundStyle(.orange)
+            case .low:
+                Image(systemName: "questionmark.circle.fill")
+                    .foregroundStyle(.red)
+            }
+        }
+    }
+
+    private var trendColor: Color {
+        switch trend {
+        case .up: return .orange
+        case .down: return .blue
+        case .stable: return .green
+        }
+    }
+
+    private func formatValue(_ value: Double) -> String {
+        if value == value.rounded() {
+            return String(format: "%.0f", value)
+        } else {
+            return String(format: "%.1f", value)
+        }
+    }
+
+    private func relativeTimeString(from date: Date) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.locale = Locale(identifier: "de_DE")
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: date, relativeTo: Date())
     }
 }
 
@@ -331,7 +531,15 @@ struct VerticalTrendBar: View {
                 idealMax: 7.6,
                 tintColor: .green,
                 trend: .up,
-                scalePosition: .leading
+                scalePosition: .leading,
+                prediction: PredictionData(
+                    estimatedValue: 7.2,
+                    confidence: .high,
+                    confidenceReason: "Messung vor 4 Stunden, stabile Bedingungen",
+                    lastMeasuredValue: 7.1,
+                    lastMeasurementTime: Date().addingTimeInterval(-4 * 3600),
+                    recommendation: nil
+                )
             )
 
             VerticalTrendBar(
@@ -343,7 +551,24 @@ struct VerticalTrendBar: View {
                 idealMax: 3.0,
                 tintColor: .blue,
                 trend: .down,
-                scalePosition: .trailing
+                scalePosition: .trailing,
+                prediction: PredictionData(
+                    estimatedValue: 1.5,
+                    confidence: .medium,
+                    confidenceReason: "Messung vor 28 Stunden, hohe UV-Belastung",
+                    lastMeasuredValue: 2.0,
+                    lastMeasurementTime: Date().addingTimeInterval(-28 * 3600),
+                    recommendation: DosingRecommendation(
+                        parameter: .freeChlorine,
+                        action: .dose,
+                        reasonCode: .TOO_LOW,
+                        productId: "chlor",
+                        amount: 50,
+                        unit: "g",
+                        targetValue: 1.5,
+                        explanation: "Chlorgehalt sinkt. 50g Chlorgranulat hinzufügen."
+                    )
+                )
             )
         }
     }

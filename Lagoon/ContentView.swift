@@ -50,7 +50,8 @@ struct ContentView: View {
                             idealMax: poolState.idealPHMax,
                             tintColor: .green,
                             trend: poolState.phTrend,
-                            scalePosition: .leading
+                            scalePosition: .leading,
+                            prediction: poolState.phPrediction
                         )
 
                         VerticalTrendBar(
@@ -62,7 +63,8 @@ struct ContentView: View {
                             idealMax: poolState.idealChlorineMax,
                             tintColor: .blue,
                             trend: poolState.chlorineTrend,
-                            scalePosition: .trailing
+                            scalePosition: .trailing,
+                            prediction: poolState.chlorinePrediction
                         )
                     }
 

@@ -24,6 +24,11 @@ final class PoolWaterState {
     private(set) var confidence: ConfidenceLevel = .low
     private(set) var confidenceReason: String = "Keine Messung vorhanden"
 
+    // MARK: - Dosing Recommendations (from Engine)
+
+    private(set) var chlorineRecommendation: DosingRecommendation?
+    private(set) var phRecommendation: DosingRecommendation?
+
     // MARK: - Trend Direction
 
     private(set) var chlorineTrend: TrendDirection = .stable
@@ -121,6 +126,34 @@ final class PoolWaterState {
         estimatedPH = output.estimatedState.pH
         confidence = output.confidence.confidence
         confidenceReason = output.confidence.reason
+
+        // Update recommendations
+        chlorineRecommendation = output.recommendations.first { $0.parameter == .freeChlorine }
+        phRecommendation = output.recommendations.first { $0.parameter == .pH }
+    }
+
+    // MARK: - Prediction Data (for Popovers)
+
+    var phPrediction: PredictionData {
+        PredictionData(
+            estimatedValue: estimatedPH,
+            confidence: confidence,
+            confidenceReason: confidenceReason,
+            lastMeasuredValue: lastPH,
+            lastMeasurementTime: lastMeasurementDate,
+            recommendation: phRecommendation
+        )
+    }
+
+    var chlorinePrediction: PredictionData {
+        PredictionData(
+            estimatedValue: estimatedChlorine,
+            confidence: confidence,
+            confidenceReason: confidenceReason,
+            lastMeasuredValue: lastChlorine,
+            lastMeasurementTime: lastMeasurementDate,
+            recommendation: chlorineRecommendation
+        )
     }
 
     // MARK: - Ideal Ranges (for UI)
