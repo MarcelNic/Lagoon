@@ -19,21 +19,34 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                MeshGradient(
-                    width: 3,
-                    height: 3,
-                    points: [
-                        [0.0, 0.0], [0.5, 0.0], [1.0, 0.0],
-                        [0.0, 0.5], [0.5, 0.5], [1.0, 0.5],
-                        [0.0, 1.0], [0.5, 1.0], [1.0, 1.0]
-                    ],
-                    colors: [
-                        .blue, .cyan, .teal,
-                        .cyan, .mint, .cyan,
-                        .teal, .cyan, .blue
-                    ]
-                )
-                .scaleEffect(1.2)
+                TimelineView(.animation) { context in
+                    let time = context.date.timeIntervalSinceReferenceDate
+                    let t = Float(time * 0.3) // Langsame Bewegung
+
+                    MeshGradient(
+                        width: 3,
+                        height: 3,
+                        points: [
+                            SIMD2(0.0, 0.0),
+                            SIMD2(0.5 + 0.08 * sin(t * 0.7), 0.0),
+                            SIMD2(1.0, 0.0),
+
+                            SIMD2(0.0, 0.5 + 0.05 * cos(t * 0.9)),
+                            SIMD2(0.5 + 0.06 * cos(t), 0.5 + 0.06 * sin(t * 0.8)),
+                            SIMD2(1.0, 0.5 + 0.05 * sin(t * 1.1)),
+
+                            SIMD2(0.0, 1.0),
+                            SIMD2(0.5 + 0.08 * cos(t * 0.6), 1.0),
+                            SIMD2(1.0, 1.0)
+                        ],
+                        colors: [
+                            .blue, .cyan, .teal,
+                            .cyan, .mint, .cyan,
+                            .teal, .cyan, .blue
+                        ]
+                    )
+                }
+                .scaleEffect(1.3)
                 .ignoresSafeArea()
 
                 VStack {
