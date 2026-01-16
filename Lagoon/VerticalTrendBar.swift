@@ -46,7 +46,7 @@ struct VerticalTrendBar: View {
     private let markerDiameter: CGFloat = 34
     private let markerPadding: CGFloat = 2
     private let markerEndPadding: CGFloat = 5  // Abstand Marker-Rand zu Bar-Ende
-    private let valuePillHeight: CGFloat = 30
+    private let valuePillHeight: CGFloat = 28  // Geschätzte Höhe mit Glass Button Style
     private let titleHeight: CGFloat = 48  // Approximate height of title text
     private let titleBarSpacing: CGFloat = 40
 
@@ -174,7 +174,7 @@ struct VerticalTrendBar: View {
         let idealYOffset = scaleTopOffset + (1 - idealMaxNormalized) * scaleHeight
 
         return RoundedRectangle(cornerRadius: (barWidth - 6) / 2)
-            .fill(.white)
+            .fill(.white.opacity(0.6))
             .frame(width: barWidth - 6, height: idealHeight)
             .offset(y: idealYOffset)
     }
@@ -258,7 +258,7 @@ struct VerticalTrendBar: View {
         Button {
             // Action für Wert-Details
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: 2) {
                 // Apple Intelligence Icon links bei leading (pH)
                 if scalePosition == .leading {
                     appleIntelligenceIcon
@@ -266,16 +266,16 @@ struct VerticalTrendBar: View {
 
                 Text(formatValue(value) + (unit.isEmpty ? "" : " \(unit)"))
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.black)
 
                 // Apple Intelligence Icon rechts bei trailing (Cl)
                 if scalePosition == .trailing {
                     appleIntelligenceIcon
                 }
             }
-            .frame(minWidth: 60, minHeight: 30)
+            .padding(.horizontal, 4)
         }
-        .glassEffect(.regular.tint(.white).interactive(), in: .capsule)
+        .buttonStyle(.glass)
+        .fixedSize()
     }
 
     private var appleIntelligenceIcon: some View {
