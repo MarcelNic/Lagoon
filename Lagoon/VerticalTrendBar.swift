@@ -46,15 +46,24 @@ struct VerticalTrendBar: View {
     private let markerDiameter: CGFloat = 34
     private let markerPadding: CGFloat = 2
     private let markerEndPadding: CGFloat = 5  // Abstand Marker-Rand zu Bar-Ende
+    private let valuePillHeight: CGFloat = 30
+    private let titleHeight: CGFloat = 48  // Approximate height of title text
+    private let titleBarSpacing: CGFloat = 40
+
+    // Gesamtgröße des Markers inkl. Padding
+    private var markerTotalSize: CGFloat {
+        markerDiameter + 2 * markerPadding
+    }
+
+    // Offset vom Bar-Anfang bis zum Skala-Anfang (wo max liegt)
+    // = halbe Markerhöhe + gewünschter Abstand zum Rand
+    private var scaleTopOffset: CGFloat {
+        markerTotalSize / 2 + markerEndPadding
+    }
 
     // Berechnete Skala-Höhe (wo min bis max abgebildet wird)
     private var scaleHeight: CGFloat {
         barHeight - 2 * scaleTopOffset
-    }
-
-    // Offset vom Bar-Anfang bis zum Skala-Anfang (max)
-    private var scaleTopOffset: CGFloat {
-        (markerDiameter + 2 * markerPadding) / 2 + markerEndPadding
     }
 
     init(
@@ -103,20 +112,19 @@ struct VerticalTrendBar: View {
             HStack(alignment: .top, spacing: 0) {
                 // Links: Skala mit Pille-Overlay (wenn scalePosition == .leading)
                 if scalePosition == .leading {
-                    ZStack(alignment: .trailing) {
+                    ZStack(alignment: .topTrailing) {
                         scaleMarks(leading: true)
 
                         valueLabelView
-                            .frame(height: scaleHeight, alignment: .top)
-                            .offset(y: markerYPosition - 15)
+                            .offset(y: markerYPosition - valuePillHeight / 2)
                             .padding(.trailing, 4)
                     }
                     .padding(.trailing, 12)
-                    .padding(.top, 40 + 48)
+                    .padding(.top, titleHeight + titleBarSpacing)
                 }
 
                 // Titel + Bar mit Marker
-                VStack(spacing: 40) {
+                VStack(spacing: titleBarSpacing) {
                     Text(title)
                         .font(.system(size: 40, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
@@ -136,7 +144,7 @@ struct VerticalTrendBar: View {
 
                             // Marker (aktueller Wert)
                             markerView
-                                .offset(y: markerYPosition - (markerDiameter + 2 * markerPadding) / 2)
+                                .offset(y: markerYPosition - markerTotalSize / 2)
                         }
                     }
                     .buttonStyle(.plain)
@@ -145,16 +153,15 @@ struct VerticalTrendBar: View {
 
                 // Rechts: Skala mit Pille-Overlay (wenn scalePosition == .trailing)
                 if scalePosition == .trailing {
-                    ZStack(alignment: .leading) {
+                    ZStack(alignment: .topLeading) {
                         scaleMarks(leading: false)
 
                         valueLabelView
-                            .frame(height: scaleHeight, alignment: .top)
-                            .offset(y: markerYPosition - 15)
+                            .offset(y: markerYPosition - valuePillHeight / 2)
                             .padding(.leading, 4)
                     }
                     .padding(.leading, 12)
-                    .padding(.top, 40 + 48)
+                    .padding(.top, titleHeight + titleBarSpacing)
                 }
             }
         }
@@ -198,7 +205,7 @@ struct VerticalTrendBar: View {
                 let isMajor = i % majorInterval == 0
                 let normalizedPosition = CGFloat(steps - i) / CGFloat(steps)
                 let scaleValue = minValue + Double(normalizedPosition) * (maxValue - minValue)
-                let yPosition = scaleTopOffset + (1 - normalizedPosition) * scaleHeight - barHeight / 2 + 2
+                let yPosition = scaleTopOffset + (1 - normalizedPosition) * scaleHeight - barHeight / 2
 
                 HStack(spacing: 4) {
                     if leading {
