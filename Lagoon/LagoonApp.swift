@@ -9,9 +9,16 @@ import SwiftUI
 
 @main
 struct LagoonApp: App {
+    @AppStorage("appearanceMode") private var appearanceMode: String = AppearanceMode.system.rawValue
+
+    private var colorScheme: ColorScheme? {
+        (AppearanceMode(rawValue: appearanceMode) ?? .system).colorScheme
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .preferredColorScheme(colorScheme)
         }
     }
 }

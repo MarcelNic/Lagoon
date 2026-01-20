@@ -43,7 +43,8 @@ struct VerticalTrendBar: View {
     let maxValue: Double
     let idealMin: Double
     let idealMax: Double
-    let tintColor: Color
+    let barColor: Color
+    let idealRangeColor: Color
     let trend: TrendDirection
     let unit: String
     let scalePosition: ScalePosition
@@ -53,9 +54,9 @@ struct VerticalTrendBar: View {
     @Namespace private var namespace
 
     // Dimensionen
-    private let barWidth: CGFloat = 44
+    private let barWidth: CGFloat = 35
     private let barHeight: CGFloat = 400
-    private let markerDiameter: CGFloat = 34
+    private let markerDiameter: CGFloat = 30
     private let markerPadding: CGFloat = 2
     private let markerEndPadding: CGFloat = 5  // Abstand Marker-Rand zu Bar-Ende
     private let valuePillHeight: CGFloat = 28  // Geschätzte Höhe mit Glass Button Style
@@ -85,7 +86,8 @@ struct VerticalTrendBar: View {
         maxValue: Double,
         idealMin: Double,
         idealMax: Double,
-        tintColor: Color,
+        barColor: Color,
+        idealRangeColor: Color,
         trend: TrendDirection = .stable,
         unit: String = "",
         scalePosition: ScalePosition = .leading,
@@ -97,7 +99,8 @@ struct VerticalTrendBar: View {
         self.maxValue = maxValue
         self.idealMin = idealMin
         self.idealMax = idealMax
-        self.tintColor = tintColor
+        self.barColor = barColor
+        self.idealRangeColor = idealRangeColor
         self.trend = trend
         self.unit = unit
         self.scalePosition = scalePosition
@@ -150,7 +153,7 @@ struct VerticalTrendBar: View {
                         ZStack(alignment: .top) {
                             // Haupt-Bar (Hintergrund)
                             RoundedRectangle(cornerRadius: barWidth / 2)
-                                .fill(.clear)
+                                .fill(barColor)
                                 .frame(width: barWidth, height: barHeight)
 
                             // Idealbereich
@@ -187,9 +190,9 @@ struct VerticalTrendBar: View {
         let idealHeight = (idealMaxNormalized - idealMinNormalized) * scaleHeight
         let idealYOffset = scaleTopOffset + (1 - idealMaxNormalized) * scaleHeight
 
-        return RoundedRectangle(cornerRadius: (barWidth - 6) / 2)
-            .fill(.white.opacity(0.6))
-            .frame(width: barWidth - 6, height: idealHeight)
+        return RoundedRectangle(cornerRadius: barWidth / 2)
+            .fill(idealRangeColor)
+            .frame(width: barWidth, height: idealHeight)
             .offset(y: idealYOffset)
     }
 
@@ -198,12 +201,12 @@ struct VerticalTrendBar: View {
     private var markerView: some View {
         ZStack {
             Circle()
+                .fill(.white)
                 .frame(width: markerDiameter, height: markerDiameter)
-                .glassEffect(.regular.tint(tintColor), in: .circle)
 
             Image(systemName: trend.chevronName)
                 .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(barColor)
         }
         .padding(markerPadding)
     }
@@ -299,7 +302,7 @@ struct VerticalTrendBar: View {
                     PredictionPopoverContent(
                         title: title,
                         prediction: prediction,
-                        tintColor: tintColor,
+                        tintColor: idealRangeColor,
                         unit: unit,
                         trend: trend
                     )
@@ -529,17 +532,11 @@ struct PredictionPopoverContent: View {
                 maxValue: 8.0,
                 idealMin: 7.2,
                 idealMax: 7.6,
-                tintColor: .phColor,
+                barColor: .phBarColor,
+                idealRangeColor: .phIdealColor,
                 trend: .up,
                 scalePosition: .leading,
-                prediction: PredictionData(
-                    estimatedValue: 7.2,
-                    confidence: .high,
-                    confidenceReason: "Messung vor 4 Stunden, stabile Bedingungen",
-                    lastMeasuredValue: 7.1,
-                    lastMeasurementTime: Date().addingTimeInterval(-4 * 3600),
-                    recommendation: nil
-                )
+                prediction: nil
             )
 
             VerticalTrendBar(
@@ -549,26 +546,11 @@ struct PredictionPopoverContent: View {
                 maxValue: 5,
                 idealMin: 1.0,
                 idealMax: 3.0,
-                tintColor: .chlorineColor,
+                barColor: .chlorineBarColor,
+                idealRangeColor: .chlorineIdealColor,
                 trend: .down,
                 scalePosition: .trailing,
-                prediction: PredictionData(
-                    estimatedValue: 1.5,
-                    confidence: .medium,
-                    confidenceReason: "Messung vor 28 Stunden, hohe UV-Belastung",
-                    lastMeasuredValue: 2.0,
-                    lastMeasurementTime: Date().addingTimeInterval(-28 * 3600),
-                    recommendation: DosingRecommendation(
-                        parameter: .freeChlorine,
-                        action: .dose,
-                        reasonCode: .TOO_LOW,
-                        productId: "chlor",
-                        amount: 50,
-                        unit: "g",
-                        targetValue: 1.5,
-                        explanation: "Chlorgehalt sinkt. 50g Chlorgranulat hinzufügen."
-                    )
-                )
+                prediction: nil
             )
         }
     }

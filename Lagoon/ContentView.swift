@@ -19,35 +19,8 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                TimelineView(.animation) { context in
-                    let time = context.date.timeIntervalSinceReferenceDate
-                    let t = Float(time * 0.3) // Langsame Bewegung
-
-                    MeshGradient(
-                        width: 3,
-                        height: 3,
-                        points: [
-                            SIMD2(0.0, 0.0),
-                            SIMD2(0.5 + 0.08 * sin(t * 0.7), 0.0),
-                            SIMD2(1.0, 0.0),
-
-                            SIMD2(0.0, 0.5 + 0.05 * cos(t * 0.9)),
-                            SIMD2(0.5 + 0.06 * cos(t), 0.5 + 0.06 * sin(t * 0.8)),
-                            SIMD2(1.0, 0.5 + 0.05 * sin(t * 1.1)),
-
-                            SIMD2(0.0, 1.0),
-                            SIMD2(0.5 + 0.08 * cos(t * 0.6), 1.0),
-                            SIMD2(1.0, 1.0)
-                        ],
-                        colors: [
-                            .blue, .cyan, .teal,
-                            .cyan, .mint, .cyan,
-                            .teal, .cyan, .blue
-                        ]
-                    )
-                }
-                .scaleEffect(1.3)
-                .ignoresSafeArea()
+                Color(red: 0x65/255, green: 0xCA/255, blue: 0xFF/255)
+                    .ignoresSafeArea()
 
                 VStack {
                     Spacer()
@@ -61,7 +34,8 @@ struct ContentView: View {
                             maxValue: 8.0,
                             idealMin: poolState.idealPHMin,
                             idealMax: poolState.idealPHMax,
-                            tintColor: .phColor,
+                            barColor: .phBarColor,
+                            idealRangeColor: .phIdealColor,
                             trend: poolState.phTrend,
                             scalePosition: .leading,
                             prediction: poolState.phPrediction
@@ -74,7 +48,8 @@ struct ContentView: View {
                             maxValue: 5,
                             idealMin: poolState.idealChlorineMin,
                             idealMax: poolState.idealChlorineMax,
-                            tintColor: .chlorineColor,
+                            barColor: .chlorineBarColor,
+                            idealRangeColor: .chlorineIdealColor,
                             trend: poolState.chlorineTrend,
                             scalePosition: .trailing,
                             prediction: poolState.chlorinePrediction
@@ -199,7 +174,7 @@ struct MessenSheet: View {
                                 .animation(.snappy, value: phValue)
                         }
                         Slider(value: $phValue, in: 6.0...9.0, step: 0.1)
-                            .tint(.phColor)
+                            .tint(.phIdealColor)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -213,7 +188,7 @@ struct MessenSheet: View {
                                 .animation(.snappy, value: chlorineValue)
                         }
                         Slider(value: $chlorineValue, in: 0.0...5.0, step: 0.1)
-                            .tint(.chlorineColor)
+                            .tint(.chlorineIdealColor)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -344,7 +319,7 @@ struct DosierenSheet: View {
                                 .animation(.snappy, value: chlorineAmount)
                         }
                         Slider(value: $chlorineAmount, in: 0...500, step: 5)
-                            .tint(.chlorineColor)
+                            .tint(.chlorineIdealColor)
                     }
                 }
 
@@ -477,8 +452,35 @@ struct PoolOverviewView: View {
 
 // MARK: - Pool Settings Sheet
 
+enum AppearanceMode: String, CaseIterable {
+    case system = "system"
+    case light = "light"
+    case dark = "dark"
+
+    var label: String {
+        switch self {
+        case .system: return "System"
+        case .light: return "Hell"
+        case .dark: return "Dunkel"
+        }
+    }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+}
+
 struct PoolSettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("appearanceMode") private var appearanceMode: String = AppearanceMode.system.rawValue
+
+    private var selectedMode: AppearanceMode {
+        AppearanceMode(rawValue: appearanceMode) ?? .system
+    }
 
     var body: some View {
         NavigationStack {
@@ -501,6 +503,15 @@ struct PoolSettingsSheet: View {
                     } label: {
                         Label("Wetter", systemImage: "sun.max.fill")
                     }
+                }
+
+                Section("Darstellung") {
+                    Picker("Erscheinungsbild", selection: $appearanceMode) {
+                        ForEach(AppearanceMode.allCases, id: \.rawValue) { mode in
+                            Text(mode.label).tag(mode.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
                 }
             }
             .navigationTitle("Einstellungen")
