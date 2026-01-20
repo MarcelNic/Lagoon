@@ -291,7 +291,7 @@ struct VerticalTrendBar: View {
             .padding(.horizontal, 4)
             .matchedTransitionSource(id: "PREDICTION_\(title)", in: namespace)
         }
-        .buttonStyle(.glass(.clear.interactive()))
+        .buttonStyle(.glass(.clear.tint(.white).interactive()))
         .fixedSize()
         .popover(isPresented: $showPredictionPopover) {
             if let prediction = prediction {
@@ -529,7 +529,7 @@ struct PredictionPopoverContent: View {
                 maxValue: 8.0,
                 idealMin: 7.2,
                 idealMax: 7.6,
-                tintColor: .green,
+                tintColor: .phColor,
                 trend: .up,
                 scalePosition: .leading,
                 prediction: PredictionData(
@@ -549,7 +549,7 @@ struct PredictionPopoverContent: View {
                 maxValue: 5,
                 idealMin: 1.0,
                 idealMax: 3.0,
-                tintColor: .blue,
+                tintColor: .chlorineColor,
                 trend: .down,
                 scalePosition: .trailing,
                 prediction: PredictionData(

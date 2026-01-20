@@ -61,7 +61,7 @@ struct ContentView: View {
                             maxValue: 8.0,
                             idealMin: poolState.idealPHMin,
                             idealMax: poolState.idealPHMax,
-                            tintColor: .green,
+                            tintColor: .phColor,
                             trend: poolState.phTrend,
                             scalePosition: .leading,
                             prediction: poolState.phPrediction
@@ -74,7 +74,7 @@ struct ContentView: View {
                             maxValue: 5,
                             idealMin: poolState.idealChlorineMin,
                             idealMax: poolState.idealChlorineMax,
-                            tintColor: .blue,
+                            tintColor: .chlorineColor,
                             trend: poolState.chlorineTrend,
                             scalePosition: .trailing,
                             prediction: poolState.chlorinePrediction
@@ -199,7 +199,7 @@ struct MessenSheet: View {
                                 .animation(.snappy, value: phValue)
                         }
                         Slider(value: $phValue, in: 6.0...9.0, step: 0.1)
-                            .tint(.green)
+                            .tint(.phColor)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -213,7 +213,7 @@ struct MessenSheet: View {
                                 .animation(.snappy, value: chlorineValue)
                         }
                         Slider(value: $chlorineValue, in: 0.0...5.0, step: 0.1)
-                            .tint(.cyan)
+                            .tint(.chlorineColor)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -344,7 +344,7 @@ struct DosierenSheet: View {
                                 .animation(.snappy, value: chlorineAmount)
                         }
                         Slider(value: $chlorineAmount, in: 0...500, step: 5)
-                            .tint(.cyan)
+                            .tint(.chlorineColor)
                     }
                 }
 
