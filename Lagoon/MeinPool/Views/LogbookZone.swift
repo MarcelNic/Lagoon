@@ -43,17 +43,26 @@ struct LogbookZone: View {
             } else {
                 List {
                     ForEach(state.filteredEntries.sorted { $0.timestamp > $1.timestamp }) { entry in
-                        LogbookEntryRow(entry: entry)
-                            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
-                            .onLongPressGesture {
-                                selectedEntry = entry
+                        Button {
+                            selectedEntry = entry
+                        } label: {
+                            LogbookEntryRow(entry: entry)
+                        }
+                        .buttonStyle(.plain)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                state.deleteEntry(entry)
+                            } label: {
+                                Label("Löschen", systemImage: "trash")
                             }
+                        }
                     }
                 }
-                .listStyle(.insetGrouped)
+                .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .scrollDisabled(true)
-                .frame(minHeight: CGFloat(state.filteredEntries.count * 60 + 20))
+                .frame(minHeight: CGFloat(state.filteredEntries.count * 56))
             }
         }
     }
