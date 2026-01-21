@@ -17,8 +17,15 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black
-                    .ignoresSafeArea()
+                LinearGradient(
+                    colors: [
+                        Color(hex: "0a1628"),
+                        Color(hex: "1a3a5c")
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
 
                 VStack(spacing: 16) {
                     Spacer()
@@ -80,7 +87,7 @@ struct ContentView: View {
                                         value: 0.3,
                                         idealMin: 0.2,
                                         idealMax: 0.6,
-                                        color: .green
+                                        color: Color(hex: "5df66d")
                                     )
                                     .padding(45)
 
@@ -274,9 +281,9 @@ struct CircularArcProgressView: View {
             let indicatorY = centerY + sin(valueAngle) * radius
 
             ZStack {
-                // Hintergrund-Arc
+                // Hintergrund-Arc (abgedunkelte Version der Ideal-Range-Farbe)
                 CircularArcShape(arcHeight: arcHeight)
-                    .stroke(.white.opacity(0.2), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    .stroke(color.opacity(0.25), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
 
                 // Ideal-Range-Arc (mittig)
                 CircularArcShape(arcHeight: arcHeight)
