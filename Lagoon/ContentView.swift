@@ -40,8 +40,28 @@ struct ContentView: View {
                                         idealMax: 0.65,
                                         color: Color(red: 0x42/255, green: 0xED/255, blue: 0xFE/255)
                                     )
-                                        .padding(.horizontal, 50)
-                                        .padding(.vertical, 40)
+                                    .padding(45)
+
+                                    // Header & Value - konzentrische Margins (20pt zum Rand)
+                                    VStack {
+                                        HStack {
+                                            Text("pH")
+                                                .font(.system(size: 17, weight: .semibold))
+                                                .foregroundStyle(.white)
+                                            Spacer()
+                                            Text("vor 2 Std.")
+                                                .font(.system(size: 15, weight: .medium))
+                                                .foregroundStyle(Color(red: 0x42/255, green: 0xED/255, blue: 0xFE/255))
+                                        }
+
+                                        Spacer()
+
+                                        Text("7.2")
+                                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                                            .foregroundStyle(.white)
+                                    }
+                                    .padding(.horizontal, 35)
+                                    .padding(.vertical, 30)
                                 }
                                 .frame(height: 180)
                             }
@@ -62,8 +82,28 @@ struct ContentView: View {
                                         idealMax: 0.6,
                                         color: .green
                                     )
-                                        .padding(.horizontal, 50)
-                                        .padding(.vertical, 40)
+                                    .padding(45)
+
+                                    // Header & Value - konzentrische Margins (20pt zum Rand)
+                                    VStack {
+                                        HStack {
+                                            Text("Chlor")
+                                                .font(.system(size: 17, weight: .semibold))
+                                                .foregroundStyle(.white)
+                                            Spacer()
+                                            Text("vor 5 Std.")
+                                                .font(.system(size: 15, weight: .medium))
+                                                .foregroundStyle(Color(red: 0x42/255, green: 0xED/255, blue: 0xFE/255))
+                                        }
+
+                                        Spacer()
+
+                                        Text("1.5")
+                                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                                            .foregroundStyle(.white)
+                                    }
+                                    .padding(.horizontal, 35)
+                                    .padding(.vertical, 30)
                                 }
                                 .frame(height: 180)
                             }
