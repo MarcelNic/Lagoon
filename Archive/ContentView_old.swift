@@ -14,64 +14,47 @@ struct ContentView: View {
     @State private var showPoolOverview = false
     @Namespace private var namespace
 
+    @State private var poolState = PoolWaterState()
+
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black
+                Color(red: 0x65/255, green: 0xCA/255, blue: 0xFF/255)
                     .ignoresSafeArea()
 
-                VStack(spacing: 16) {
+                VStack {
                     Spacer()
 
-                    // Live Activity Style Stacks
-                    GlassEffectContainer {
-                        VStack(spacing: 12) {
-                            // Stack 1 - pH
-                            Button {
-                                // TODO: pH action
-                            } label: {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 50, style: .continuous)
-                                        .fill(.white.opacity(0.001))
+                    // pH und Chlor Trend Bars
+                    HStack(spacing: 60) {
+                        VerticalTrendBar(
+                            title: "pH",
+                            value: poolState.estimatedPH,
+                            minValue: 6.8,
+                            maxValue: 8.0,
+                            idealMin: poolState.idealPHMin,
+                            idealMax: poolState.idealPHMax,
+                            barColor: .phBarColor,
+                            idealRangeColor: .phIdealColor,
+                            trend: poolState.phTrend,
+                            scalePosition: .leading,
+                            prediction: poolState.phPrediction
+                        )
 
-                                    CircularArcProgressView(
-                                        value: 0.35,
-                                        idealMin: 0.35,
-                                        idealMax: 0.65,
-                                        color: Color(red: 0x42/255, green: 0xED/255, blue: 0xFE/255)
-                                    )
-                                        .padding(.horizontal, 50)
-                                        .padding(.vertical, 40)
-                                }
-                                .frame(height: 180)
-                            }
-                            .buttonStyle(.plain)
-                            .glassEffect(.clear.interactive(), in: .rect(cornerRadius: 50))
-
-                            // Stack 2 - Chlor
-                            Button {
-                                // TODO: Chlor action
-                            } label: {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 50, style: .continuous)
-                                        .fill(.white.opacity(0.001))
-
-                                    CircularArcProgressView(
-                                        value: 0.3,
-                                        idealMin: 0.2,
-                                        idealMax: 0.6,
-                                        color: .green
-                                    )
-                                        .padding(.horizontal, 50)
-                                        .padding(.vertical, 40)
-                                }
-                                .frame(height: 180)
-                            }
-                            .buttonStyle(.plain)
-                            .glassEffect(.clear.interactive(), in: .rect(cornerRadius: 50))
-                        }
+                        VerticalTrendBar(
+                            title: "Cl",
+                            value: poolState.estimatedChlorine,
+                            minValue: 0,
+                            maxValue: 5,
+                            idealMin: poolState.idealChlorineMin,
+                            idealMax: poolState.idealChlorineMax,
+                            barColor: .chlorineBarColor,
+                            idealRangeColor: .chlorineIdealColor,
+                            trend: poolState.chlorineTrend,
+                            scalePosition: .trailing,
+                            prediction: poolState.chlorinePrediction
+                        )
                     }
-                    .padding(.horizontal, 16)
 
                     Spacer()
 
@@ -147,7 +130,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showMessenSheet) {
-            MessenSheet()
+            MessenSheet(poolState: poolState)
                 .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showDosierenSheet) {
@@ -157,112 +140,24 @@ struct ContentView: View {
     }
 }
 
-// MARK: - Circular Arc Shape
-
-struct CircularArcShape: Shape {
-    // Wie hoch der Bogen sein soll (0.0 - 1.0, relativ zur Höhe)
-    var arcHeight: CGFloat = 0.7
-
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-
-        // Start- und Endpunkt: Unten links/rechts
-        let startPoint = CGPoint(x: 0, y: rect.height)
-        let endPoint = CGPoint(x: rect.width, y: rect.height)
-
-        // Oberster Punkt: Mitte, arcHeight von oben
-        let topY = rect.height * (1 - arcHeight)
-
-        // Kreismittelpunkt und Radius berechnen
-        let halfWidth = rect.width / 2
-
-        // Formel: r² = (w/2)² + (cy - h)² und r = cy - topY
-        // Aufgelöst: cy = (w²/4 + h² - topY²) / (2*(h - topY))
-        let h = rect.height
-        let centerY = (halfWidth * halfWidth + h * h - topY * topY) / (2 * (h - topY))
-        let centerX = halfWidth
-        let radius = centerY - topY
-
-        // Winkel berechnen
-        let startAngle = Angle(radians: atan2(startPoint.y - centerY, startPoint.x - centerX))
-        let endAngle = Angle(radians: atan2(endPoint.y - centerY, endPoint.x - centerX))
-
-        path.addArc(
-            center: CGPoint(x: centerX, y: centerY),
-            radius: radius,
-            startAngle: startAngle,
-            endAngle: endAngle,
-            clockwise: false
-        )
-
-        return path
-    }
-}
-
-// MARK: - Circular Arc Progress View
-
-struct CircularArcProgressView: View {
-    let value: Double      // Aktueller Wert (0.0 - 1.0)
-    let idealMin: Double   // Idealbereich Start (0.0 - 1.0)
-    let idealMax: Double   // Idealbereich Ende (0.0 - 1.0)
-    let color: Color
-    let lineWidth: CGFloat = 20
-    let arcHeight: CGFloat = 0.7
-
-    var body: some View {
-        GeometryReader { geo in
-            let rect = geo.frame(in: .local)
-
-            // Gleiche Berechnung wie im Shape
-            let halfWidth = rect.width / 2
-            let topY = rect.height * (1 - arcHeight)
-            let h = rect.height
-            let centerY = (halfWidth * halfWidth + h * h - topY * topY) / (2 * (h - topY))
-            let centerX = halfWidth
-            let radius = centerY - topY
-
-            // Start- und Endwinkel
-            let startAngle = atan2(h - centerY, 0 - centerX)
-            let endAngle = atan2(h - centerY, rect.width - centerX)
-
-            // Winkel für Indikator (interpoliert zwischen start und end)
-            let totalAngle = endAngle - startAngle
-            let valueAngle = startAngle + (totalAngle * value)
-
-            // Indikator-Position auf dem Kreis
-            let indicatorX = centerX + cos(valueAngle) * radius
-            let indicatorY = centerY + sin(valueAngle) * radius
-
-            ZStack {
-                // Hintergrund-Arc
-                CircularArcShape(arcHeight: arcHeight)
-                    .stroke(.white.opacity(0.2), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-
-                // Ideal-Range-Arc (mittig)
-                CircularArcShape(arcHeight: arcHeight)
-                    .trim(from: idealMin, to: idealMax)
-                    .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-
-                // Indikator-Punkt
-                Circle()
-                    .fill(.white)
-                    .frame(width: 12, height: 12)
-                    .shadow(color: .black.opacity(0.3), radius: 4, y: 2)
-                    .position(x: indicatorX, y: indicatorY)
-            }
-        }
-    }
-}
-
 // MARK: - Messen Sheet
 
 struct MessenSheet: View {
     @Environment(\.dismiss) private var dismiss
+    var poolState: PoolWaterState
 
     @State private var phValue: Double = 7.2
     @State private var chlorineValue: Double = 1.0
     @State private var waterTemperature: Double = 26.0
+    @State private var batherLoad: BatherLoadLevel = .normal
     @State private var measurementDate: Date = Date()
+
+    init(poolState: PoolWaterState) {
+        self.poolState = poolState
+        // Initialize with last measurement values
+        _phValue = State(initialValue: poolState.lastPH)
+        _chlorineValue = State(initialValue: poolState.lastChlorine)
+    }
 
     var body: some View {
         NavigationStack {
@@ -279,7 +174,7 @@ struct MessenSheet: View {
                                 .animation(.snappy, value: phValue)
                         }
                         Slider(value: $phValue, in: 6.0...9.0, step: 0.1)
-                            .tint(.cyan)
+                            .tint(.phIdealColor)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -293,7 +188,7 @@ struct MessenSheet: View {
                                 .animation(.snappy, value: chlorineValue)
                         }
                         Slider(value: $chlorineValue, in: 0.0...5.0, step: 0.1)
-                            .tint(.green)
+                            .tint(.chlorineIdealColor)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -308,6 +203,21 @@ struct MessenSheet: View {
                         }
                         Slider(value: $waterTemperature, in: 10.0...40.0, step: 1.0)
                             .tint(.orange)
+                    }
+                }
+
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("Nutzung", systemImage: "figure.pool.swim")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Picker("Nutzung", selection: $batherLoad) {
+                            Text("Keine").tag(BatherLoadLevel.none)
+                            Text("Normal").tag(BatherLoadLevel.normal)
+                            Text("Viel").tag(BatherLoadLevel.high)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
                     }
                 }
 
@@ -334,7 +244,12 @@ struct MessenSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
-                        // TODO: Save measurement
+                        // Save measurement to PoolWaterState
+                        poolState.recordMeasurement(
+                            chlorine: chlorineValue,
+                            pH: phValue,
+                            date: measurementDate
+                        )
                         dismiss()
                     } label: {
                         Image(systemName: "checkmark")
@@ -404,7 +319,7 @@ struct DosierenSheet: View {
                                 .animation(.snappy, value: chlorineAmount)
                         }
                         Slider(value: $chlorineAmount, in: 0...500, step: 5)
-                            .tint(.green)
+                            .tint(.chlorineIdealColor)
                     }
                 }
 
@@ -480,7 +395,7 @@ struct PoolcareView: View {
 
             Spacer()
         }
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarHidden(true)
     }
 }
 
@@ -528,7 +443,7 @@ struct PoolOverviewView: View {
 
             Spacer()
         }
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarHidden(true)
         .sheet(isPresented: $showSettings) {
             PoolSettingsSheet()
         }
@@ -570,6 +485,26 @@ struct PoolSettingsSheet: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    NavigationLink {
+                        PoolSettingsView()
+                    } label: {
+                        Label("Pool", systemImage: "drop.fill")
+                    }
+
+                    NavigationLink {
+                        ChemistrySettingsView()
+                    } label: {
+                        Label("Chemie", systemImage: "flask.fill")
+                    }
+
+                    NavigationLink {
+                        WeatherSettingsView()
+                    } label: {
+                        Label("Wetter", systemImage: "sun.max.fill")
+                    }
+                }
+
                 Section("Darstellung") {
                     Picker("Erscheinungsbild", selection: $appearanceMode) {
                         ForEach(AppearanceMode.allCases, id: \.rawValue) { mode in
