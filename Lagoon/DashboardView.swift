@@ -9,6 +9,7 @@ struct DashboardView: View {
     @State private var showMessenSheet = false
     @State private var showDosierenSheet = false
     @State private var showPoolcare = false
+    @State private var showMeinPool = false
     @Namespace private var namespace
 
     private let phColor = Color(hex: "42edfe")
@@ -84,6 +85,7 @@ struct DashboardView: View {
                                     .frame(width: 1, height: 26)
 
                                 Button {
+                                    showMeinPool = true
                                 } label: {
                                     Text("Mein Pool")
                                         .font(.system(size: 17, weight: .medium))
@@ -92,6 +94,7 @@ struct DashboardView: View {
                                         .padding(.trailing, 24)
                                         .frame(height: 52)
                                 }
+                                .matchedTransitionSource(id: "meinPool", in: namespace)
                             }
                             .glassEffect(.clear.interactive(), in: .capsule)
 
@@ -122,6 +125,10 @@ struct DashboardView: View {
                 .navigationDestination(isPresented: $showPoolcare) {
                     PoolcareView()
                         .navigationTransition(.zoom(sourceID: "poolcare", in: namespace))
+                }
+                .navigationDestination(isPresented: $showMeinPool) {
+                    MeinPoolView()
+                        .navigationTransition(.zoom(sourceID: "meinPool", in: namespace))
                 }
             }
         }
