@@ -17,7 +17,7 @@ struct LagoonApp: App {
 
     var body: some Scene {
         WindowGroup {
-            DashboardVariantBars()
+            DashboardView()
                 .preferredColorScheme(colorScheme)
         }
     }
