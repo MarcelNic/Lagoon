@@ -490,47 +490,6 @@ struct DosierenSheet: View {
     }
 }
 
-// MARK: - Poolcare View
-
-struct PoolcareView: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        VStack(spacing: 0) {
-            // Custom Header mit Liquid Glass
-            HStack {
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 17, weight: .semibold))
-                        .frame(width: 44, height: 44)
-                }
-                .glassEffect(.regular.interactive(), in: .circle)
-
-                Spacer()
-
-                Text("Poolcare")
-                    .font(.headline)
-
-                Spacer()
-
-                Color.clear
-                    .frame(width: 44, height: 44)
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-
-            Spacer()
-
-            Text("Poolcare Inhalt")
-
-            Spacer()
-        }
-        .toolbar(.hidden, for: .navigationBar)
-    }
-}
-
 // MARK: - Pool Overview View
 
 struct PoolOverviewView: View {

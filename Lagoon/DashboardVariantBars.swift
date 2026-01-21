@@ -16,6 +16,7 @@ enum DashboardStyle: String, CaseIterable {
 struct DashboardVariantBars: View {
     @State private var showMessenSheet = false
     @State private var showDosierenSheet = false
+    @State private var showPoolcare = false
     @State private var dashboardStyle: DashboardStyle = .bars
     @Namespace private var namespace
 
@@ -152,6 +153,7 @@ struct DashboardVariantBars: View {
                         HStack(spacing: 12) {
                             HStack(spacing: 0) {
                                 Button {
+                                    showPoolcare = true
                                 } label: {
                                     Image(systemName: "checklist")
                                         .font(.system(size: 20, weight: .semibold))
@@ -160,6 +162,7 @@ struct DashboardVariantBars: View {
                                         .padding(.trailing, 12)
                                         .frame(height: 52)
                                 }
+                                .matchedTransitionSource(id: "poolcare", in: namespace)
 
                                 Rectangle()
                                     .fill(.white.opacity(0.3))
@@ -201,6 +204,10 @@ struct DashboardVariantBars: View {
                     .padding(.bottom, 8)
                 }
                 .toolbar(.hidden, for: .navigationBar)
+                .navigationDestination(isPresented: $showPoolcare) {
+                    PoolcareView()
+                        .navigationTransition(.zoom(sourceID: "poolcare", in: namespace))
+                }
             }
         }
     }
