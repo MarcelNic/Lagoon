@@ -61,7 +61,7 @@ struct VerticalTrendBar: View {
     private let markerEndPadding: CGFloat = 5  // Abstand Marker-Rand zu Bar-Ende
     private let valuePillHeight: CGFloat = 28  // Geschätzte Höhe mit Glass Button Style
     private let titleHeight: CGFloat = 48  // Approximate height of title text
-    private let titleBarSpacing: CGFloat = 40
+    private let titleBarSpacing: CGFloat = 20
 
     // Gesamtgröße des Markers inkl. Padding
     private var markerTotalSize: CGFloat {
@@ -206,7 +206,7 @@ struct VerticalTrendBar: View {
 
             Image(systemName: trend.chevronName)
                 .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(barColor)
+                .foregroundStyle(.black)
         }
         .padding(markerPadding)
     }
@@ -294,7 +294,7 @@ struct VerticalTrendBar: View {
             .padding(.horizontal, 4)
             .matchedTransitionSource(id: "PREDICTION_\(title)", in: namespace)
         }
-        .buttonStyle(.glass(.clear.tint(.white).interactive()))
+        .buttonStyle(.glass(.clear.interactive()))
         .fixedSize()
         .popover(isPresented: $showPredictionPopover) {
             if let prediction = prediction {

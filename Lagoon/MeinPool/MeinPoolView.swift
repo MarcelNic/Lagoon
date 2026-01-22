@@ -4,9 +4,11 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct MeinPoolView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @AppStorage("poolName") private var poolName: String = "Pool"
     @State private var meinPoolState = MeinPoolState()
     @State private var showSettings = false
@@ -29,6 +31,7 @@ struct MeinPoolView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
+            .scaleEffect(1.2)
             .ignoresSafeArea()
 
             List {
@@ -136,6 +139,9 @@ struct MeinPoolView: View {
                     .presentationDetents([.medium, .large])
             }
         }
+        .onAppear {
+            meinPoolState.setModelContext(modelContext)
+        }
     }
 }
 
@@ -177,7 +183,7 @@ struct EditMessenSheet: View {
                                 .animation(.snappy, value: phValue)
                         }
                         Slider(value: $phValue, in: 6.0...9.0, step: 0.1)
-                            .tint(.cyan)
+                            .tint(.phIdealColor)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -191,7 +197,7 @@ struct EditMessenSheet: View {
                                 .animation(.snappy, value: chlorineValue)
                         }
                         Slider(value: $chlorineValue, in: 0.0...5.0, step: 0.1)
-                            .tint(.green)
+                            .tint(.chlorineIdealColor)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -306,7 +312,7 @@ struct EditDosierenSheet: View {
                                 .animation(.snappy, value: amount)
                         }
                         Slider(value: $amount, in: 10...500, step: 10)
-                            .tint(.green)
+                            .tint(.chlorineIdealColor)
                     }
 
                     Picker("Einheit", selection: $unit) {

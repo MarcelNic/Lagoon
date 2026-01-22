@@ -4,16 +4,18 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct DashboardView: View {
+    @Environment(PoolWaterState.self) private var poolWaterState
+    @Environment(\.modelContext) private var modelContext
+
     @State private var showMessenSheet = false
     @State private var showDosierenSheet = false
     @State private var showPoolcare = false
     @State private var showMeinPool = false
     @Namespace private var namespace
 
-    private let phColor = Color(hex: "42edfe")
-    private let chlorineColor = Color(hex: "5df66d")
 
     var body: some View {
         NavigationStack {
@@ -26,39 +28,41 @@ struct DashboardView: View {
                     startPoint: .top,
                     endPoint: .bottom
                 )
+                .scaleEffect(1.2)
                 .ignoresSafeArea()
 
                 VStack {
                     Spacer()
+                        .frame(maxHeight: 60)
 
                     // Dashboard Content - Classic Style
                     HStack(spacing: 60) {
                         VerticalTrendBar(
                             title: "pH",
-                            value: 7.2,
+                            value: poolWaterState.estimatedPH,
                             minValue: 6.8,
                             maxValue: 8.0,
-                            idealMin: 7.2,
-                            idealMax: 7.6,
-                            barColor: phColor.opacity(0.25),
-                            idealRangeColor: phColor,
-                            trend: .up,
+                            idealMin: poolWaterState.idealPHMin,
+                            idealMax: poolWaterState.idealPHMax,
+                            barColor: .phBarColor,
+                            idealRangeColor: .phIdealColor,
+                            trend: poolWaterState.phTrend,
                             scalePosition: .leading,
-                            prediction: nil
+                            prediction: poolWaterState.phPrediction
                         )
 
                         VerticalTrendBar(
                             title: "Cl",
-                            value: 1.5,
+                            value: poolWaterState.estimatedChlorine,
                             minValue: 0,
                             maxValue: 5,
-                            idealMin: 1.0,
-                            idealMax: 3.0,
-                            barColor: chlorineColor.opacity(0.25),
-                            idealRangeColor: chlorineColor,
-                            trend: .down,
+                            idealMin: poolWaterState.idealChlorineMin,
+                            idealMax: poolWaterState.idealChlorineMax,
+                            barColor: .chlorineBarColor,
+                            idealRangeColor: .chlorineIdealColor,
+                            trend: poolWaterState.chlorineTrend,
                             scalePosition: .trailing,
-                            prediction: nil
+                            prediction: poolWaterState.chlorinePrediction
                         )
                     }
 
@@ -132,9 +136,257 @@ struct DashboardView: View {
                 }
             }
         }
+        .sheet(isPresented: $showMessenSheet) {
+            MessenSheet()
+                .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $showDosierenSheet) {
+            DosierenSheet()
+                .presentationDetents([.medium])
+        }
+        .onAppear {
+            poolWaterState.setModelContext(modelContext)
+        }
+    }
+}
+
+// MARK: - Messen Sheet
+
+struct MessenSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(PoolWaterState.self) private var poolWaterState
+
+    @State private var phValue: Double = 7.2
+    @State private var chlorineValue: Double = 1.0
+    @State private var waterTemperature: Double = 26.0
+    @State private var measurementDate: Date = Date()
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Label("pH-Wert", systemImage: "drop.fill")
+                            Spacer()
+                            Text(String(format: "%.1f", phValue))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                                .contentTransition(.numericText())
+                                .animation(.snappy, value: phValue)
+                        }
+                        Slider(value: $phValue, in: 6.0...9.0, step: 0.1)
+                            .tint(.phIdealColor)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Label("Chlor", systemImage: "allergens.fill")
+                            Spacer()
+                            Text(String(format: "%.1f mg/l", chlorineValue))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                                .contentTransition(.numericText())
+                                .animation(.snappy, value: chlorineValue)
+                        }
+                        Slider(value: $chlorineValue, in: 0.0...5.0, step: 0.1)
+                            .tint(.chlorineIdealColor)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Label("Wassertemperatur", systemImage: "thermometer.medium")
+                            Spacer()
+                            Text(String(format: "%.0f °C", waterTemperature))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                                .contentTransition(.numericText())
+                                .animation(.snappy, value: waterTemperature)
+                        }
+                        Slider(value: $waterTemperature, in: 10.0...40.0, step: 1.0)
+                            .tint(.orange)
+                    }
+                }
+
+                Section {
+                    DatePicker(
+                        selection: $measurementDate,
+                        in: ...Date(),
+                        displayedComponents: [.date, .hourAndMinute]
+                    ) {
+                        Label("Zeitpunkt", systemImage: "clock")
+                    }
+                }
+            }
+            .contentMargins(.top, 0)
+            .navigationTitle("Messen")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        poolWaterState.recordMeasurement(
+                            chlorine: chlorineValue,
+                            pH: phValue,
+                            waterTemperature: waterTemperature,
+                            date: measurementDate
+                        )
+                        dismiss()
+                    } label: {
+                        Image(systemName: "checkmark")
+                    }
+                    .buttonStyle(.glassProminent)
+                }
+            }
+        }
+        .onAppear {
+            // Initialize with last measured values
+            phValue = poolWaterState.lastPH
+            chlorineValue = poolWaterState.lastChlorine
+        }
+    }
+}
+
+// MARK: - Dosieren Sheet
+
+struct DosierenSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(PoolWaterState.self) private var poolWaterState
+
+    @State private var phType: PHType = .minus
+    @State private var phAmount: Double = 0
+    @State private var chlorineAmount: Double = 0
+    @State private var dosingDate: Date = Date()
+
+    enum PHType: String, CaseIterable {
+        case minus, plus
+
+        var label: String {
+            switch self {
+            case .minus: return "pH-"
+            case .plus: return "pH+"
+            }
+        }
+
+        var productId: String {
+            switch self {
+            case .minus: return "ph_minus"
+            case .plus: return "ph_plus"
+            }
+        }
+
+        var productName: String {
+            switch self {
+            case .minus: return "pH-Minus"
+            case .plus: return "pH-Plus"
+            }
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Label("pH", systemImage: "drop.fill")
+                            Spacer()
+                            Text(String(format: "%.0f g", phAmount))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                                .contentTransition(.numericText())
+                                .animation(.snappy, value: phAmount)
+                        }
+                        Picker("pH", selection: $phType) {
+                            Text("pH-").tag(PHType.minus)
+                            Text("pH+").tag(PHType.plus)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        Slider(value: $phAmount, in: 0...300, step: 5)
+                            .tint(.phIdealColor)
+                    }
+                }
+
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Label("Chlor", systemImage: "allergens.fill")
+                            Spacer()
+                            Text(String(format: "%.0f g", chlorineAmount))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                                .contentTransition(.numericText())
+                                .animation(.snappy, value: chlorineAmount)
+                        }
+                        Slider(value: $chlorineAmount, in: 0...500, step: 5)
+                            .tint(.chlorineIdealColor)
+                    }
+                }
+
+                Section {
+                    DatePicker(
+                        selection: $dosingDate,
+                        in: ...Date(),
+                        displayedComponents: [.date, .hourAndMinute]
+                    ) {
+                        Label("Zeitpunkt", systemImage: "clock")
+                    }
+                }
+            }
+            .contentMargins(.top, 0)
+            .navigationTitle("Dosieren")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        // Save pH dosing if amount > 0
+                        if phAmount > 0 {
+                            poolWaterState.recordDosing(
+                                productId: phType.productId,
+                                productName: phType.productName,
+                                amount: phAmount,
+                                unit: "g",
+                                date: dosingDate
+                            )
+                        }
+
+                        // Save chlorine dosing if amount > 0
+                        if chlorineAmount > 0 {
+                            poolWaterState.recordDosing(
+                                productId: "chlorine",
+                                productName: "Chlorgranulat",
+                                amount: chlorineAmount,
+                                unit: "g",
+                                date: dosingDate
+                            )
+                        }
+
+                        dismiss()
+                    } label: {
+                        Image(systemName: "checkmark")
+                    }
+                    .buttonStyle(.glassProminent)
+                }
+            }
+        }
     }
 }
 
 #Preview {
     DashboardView()
+        .environment(PoolWaterState())
 }

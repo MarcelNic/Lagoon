@@ -3,15 +3,16 @@
 //  Lagoon
 //
 //  Observable model that connects UI with the PoolWaterEngine.
-//  Reads settings from AppStorage and calculates estimated water state.
+//  Integrates with SwiftData for persistence.
 //
 
 import SwiftUI
+import SwiftData
 
 @Observable
 final class PoolWaterState {
 
-    // MARK: - Last Measurement (stored in AppStorage via wrapper)
+    // MARK: - Last Measurement
 
     private(set) var lastChlorine: Double = 1.0
     private(set) var lastPH: Double = 7.2
@@ -34,29 +35,44 @@ final class PoolWaterState {
     private(set) var chlorineTrend: TrendDirection = .stable
     private(set) var phTrend: TrendDirection = .stable
 
+    // MARK: - Settings (cached from SwiftData or AppStorage)
+
+    private(set) var poolVolume: Double = 50.0
+    private(set) var pumpRuntime: Double = 8.0
+    private(set) var hasCover: Bool = false
+    private(set) var idealPHMin: Double = 7.0
+    private(set) var idealPHMax: Double = 7.4
+    private(set) var idealChlorineMin: Double = 0.5
+    private(set) var idealChlorineMax: Double = 1.5
+
     // MARK: - Engine
 
     private let engine = PoolWaterEngine()
 
-    // MARK: - UserDefaults Keys
+    // MARK: - SwiftData Context
 
-    private enum Keys {
-        static let lastChlorine = "lastChlorine"
-        static let lastPH = "lastPH"
-        static let lastMeasurementDate = "lastMeasurementDate"
-    }
+    private var modelContext: ModelContext?
 
     // MARK: - Initialization
 
     init() {
-        loadLastMeasurement()
+        loadSettingsFromUserDefaults()
+        loadLastMeasurementFromUserDefaults()
         recalculate()
+    }
+
+    // MARK: - SwiftData Integration
+
+    /// Set the model context from environment
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
+        loadFromSwiftData()
     }
 
     // MARK: - Public Methods
 
-    /// Record a new measurement and recalculate estimates
-    func recordMeasurement(chlorine: Double, pH: Double, date: Date = Date()) {
+    /// Record a new measurement and save to SwiftData
+    func recordMeasurement(chlorine: Double, pH: Double, waterTemperature: Double? = nil, date: Date = Date()) {
         // Store previous values for trend calculation
         let previousChlorine = estimatedChlorine
         let previousPH = estimatedPH
@@ -66,8 +82,25 @@ final class PoolWaterState {
         lastPH = pH
         lastMeasurementDate = date
 
-        // Save to UserDefaults
-        saveLastMeasurement()
+        // Save to UserDefaults (as backup)
+        saveLastMeasurementToUserDefaults()
+
+        // Save to SwiftData
+        if let context = modelContext {
+            let measurement = Measurement(
+                chlorine: chlorine,
+                pH: pH,
+                waterTemperature: waterTemperature,
+                timestamp: date
+            )
+            context.insert(measurement)
+
+            do {
+                try context.save()
+            } catch {
+                print("Error saving measurement: \(error)")
+            }
+        }
 
         // Recalculate
         recalculate()
@@ -77,44 +110,94 @@ final class PoolWaterState {
         phTrend = calculateTrend(previous: previousPH, current: estimatedPH)
     }
 
+    /// Record a dosing event and save to SwiftData
+    func recordDosing(productId: String, productName: String, amount: Double, unit: String = "g", date: Date = Date()) {
+        guard amount > 0 else { return }
+
+        if let context = modelContext {
+            let dosing = DosingEventModel(
+                productId: productId,
+                productName: productName,
+                amount: amount,
+                unit: unit,
+                timestamp: date
+            )
+            context.insert(dosing)
+
+            do {
+                try context.save()
+            } catch {
+                print("Error saving dosing: \(error)")
+            }
+        }
+
+        // Recalculate after dosing
+        recalculate()
+    }
+
+    /// Record a care task and save to SwiftData
+    func recordCareTask(taskName: String, description: String? = nil, date: Date = Date()) {
+        if let context = modelContext {
+            let task = CareTaskModel(
+                taskName: taskName,
+                taskDescription: description,
+                timestamp: date
+            )
+            context.insert(task)
+
+            do {
+                try context.save()
+            } catch {
+                print("Error saving care task: \(error)")
+            }
+        }
+    }
+
+    /// Save weather input to SwiftData
+    func recordWeather(temperature: Double, uvIndex: Double, source: String = "manual", date: Date = Date()) {
+        if let context = modelContext {
+            let weather = WeatherInputModel(
+                temperature: temperature,
+                uvIndex: uvIndex,
+                timestamp: date,
+                source: source
+            )
+            context.insert(weather)
+
+            do {
+                try context.save()
+            } catch {
+                print("Error saving weather: \(error)")
+            }
+        }
+
+        // Recalculate after weather update
+        recalculate()
+    }
+
     /// Recalculate estimated state based on current conditions
     func recalculate() {
-        // Read settings from AppStorage via UserDefaults
-        let defaults = UserDefaults.standard
+        // Load dosing history since last measurement
+        let dosingHistory = loadDosingHistorySinceLastMeasurement()
 
-        let poolVolume = defaults.double(forKey: "poolVolume")
-        let pumpRuntime = defaults.double(forKey: "pumpRuntime")
-        let hasCover = defaults.bool(forKey: "hasCover")
-
-        // Chemistry settings
-        let phMin = defaults.double(forKey: "phMin")
-        let phMax = defaults.double(forKey: "phMax")
-        let chlorineMin = defaults.double(forKey: "chlorineMin")
-        let chlorineMax = defaults.double(forKey: "chlorineMax")
-
-        // Use defaults if not set
-        let volume = poolVolume > 0 ? poolVolume : 50.0
-        let runtime = pumpRuntime > 0 ? pumpRuntime : 8.0
-        let phMinVal = phMin > 0 ? phMin : 7.0
-        let phMaxVal = phMax > 0 ? phMax : 7.4
-        let clMinVal = chlorineMin > 0 ? chlorineMin : 0.5
-        let clMaxVal = chlorineMax > 0 ? chlorineMax : 1.5
+        // Load latest weather input
+        let weather = loadLatestWeather()
 
         // Create engine input
         let input = PoolWaterEngineInput.create(
-            poolVolume_m3: volume,
+            poolVolume_m3: poolVolume,
             lastChlorine_ppm: lastChlorine,
             lastPH: lastPH,
             lastMeasurementISO: ISO8601DateFormatter().string(from: lastMeasurementDate),
-            waterTemperature_c: 25.0, // TODO: Get from weather/manual input
-            uvExposure: .medium,       // TODO: Get from weather
+            waterTemperature_c: weather?.temperature ?? 25.0,
+            uvExposure: weather?.uvExposureLevel ?? .medium,
             poolCovered: hasCover,
-            batherLoad: .none,         // TODO: Get from recent input
-            filterRuntime: runtime,
-            dosingHistory: [],         // TODO: Load from SwiftData
+            batherLoad: .none,
+            filterRuntime: pumpRuntime,
+            dosingHistory: dosingHistory,
             idealRanges: WaterTargets(
-                freeChlorine: ChlorineTargets(min_ppm: clMinVal, max_ppm: clMaxVal),
-                pH: PHTargets(min: phMinVal, max: phMaxVal)
+                freeChlorine: ChlorineTargets(min_ppm: idealChlorineMin, max_ppm: idealChlorineMax),
+                pH: PHTargets(min: idealPHMin, max: idealPHMax)
             )
         )
 
@@ -156,53 +239,109 @@ final class PoolWaterState {
         )
     }
 
-    // MARK: - Ideal Ranges (for UI)
-
-    var idealPHMin: Double {
-        let val = UserDefaults.standard.double(forKey: "phMin")
-        return val > 0 ? val : 7.0
-    }
-
-    var idealPHMax: Double {
-        let val = UserDefaults.standard.double(forKey: "phMax")
-        return val > 0 ? val : 7.4
-    }
-
-    var idealChlorineMin: Double {
-        let val = UserDefaults.standard.double(forKey: "chlorineMin")
-        return val > 0 ? val : 0.5
-    }
-
-    var idealChlorineMax: Double {
-        let val = UserDefaults.standard.double(forKey: "chlorineMax")
-        return val > 0 ? val : 1.5
-    }
-
     // MARK: - Private Methods
 
-    private func loadLastMeasurement() {
+    private func loadFromSwiftData() {
+        guard let context = modelContext else { return }
+
+        // Load most recent measurement
+        let measurementDescriptor = FetchDescriptor<Measurement>(
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+        )
+        if let measurements = try? context.fetch(measurementDescriptor),
+           let latest = measurements.first {
+            if let chlorine = latest.chlorine {
+                lastChlorine = chlorine
+            }
+            if let pH = latest.pH {
+                lastPH = pH
+            }
+            lastMeasurementDate = latest.timestamp
+        }
+
+        // Load pool settings (if exists)
+        let settingsDescriptor = FetchDescriptor<PoolSettings>()
+        if let settings = try? context.fetch(settingsDescriptor).first {
+            poolVolume = settings.poolVolume
+            pumpRuntime = settings.pumpRuntime
+            hasCover = settings.hasCover
+            idealPHMin = settings.phMin
+            idealPHMax = settings.phMax
+            idealChlorineMin = settings.chlorineMin
+            idealChlorineMax = settings.chlorineMax
+        }
+
+        recalculate()
+    }
+
+    private func loadDosingHistorySinceLastMeasurement() -> [DosingEvent] {
+        guard let context = modelContext else { return [] }
+
+        var descriptor = FetchDescriptor<DosingEventModel>(
+            predicate: #Predicate { $0.timestamp > lastMeasurementDate },
+            sortBy: [SortDescriptor(\.timestamp)]
+        )
+        descriptor.fetchLimit = 100
+
+        guard let dosings = try? context.fetch(descriptor) else { return [] }
+
+        return dosings.map { $0.toEngineDosingEvent() }
+    }
+
+    private func loadLatestWeather() -> WeatherInputModel? {
+        guard let context = modelContext else { return nil }
+
+        var descriptor = FetchDescriptor<WeatherInputModel>(
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+
+        return try? context.fetch(descriptor).first
+    }
+
+    private func loadSettingsFromUserDefaults() {
         let defaults = UserDefaults.standard
 
-        if let date = defaults.object(forKey: Keys.lastMeasurementDate) as? Date {
+        let volume = defaults.double(forKey: "poolVolume")
+        if volume > 0 { poolVolume = volume }
+
+        let runtime = defaults.double(forKey: "pumpRuntime")
+        if runtime > 0 { pumpRuntime = runtime }
+
+        hasCover = defaults.bool(forKey: "hasCover")
+
+        let phMin = defaults.double(forKey: "phMin")
+        if phMin > 0 { idealPHMin = phMin }
+
+        let phMax = defaults.double(forKey: "phMax")
+        if phMax > 0 { idealPHMax = phMax }
+
+        let clMin = defaults.double(forKey: "chlorineMin")
+        if clMin > 0 { idealChlorineMin = clMin }
+
+        let clMax = defaults.double(forKey: "chlorineMax")
+        if clMax > 0 { idealChlorineMax = clMax }
+    }
+
+    private func loadLastMeasurementFromUserDefaults() {
+        let defaults = UserDefaults.standard
+
+        let chlorine = defaults.double(forKey: "lastChlorine")
+        if chlorine > 0 { lastChlorine = chlorine }
+
+        let pH = defaults.double(forKey: "lastPH")
+        if pH > 0 { lastPH = pH }
+
+        if let date = defaults.object(forKey: "lastMeasurementDate") as? Date {
             lastMeasurementDate = date
-        }
-
-        let chlorine = defaults.double(forKey: Keys.lastChlorine)
-        if chlorine > 0 {
-            lastChlorine = chlorine
-        }
-
-        let pH = defaults.double(forKey: Keys.lastPH)
-        if pH > 0 {
-            lastPH = pH
         }
     }
 
-    private func saveLastMeasurement() {
+    private func saveLastMeasurementToUserDefaults() {
         let defaults = UserDefaults.standard
-        defaults.set(lastChlorine, forKey: Keys.lastChlorine)
-        defaults.set(lastPH, forKey: Keys.lastPH)
-        defaults.set(lastMeasurementDate, forKey: Keys.lastMeasurementDate)
+        defaults.set(lastChlorine, forKey: "lastChlorine")
+        defaults.set(lastPH, forKey: "lastPH")
+        defaults.set(lastMeasurementDate, forKey: "lastMeasurementDate")
     }
 
     private func calculateTrend(previous: Double, current: Double) -> TrendDirection {

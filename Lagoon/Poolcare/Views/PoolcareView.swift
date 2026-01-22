@@ -23,6 +23,7 @@ struct PoolcareView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
+            .scaleEffect(1.2)
             .ignoresSafeArea()
 
             ScrollView {

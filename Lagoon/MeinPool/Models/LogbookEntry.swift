@@ -145,3 +145,45 @@ extension LogbookEntry {
         ]
     }
 }
+
+// MARK: - SwiftData Model Conversions
+
+extension Measurement {
+    /// Convert SwiftData Measurement to LogbookEntry
+    func toLogbookEntry() -> LogbookEntry {
+        LogbookEntry(
+            type: .messen,
+            timestamp: timestamp,
+            summary: summary,
+            phValue: pH,
+            chlorineValue: chlorine,
+            waterTemperature: waterTemperature
+        )
+    }
+}
+
+extension DosingEventModel {
+    /// Convert SwiftData DosingEventModel to LogbookEntry
+    func toLogbookEntry() -> LogbookEntry {
+        LogbookEntry(
+            type: .dosieren,
+            timestamp: timestamp,
+            summary: summary,
+            product: productName,
+            amount: amount,
+            unit: unit
+        )
+    }
+}
+
+extension CareTaskModel {
+    /// Convert SwiftData CareTaskModel to LogbookEntry
+    func toLogbookEntry() -> LogbookEntry {
+        LogbookEntry(
+            type: .poolpflege,
+            timestamp: timestamp,
+            summary: summary,
+            description: taskDescription
+        )
+    }
+}

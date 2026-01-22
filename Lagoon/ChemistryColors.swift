@@ -11,18 +11,18 @@ extension Color {
     // MARK: - pH Farben
 
     /// pH Bar Farbe (adaptiv)
-    static let phBarColor = Color(light: Color(hex: "43aef5"), dark: Color(hex: "354d82"))
+    static let phBarColor = Color(hex: "42edfe").opacity(0.25)
 
-    /// pH Ideal Range Farbe (adaptiv)
-    static let phIdealColor = Color(light: Color(hex: "70fbf8"), dark: Color(hex: "65bbf7"))
+    /// pH Ideal Range Farbe
+    static let phIdealColor = Color(hex: "42edfe")
 
     // MARK: - Chlor Farben
 
-    /// Chlor Bar Farbe (adaptiv)
-    static let chlorineBarColor = Color(light: Color(hex: "34c759").opacity(0.4), dark: Color(hex: "30d158").opacity(0.4))
+    /// Chlor Bar Farbe
+    static let chlorineBarColor = Color(hex: "5df66d").opacity(0.25)
 
-    /// Chlor Ideal Range Farbe (adaptiv)
-    static let chlorineIdealColor = Color(light: Color(hex: "5ef66d"), dark: Color(hex: "5ef66d"))
+    /// Chlor Ideal Range Farbe
+    static let chlorineIdealColor = Color(hex: "5df66d")
 
     // MARK: - Helpers
 
