@@ -121,6 +121,16 @@ struct DashboardView: View {
                             }
                             .frame(width: 52, height: 52)
                             .glassEffect(.clear.interactive(), in: .circle)
+
+                            Button {
+                                NotificationCenter.default.post(name: .openQuickMeasure, object: nil)
+                            } label: {
+                                Image(systemName: "bell.badge")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundStyle(.orange)
+                            }
+                            .frame(width: 52, height: 52)
+                            .glassEffect(.clear.interactive(), in: .circle)
                         }
                     }
                     .padding(.bottom, 8)

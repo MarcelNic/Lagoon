@@ -34,6 +34,8 @@ struct LagoonApp: App {
     }()
 
     @State private var poolWaterState = PoolWaterState()
+    @State private var notificationManager = NotificationManager()
+    @State private var showQuickMeasure = false
 
     private var colorScheme: ColorScheme? {
         (AppearanceMode(rawValue: appearanceMode) ?? .system).colorScheme
@@ -44,6 +46,16 @@ struct LagoonApp: App {
             DashboardView()
                 .preferredColorScheme(colorScheme)
                 .environment(poolWaterState)
+                .sheet(isPresented: $showQuickMeasure) {
+                    QuickMeasureSheet()
+                        .environment(poolWaterState)
+                }
+                .task {
+                    await notificationManager.requestPermission()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .openQuickMeasure)) { _ in
+                    showQuickMeasure = true
+                }
         }
         .modelContainer(sharedModelContainer)
     }
