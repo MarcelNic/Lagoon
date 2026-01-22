@@ -11,7 +11,7 @@ struct QuickMeasureSheet: View {
     }
 
     @State private var phase: Phase = .messen
-    @State private var currentDetent: PresentationDetent = .medium
+    @State private var currentDetent: PresentationDetent = QuickMeasureSheet.messenDetent
 
     // Messen values
     @State private var phSelection: Int = 12
@@ -74,6 +74,7 @@ struct QuickMeasureSheet: View {
         )
     }
 
+    private static let messenDetent = PresentationDetent.height(360)
     private static let dosierenDetent = PresentationDetent.height(300)
 
     var body: some View {
@@ -88,9 +89,10 @@ struct QuickMeasureSheet: View {
                     bearbeitenSections
                 }
             }
-            .contentMargins(.top, 0)
+            .contentMargins(.top, phase == .messen ? 16 : 0)
             .navigationTitle(headerTitle)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(phase == .messen ? .hidden : .visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     if phase != .messen {
@@ -101,7 +103,7 @@ struct QuickMeasureSheet: View {
                                     currentDetent = Self.dosierenDetent
                                 } else {
                                     phase = .messen
-                                    currentDetent = .medium
+                                    currentDetent = Self.messenDetent
                                 }
                             }
                         } label: {
@@ -125,7 +127,7 @@ struct QuickMeasureSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium, Self.dosierenDetent], selection: $currentDetent)
+        .presentationDetents([Self.messenDetent, Self.dosierenDetent, .medium], selection: $currentDetent)
         .interactiveDismissDisabled(phase != .messen)
         .onAppear {
             phSelection = Int(((poolWaterState.lastPH - 6.0) / 0.1).rounded())
@@ -135,7 +137,7 @@ struct QuickMeasureSheet: View {
 
     private var headerTitle: String {
         switch phase {
-        case .messen: return "Messen"
+        case .messen: return ""
         case .dosieren: return "Dosieren"
         case .bearbeiten: return "Anpassen"
         }
@@ -181,7 +183,7 @@ struct QuickMeasureSheet: View {
                     currentDetent = Self.dosierenDetent
                 }
             } label: {
-                Text("Weiter")
+                Text("Messen")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
