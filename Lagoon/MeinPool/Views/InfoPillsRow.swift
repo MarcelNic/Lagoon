@@ -16,6 +16,7 @@ struct InfoPillsRow: View {
                 InfoPill(icon: "cloud.fill", text: state.weather)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 }
 

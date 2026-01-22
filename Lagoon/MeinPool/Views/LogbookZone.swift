@@ -5,14 +5,47 @@
 
 import SwiftUI
 
-struct LogbookZone: View {
+struct LogbookSection: View {
     @Bindable var state: MeinPoolState
     @Binding var selectedEntry: LogbookEntry?
     @State private var showFilterPopover = false
 
+    private var sortedEntries: [LogbookEntry] {
+        state.filteredEntries.sorted { $0.timestamp > $1.timestamp }
+    }
+
     var body: some View {
-        VStack(spacing: 0) {
-            // Section header with filter button
+        Section {
+            if state.filteredEntries.isEmpty {
+                emptyState
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+            } else {
+                ForEach(Array(sortedEntries.enumerated()), id: \.element.id) { index, entry in
+                    Button {
+                        selectedEntry = entry
+                    } label: {
+                        LogbookEntryRow(entry: entry)
+                    }
+                    .buttonStyle(.plain)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            state.deleteEntry(entry)
+                        } label: {
+                            Label("Löschen", systemImage: "trash")
+                        }
+                    }
+                    .listRowBackground(
+                        RoundedCornerBackground(
+                            isFirst: index == 0,
+                            isLast: index == sortedEntries.count - 1
+                        )
+                    )
+                    .listRowSeparator(.hidden)
+                }
+                .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+            }
+        } header: {
             HStack {
                 Text("Logbuch")
                     .font(.system(size: 13, weight: .semibold))
@@ -35,35 +68,7 @@ struct LogbookZone: View {
                 }
             }
             .padding(.horizontal, 4)
-            .padding(.bottom, 12)
-
-            // Native List
-            if state.filteredEntries.isEmpty {
-                emptyState
-            } else {
-                List {
-                    ForEach(state.filteredEntries.sorted { $0.timestamp > $1.timestamp }) { entry in
-                        Button {
-                            selectedEntry = entry
-                        } label: {
-                            LogbookEntryRow(entry: entry)
-                        }
-                        .buttonStyle(.plain)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                state.deleteEntry(entry)
-                            } label: {
-                                Label("Löschen", systemImage: "trash")
-                            }
-                        }
-                    }
-                }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                .scrollDisabled(true)
-                .frame(minHeight: CGFloat(state.filteredEntries.count * 56))
-            }
+            .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 8, trailing: 16))
         }
     }
 
@@ -87,18 +92,50 @@ struct LogbookZone: View {
     }
 }
 
+// MARK: - Rounded Corner Background
+
+struct RoundedCornerBackground: View {
+    let isFirst: Bool
+    let isLast: Bool
+
+    private let cornerRadius: CGFloat = 16
+
+    private var shape: UnevenRoundedRectangle {
+        .rect(
+            topLeadingRadius: isFirst ? cornerRadius : 0,
+            bottomLeadingRadius: isLast ? cornerRadius : 0,
+            bottomTrailingRadius: isLast ? cornerRadius : 0,
+            topTrailingRadius: isFirst ? cornerRadius : 0
+        )
+    }
+
+    var body: some View {
+        Rectangle()
+            .fill(.clear)
+            .glassEffect(.clear.interactive(), in: shape)
+            .overlay(alignment: .bottom) {
+                if !isLast {
+                    Divider()
+                        .background(Color.white.opacity(0.15))
+                        .padding(.leading, 42)
+                }
+            }
+    }
+}
+
 #Preview {
     ZStack {
         LinearGradient(
-            colors: [Color(hex: "0a1628"), Color(hex: "1a3a5c")],
+            colors: [Color(red: 0.04, green: 0.09, blue: 0.16), Color(red: 0.10, green: 0.23, blue: 0.36)],
             startPoint: .top,
             endPoint: .bottom
         )
         .ignoresSafeArea()
 
-        ScrollView {
-            LogbookZone(state: MeinPoolState(), selectedEntry: .constant(nil))
-                .padding(.horizontal, 20)
+        List {
+            LogbookSection(state: MeinPoolState(), selectedEntry: .constant(nil))
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
 }

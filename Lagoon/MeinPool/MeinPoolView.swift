@@ -31,24 +31,31 @@ struct MeinPoolView: View {
             )
             .ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: 28) {
+            List {
+                // Header Section
+                Section {
                     PoolIdentityCard(
                         poolName: poolName,
                         isVacationModeActive: false
                     )
 
                     InfoPillsRow(state: meinPoolState)
-
-                    LogbookZone(
-                        state: meinPoolState,
-                        selectedEntry: $selectedEntry
-                    )
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 40)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                .listRowSeparator(.hidden)
+
+                // Logbook Section
+                LogbookSection(
+                    state: meinPoolState,
+                    selectedEntry: $selectedEntry
+                )
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .contentMargins(.top, 20)
+            .contentMargins(.bottom, 40)
+            .contentMargins(.horizontal, 20)
 
             // Undo toast
             if meinPoolState.showUndoToast {
@@ -80,12 +87,6 @@ struct MeinPoolView: View {
                         .frame(width: 36, height: 36)
                 }
                 .glassEffect(.regular.interactive(), in: .circle)
-
-                Spacer()
-
-                Text("Mein Pool")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.white)
 
                 Spacer()
 

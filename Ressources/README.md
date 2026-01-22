@@ -386,6 +386,27 @@ var body: some View {
     }
     .buttonStyle(.glass)
 }
+
+Button Styles with Glass Effects
+Use .buttonStyle(.glass) for standard glass buttons and .buttonStyle(.glassProminent) for primary actions. Both styles support tinting with .tint() modifier:
+
+VStack {
+  HStack {
+    Button("Tap Me", action: action)
+      .buttonStyle(.glass)
+    Button("Tinted Tap Me", action: action)
+      .buttonStyle(.glass)
+      .tint(.red)
+  }
+  HStack {
+    Button("Tap Me", action: action)
+      .buttonStyle(.glassProminent)
+    Button("Tap Me", action: action)
+      .buttonStyle(.glassProminent)
+      .tint(.red)
+  }
+}
+
 See Also
 Styling views with Liquid Glass
 Landmarks: Building an app with Liquid Glass
