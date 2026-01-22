@@ -156,41 +156,67 @@ struct MessenSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(PoolWaterState.self) private var poolWaterState
 
-    @State private var phValue: Double = 7.2
-    @State private var chlorineValue: Double = 1.0
+    // TickPicker uses Int, we convert to/from Double
+    @State private var phSelection: Int = 12  // 6.0 + 12*0.1 = 7.2
+    @State private var chlorineSelection: Int = 10  // 0.0 + 10*0.1 = 1.0
     @State private var waterTemperature: Double = 26.0
     @State private var measurementDate: Date = Date()
+
+    private var phValue: Double { 6.0 + Double(phSelection) * 0.1 }
+    private var chlorineValue: Double { Double(chlorineSelection) * 0.1 }
+
+    private var phConfig: TickConfig {
+        .init(
+            tickWidth: 2,
+            tickHeight: 24,
+            tickHPadding: 4,
+            activeTint: .phIdealColor,
+            inActiveTint: .white.opacity(0.6),
+            alignment: .center
+        )
+    }
+
+    private var chlorineConfig: TickConfig {
+        .init(
+            tickWidth: 2,
+            tickHeight: 24,
+            tickHPadding: 4,
+            activeTint: .chlorineIdealColor,
+            inActiveTint: .white.opacity(0.6),
+            alignment: .center
+        )
+    }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(spacing: 4) {
                         HStack {
                             Label("pH-Wert", systemImage: "drop.fill")
                             Spacer()
                             Text(String(format: "%.1f", phValue))
-                                .foregroundStyle(.secondary)
+                                .font(.system(size: 17, weight: .semibold, design: .rounded))
                                 .monospacedDigit()
                                 .contentTransition(.numericText())
-                                .animation(.snappy, value: phValue)
+                                .animation(.snappy, value: phSelection)
                         }
-                        Slider(value: $phValue, in: 6.0...9.0, step: 0.1)
-                            .tint(.phIdealColor)
+
+                        TickPicker(count: 30, config: phConfig, selection: $phSelection)
                     }
 
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(spacing: 4) {
                         HStack {
                             Label("Chlor", systemImage: "allergens.fill")
                             Spacer()
                             Text(String(format: "%.1f mg/l", chlorineValue))
-                                .foregroundStyle(.secondary)
+                                .font(.system(size: 17, weight: .semibold, design: .rounded))
                                 .monospacedDigit()
                                 .contentTransition(.numericText())
-                                .animation(.snappy, value: chlorineValue)
+                                .animation(.snappy, value: chlorineSelection)
                         }
-                        Slider(value: $chlorineValue, in: 0.0...5.0, step: 0.1)
-                            .tint(.chlorineIdealColor)
+
+                        TickPicker(count: 50, config: chlorineConfig, selection: $chlorineSelection)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -247,8 +273,8 @@ struct MessenSheet: View {
         }
         .onAppear {
             // Initialize with last measured values
-            phValue = poolWaterState.lastPH
-            chlorineValue = poolWaterState.lastChlorine
+            phSelection = Int(((poolWaterState.lastPH - 6.0) / 0.1).rounded())
+            chlorineSelection = Int((poolWaterState.lastChlorine / 0.1).rounded())
         }
     }
 }
@@ -260,9 +286,12 @@ struct DosierenSheet: View {
     @Environment(PoolWaterState.self) private var poolWaterState
 
     @State private var phType: PHType = .minus
-    @State private var phAmount: Double = 0
-    @State private var chlorineAmount: Double = 0
+    @State private var phAmountSelection: Int = 0  // 0-60 → 0-300g (step 5)
+    @State private var chlorineAmountSelection: Int = 0  // 0-100 → 0-500g (step 5)
     @State private var dosingDate: Date = Date()
+
+    private var phAmount: Double { Double(phAmountSelection) * 5.0 }
+    private var chlorineAmount: Double { Double(chlorineAmountSelection) * 5.0 }
 
     enum PHType: String, CaseIterable {
         case minus, plus
@@ -289,19 +318,41 @@ struct DosierenSheet: View {
         }
     }
 
+    private var phConfig: TickConfig {
+        .init(
+            tickWidth: 2,
+            tickHeight: 24,
+            tickHPadding: 4,
+            activeTint: .phIdealColor,
+            inActiveTint: .white.opacity(0.6),
+            alignment: .center
+        )
+    }
+
+    private var chlorineConfig: TickConfig {
+        .init(
+            tickWidth: 2,
+            tickHeight: 24,
+            tickHPadding: 4,
+            activeTint: .chlorineIdealColor,
+            inActiveTint: .white.opacity(0.6),
+            alignment: .center
+        )
+    }
+
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(spacing: 4) {
                         HStack {
                             Label("pH", systemImage: "drop.fill")
                             Spacer()
                             Text(String(format: "%.0f g", phAmount))
-                                .foregroundStyle(.secondary)
+                                .font(.system(size: 17, weight: .semibold, design: .rounded))
                                 .monospacedDigit()
                                 .contentTransition(.numericText())
-                                .animation(.snappy, value: phAmount)
+                                .animation(.snappy, value: phAmountSelection)
                         }
                         Picker("pH", selection: $phType) {
                             Text("pH-").tag(PHType.minus)
@@ -309,24 +360,24 @@ struct DosierenSheet: View {
                         }
                         .pickerStyle(.segmented)
                         .labelsHidden()
-                        Slider(value: $phAmount, in: 0...300, step: 5)
-                            .tint(.phIdealColor)
+
+                        TickPicker(count: 60, config: phConfig, selection: $phAmountSelection)
                     }
                 }
 
                 Section {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(spacing: 4) {
                         HStack {
                             Label("Chlor", systemImage: "allergens.fill")
                             Spacer()
                             Text(String(format: "%.0f g", chlorineAmount))
-                                .foregroundStyle(.secondary)
+                                .font(.system(size: 17, weight: .semibold, design: .rounded))
                                 .monospacedDigit()
                                 .contentTransition(.numericText())
-                                .animation(.snappy, value: chlorineAmount)
+                                .animation(.snappy, value: chlorineAmountSelection)
                         }
-                        Slider(value: $chlorineAmount, in: 0...500, step: 5)
-                            .tint(.chlorineIdealColor)
+
+                        TickPicker(count: 100, config: chlorineConfig, selection: $chlorineAmountSelection)
                     }
                 }
 
