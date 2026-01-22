@@ -39,11 +39,7 @@ struct SlideToConfirm: View {
             }
         }
         .frame(height: isCompleted ? 50 : config.height)
-        .containerRelativeFrame(.horizontal) { value, _ in
-            let ratio: CGFloat = isCompleted ? 0.5 : 0.85
-            return value * ratio
-        }
-        .frame(maxWidth: 350)
+        .frame(maxWidth: .infinity)
         .allowsHitTesting(!isCompleted)
     }
 

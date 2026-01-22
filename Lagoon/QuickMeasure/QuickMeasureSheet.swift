@@ -74,7 +74,7 @@ struct QuickMeasureSheet: View {
         )
     }
 
-    private static let messenDetent = PresentationDetent.height(360)
+    private static let messenDetent = PresentationDetent.height(320)
     private static let dosierenDetent = PresentationDetent.height(300)
 
     var body: some View {
@@ -138,7 +138,7 @@ struct QuickMeasureSheet: View {
     private var headerTitle: String {
         switch phase {
         case .messen: return ""
-        case .dosieren: return "Dosieren"
+        case .dosieren: return "Empfehlung"
         case .bearbeiten: return "Anpassen"
         }
     }
@@ -186,11 +186,12 @@ struct QuickMeasureSheet: View {
                 Text("Messen")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
+                    .padding(.vertical, 12)
             }
             .buttonStyle(.glassProminent)
+            .tint(.blue)
             .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
+            .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
         }
     }
 
@@ -229,8 +230,6 @@ struct QuickMeasureSheet: View {
                             .monospacedDigit()
                     }
                 }
-            } header: {
-                Text("Empfehlung")
             }
         }
 
@@ -247,7 +246,7 @@ struct QuickMeasureSheet: View {
                 saveAll(phAmount: recommendedPHAmount, chlorineAmount: recommendedChlorineAmount)
             }
             .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
+            .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
             .frame(height: 60)
         }
     }
@@ -308,7 +307,7 @@ struct QuickMeasureSheet: View {
                 saveAll(phAmount: editedPHAmount, chlorineAmount: editedChlorineAmount)
             }
             .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
+            .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
             .frame(height: 60)
         }
     }
