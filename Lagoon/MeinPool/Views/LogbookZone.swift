@@ -8,7 +8,6 @@ import SwiftUI
 struct LogbookSection: View {
     @Bindable var state: MeinPoolState
     @Binding var selectedEntry: LogbookEntry?
-    @State private var showFilterPopover = false
 
     private var sortedEntries: [LogbookEntry] {
         state.filteredEntries.sorted { $0.timestamp > $1.timestamp }
@@ -54,18 +53,31 @@ struct LogbookSection: View {
 
                 Spacer()
 
-                Button {
-                    showFilterPopover = true
+                Menu {
+                    Button {
+                        state.filterMessen.toggle()
+                    } label: {
+                        Label("Messungen", systemImage: state.filterMessen ? "checkmark" : "")
+                    }
+
+                    Button {
+                        state.filterDosieren.toggle()
+                    } label: {
+                        Label("Dosierungen", systemImage: state.filterDosieren ? "checkmark" : "")
+                    }
+
+                    Button {
+                        state.filterPoolpflege.toggle()
+                    } label: {
+                        Label("Pflege", systemImage: state.filterPoolpflege ? "checkmark" : "")
+                    }
                 } label: {
                     Image(systemName: filterIcon)
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.8))
                         .frame(width: 36, height: 36)
                 }
-                .glassEffect(.regular.interactive(), in: .circle)
-                .popover(isPresented: $showFilterPopover) {
-                    LogbookFilterPopover(state: state)
-                }
+                .glassEffect(.clear.interactive(), in: .circle)
             }
             .padding(.horizontal, 4)
             .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 8, trailing: 16))
