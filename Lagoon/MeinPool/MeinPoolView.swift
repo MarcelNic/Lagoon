@@ -9,6 +9,7 @@ import SwiftData
 struct MeinPoolView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(PoolWaterState.self) private var poolWaterState
     @AppStorage("poolName") private var poolName: String = "Pool"
     @State private var meinPoolState = MeinPoolState()
     @State private var showSettings = false
@@ -121,7 +122,9 @@ struct MeinPoolView: View {
                 showPflegeSheet = true
             }
         }
-        .sheet(isPresented: $showSettings) {
+        .sheet(isPresented: $showSettings, onDismiss: {
+            poolWaterState.reloadSettings()
+        }) {
             SettingsView()
                 .presentationDetents([.medium, .large])
         }

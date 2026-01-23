@@ -9,18 +9,42 @@ import SwiftData
 struct DashboardView: View {
     @Environment(PoolWaterState.self) private var poolWaterState
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var showMessenSheet = false
     @State private var showDosierenSheet = false
     @State private var showQuickMeasure = false
     @State private var showPoolcare = false
     @State private var showMeinPool = false
+    @State private var timeOffsetSelection: Int = 0
     @Namespace private var namespace
 
     private var anySheetPresented: Bool {
         showMessenSheet || showDosierenSheet || showQuickMeasure
     }
 
+    private var simulationTimeLabel: String {
+        guard timeOffsetSelection > 0 else { return "Jetzt" }
+
+        let calendar = Calendar.current
+        let now = calendar.dateInterval(of: .hour, for: Date())?.start ?? Date()
+        let targetDate = now.addingTimeInterval(Double(timeOffsetSelection) * 3600)
+
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
+        let timeString = timeFormatter.string(from: targetDate)
+
+        if calendar.isDateInToday(targetDate) {
+            return timeString
+        } else if calendar.isDateInTomorrow(targetDate) {
+            return "Morgen, \(timeString)"
+        } else {
+            let dayFormatter = DateFormatter()
+            dayFormatter.locale = Locale(identifier: "de_DE")
+            dayFormatter.dateFormat = "EE"
+            return "\(dayFormatter.string(from: targetDate)), \(timeString)"
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -85,6 +109,35 @@ struct DashboardView: View {
                     }
                     .offset(y: anySheetPresented ? -140 : 0)
                     .animation(.smooth, value: anySheetPresented)
+
+                    // Time simulation picker
+                    VStack(spacing: 4) {
+                        Text(simulationTimeLabel)
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.6))
+                            .contentTransition(.numericText())
+                            .animation(.snappy, value: timeOffsetSelection)
+
+                        TickPicker(
+                            count: 48,
+                            config: TickConfig(
+                                tickWidth: 1.5,
+                                tickHeight: 16,
+                                tickHPadding: 3,
+                                activeTint: .white.opacity(0.8),
+                                inActiveTint: .white.opacity(0.2),
+                                alignment: .center
+                            ),
+                            selection: $timeOffsetSelection
+                        )
+                        .frame(height: 16)
+                    }
+                    .padding(.horizontal, 40)
+                    .padding(.top, 20)
+                    .onChange(of: timeOffsetSelection) { _, newValue in
+                        poolWaterState.simulationOffsetHours = Double(newValue)
+                        poolWaterState.recalculate()
+                    }
 
                     Spacer()
 
@@ -173,6 +226,11 @@ struct DashboardView: View {
         }
         .onAppear {
             poolWaterState.setModelContext(modelContext)
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                poolWaterState.reloadSettings()
+            }
         }
     }
 }

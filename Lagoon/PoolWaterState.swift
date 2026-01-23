@@ -45,6 +45,11 @@ final class PoolWaterState {
     private(set) var idealChlorineMin: Double = 0.5
     private(set) var idealChlorineMax: Double = 1.5
 
+    // MARK: - Simulation
+
+    /// Hours offset for time simulation (0 = now)
+    var simulationOffsetHours: Double = 0.0
+
     // MARK: - Engine
 
     private let engine = PoolWaterEngine()
@@ -73,10 +78,6 @@ final class PoolWaterState {
 
     /// Record a new measurement and save to SwiftData
     func recordMeasurement(chlorine: Double, pH: Double, waterTemperature: Double? = nil, date: Date = Date()) {
-        // Store previous values for trend calculation
-        let previousChlorine = estimatedChlorine
-        let previousPH = estimatedPH
-
         // Update last measurement
         lastChlorine = chlorine
         lastPH = pH
@@ -102,12 +103,8 @@ final class PoolWaterState {
             }
         }
 
-        // Recalculate
+        // Recalculate (also updates trends)
         recalculate()
-
-        // Calculate trends
-        chlorineTrend = calculateTrend(previous: previousChlorine, current: estimatedChlorine)
-        phTrend = calculateTrend(previous: previousPH, current: estimatedPH)
     }
 
     /// Record a dosing event and save to SwiftData
@@ -175,8 +172,18 @@ final class PoolWaterState {
         recalculate()
     }
 
+    /// Reload settings from UserDefaults and recalculate
+    func reloadSettings() {
+        loadSettingsFromUserDefaults()
+        recalculate()
+    }
+
     /// Recalculate estimated state based on current conditions
     func recalculate() {
+        // Store previous values for trend calculation
+        let previousChlorine = estimatedChlorine
+        let previousPH = estimatedPH
+
         // Load dosing history since last measurement
         let dosingHistory = loadDosingHistorySinceLastMeasurement()
 
@@ -201,8 +208,9 @@ final class PoolWaterState {
             )
         )
 
-        // Process with engine
-        let output = engine.process(input)
+        // Process with engine (apply simulation offset)
+        let simulationDate = Date().addingTimeInterval(simulationOffsetHours * 3600)
+        let output = engine.process(input, at: simulationDate)
 
         // Update state
         estimatedChlorine = output.estimatedState.freeChlorine_ppm
@@ -213,6 +221,13 @@ final class PoolWaterState {
         // Update recommendations
         chlorineRecommendation = output.recommendations.first { $0.parameter == .freeChlorine }
         phRecommendation = output.recommendations.first { $0.parameter == .pH }
+
+        // Update trends
+        chlorineTrend = calculateTrend(previous: previousChlorine, current: estimatedChlorine)
+        phTrend = calculateTrend(previous: previousPH, current: estimatedPH)
+
+        // Override trends for pending dosing effects (mixing not yet complete)
+        overrideTrendsForPendingDosing(dosingHistory: dosingHistory)
     }
 
     // MARK: - Prediction Data (for Popovers)
@@ -342,6 +357,23 @@ final class PoolWaterState {
         defaults.set(lastChlorine, forKey: "lastChlorine")
         defaults.set(lastPH, forKey: "lastPH")
         defaults.set(lastMeasurementDate, forKey: "lastMeasurementDate")
+    }
+
+    private func overrideTrendsForPendingDosing(dosingHistory: [DosingEvent]) {
+        let simulationDate = Date().addingTimeInterval(simulationOffsetHours * 3600)
+        let pendingEvents = dosingHistory.filter { event in
+            let hoursSince = simulationDate.timeIntervalSince(event.timestamp) / 3600.0
+            return hoursSince >= 0 && hoursSince < 4.0
+        }
+
+        if pendingEvents.contains(where: { $0.kind == .chlorine }) {
+            chlorineTrend = .up
+        }
+        if pendingEvents.contains(where: { $0.kind == .phMinus }) {
+            phTrend = .down
+        } else if pendingEvents.contains(where: { $0.kind == .phPlus }) {
+            phTrend = .up
+        }
     }
 
     private func calculateTrend(previous: Double, current: Double) -> TrendDirection {
