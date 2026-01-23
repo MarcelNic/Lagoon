@@ -148,8 +148,6 @@ final class MeinPoolState {
         entries.removeAll { $0.id == entry.id }
         showUndoToast = true
 
-        // Note: In a full implementation, we would also delete from SwiftData
-
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(4))
             self.dismissUndoToast()
@@ -165,7 +163,42 @@ final class MeinPoolState {
     }
 
     func dismissUndoToast() {
+        if let entry = recentlyDeletedEntry {
+            deleteFromSwiftData(entry)
+        }
         showUndoToast = false
         recentlyDeletedEntry = nil
+    }
+
+    private func deleteFromSwiftData(_ entry: LogbookEntry) {
+        guard let context = modelContext else { return }
+
+        let timestamp = entry.timestamp
+
+        switch entry.type {
+        case .messen:
+            let descriptor = FetchDescriptor<Measurement>(
+                predicate: #Predicate { $0.timestamp == timestamp }
+            )
+            if let match = try? context.fetch(descriptor).first {
+                context.delete(match)
+            }
+        case .dosieren:
+            let descriptor = FetchDescriptor<DosingEventModel>(
+                predicate: #Predicate { $0.timestamp == timestamp }
+            )
+            if let match = try? context.fetch(descriptor).first {
+                context.delete(match)
+            }
+        case .poolpflege:
+            let descriptor = FetchDescriptor<CareTaskModel>(
+                predicate: #Predicate { $0.timestamp == timestamp }
+            )
+            if let match = try? context.fetch(descriptor).first {
+                context.delete(match)
+            }
+        }
+
+        try? context.save()
     }
 }

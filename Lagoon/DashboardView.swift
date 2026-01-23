@@ -11,6 +11,9 @@ struct DashboardView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
 
+    @AppStorage("dosingUnit") private var dosingUnit: String = "gramm"
+    @AppStorage("cupGrams") private var cupGrams: Double = 50.0
+
     @State private var showMessenSheet = false
     @State private var showDosierenSheet = false
     @State private var showQuickMeasure = false
@@ -34,6 +37,23 @@ struct DashboardView: View {
             }
         }
         return 0.80
+    }
+
+    private var recentDosingLabel: String {
+        var parts: [String] = []
+        if poolWaterState.lastDosingChlorineAmount > 0 {
+            let formatted = DosingFormatter.format(grams: poolWaterState.lastDosingChlorineAmount, unit: dosingUnit, cupGrams: cupGrams)
+                .replacingOccurrences(of: " Becher", with: "")
+                .replacingOccurrences(of: " g", with: "g")
+            parts.append("\(formatted) Cl")
+        }
+        if poolWaterState.lastDosingPHAmount > 0 {
+            let formatted = DosingFormatter.format(grams: poolWaterState.lastDosingPHAmount, unit: dosingUnit, cupGrams: cupGrams)
+                .replacingOccurrences(of: " Becher", with: "")
+                .replacingOccurrences(of: " g", with: "g")
+            parts.append("\(formatted) \(poolWaterState.lastDosingPHType)")
+        }
+        return parts.isEmpty ? "Dosiert" : parts.joined(separator: " ")
     }
 
     private var simulationTimeLabel: String {
@@ -115,6 +135,32 @@ struct DashboardView: View {
                     .animation(.smooth, value: quickMeasurePhase)
 
                     Spacer()
+
+                    // Dosing status pill
+                    if poolWaterState.recentDosingActive {
+                        Button { showQuickMeasure = true } label: {
+                            InfoPill(
+                                icon: "checkmark.circle.fill",
+                                text: recentDosingLabel
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .transition(.scale.combined(with: .opacity))
+                        .opacity(anySheetPresented ? 0 : 1)
+                        .animation(.smooth, value: anySheetPresented)
+                    } else if poolWaterState.dosingNeeded {
+                        Button { showQuickMeasure = true } label: {
+                            InfoPill(
+                                icon: "exclamationmark.triangle.fill",
+                                text: "Dosierung",
+                                tint: .red.opacity(0.5)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .transition(.scale.combined(with: .opacity))
+                        .opacity(anySheetPresented ? 0 : 1)
+                        .animation(.smooth, value: anySheetPresented)
+                    }
 
                     // Time simulation picker
                     VStack(spacing: 4) {

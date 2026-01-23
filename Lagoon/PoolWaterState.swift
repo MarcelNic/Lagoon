@@ -35,6 +35,24 @@ final class PoolWaterState {
     private(set) var chlorineTrend: TrendDirection = .stable
     private(set) var phTrend: TrendDirection = .stable
 
+    // MARK: - Last Dosing (for status pill)
+
+    private(set) var lastDosingTimestamp: Date?
+    private(set) var lastDosingChlorineAmount: Double = 0
+    private(set) var lastDosingPHAmount: Double = 0
+    private(set) var lastDosingPHType: String = ""  // "pH-" or "pH+"
+
+    var dosingNeeded: Bool {
+        let clNeeded = chlorineRecommendation?.action == .dose
+        let phNeeded = phRecommendation?.action == .dose
+        return clNeeded || phNeeded
+    }
+
+    var recentDosingActive: Bool {
+        guard let ts = lastDosingTimestamp else { return false }
+        return Date().timeIntervalSince(ts) < 3600
+    }
+
     // MARK: - Settings (cached from SwiftData or AppStorage)
 
     private(set) var poolVolume: Double = 50.0
@@ -126,6 +144,21 @@ final class PoolWaterState {
             } catch {
                 print("Error saving dosing: \(error)")
             }
+        }
+
+        // Update last dosing info for status pill
+        lastDosingTimestamp = date
+        switch productId {
+        case "chlorine":
+            lastDosingChlorineAmount = amount
+        case "ph_minus":
+            lastDosingPHAmount = amount
+            lastDosingPHType = "pH-"
+        case "ph_plus":
+            lastDosingPHAmount = amount
+            lastDosingPHType = "pH+"
+        default:
+            break
         }
 
         // Recalculate after dosing
@@ -228,6 +261,33 @@ final class PoolWaterState {
 
         // Override trends for pending dosing effects (mixing not yet complete)
         overrideTrendsForPendingDosing(dosingHistory: dosingHistory)
+
+        // Load recent dosing events for status pill (if not already set this session)
+        if lastDosingTimestamp == nil, let context = modelContext {
+            let oneHourAgo = Date().addingTimeInterval(-3600)
+            var descriptor = FetchDescriptor<DosingEventModel>(
+                predicate: #Predicate { $0.timestamp > oneHourAgo },
+                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+            )
+            descriptor.fetchLimit = 10
+            if let events = try? context.fetch(descriptor), !events.isEmpty {
+                lastDosingTimestamp = events.first?.timestamp
+                for event in events {
+                    switch event.productId {
+                    case "chlorine":
+                        lastDosingChlorineAmount = event.amount
+                    case "ph_minus":
+                        lastDosingPHAmount = event.amount
+                        lastDosingPHType = "pH-"
+                    case "ph_plus":
+                        lastDosingPHAmount = event.amount
+                        lastDosingPHType = "pH+"
+                    default:
+                        break
+                    }
+                }
+            }
+        }
     }
 
     // MARK: - Prediction Data (for Popovers)

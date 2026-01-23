@@ -23,6 +23,7 @@ struct InfoPillsRow: View {
 struct InfoPill: View {
     let icon: String
     let text: String
+    var tint: Color? = nil
 
     var body: some View {
         HStack(spacing: 6) {
@@ -34,7 +35,10 @@ struct InfoPill: View {
         .foregroundStyle(.white.opacity(0.8))
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .glassEffect(.clear.interactive(), in: .capsule)
+        .glassEffect(
+            tint.map { .clear.tint($0).interactive() } ?? .clear.interactive(),
+            in: .capsule
+        )
     }
 }
 
