@@ -184,13 +184,19 @@ struct MessenSheet: View {
     @Environment(PoolWaterState.self) private var poolWaterState
 
     // TickPicker uses Int, we convert to/from Double
-    @State private var phSelection: Int = 12  // 6.0 + 12*0.1 = 7.2
+    @State private var phSelection: Int = 6  // 6.8 + 6*0.1 = 7.4
     @State private var chlorineSelection: Int = 10  // 0.0 + 10*0.1 = 1.0
     @State private var waterTemperature: Double = 26.0
     @State private var measurementDate: Date = Date()
 
-    private var phValue: Double { 6.0 + Double(phSelection) * 0.1 }
-    private var chlorineValue: Double { Double(chlorineSelection) * 0.1 }
+    private var phValue: Double { 6.8 + Double(phSelection) * 0.1 }
+    private var chlorineValue: Double {
+        if chlorineSelection <= 10 {
+            return Double(chlorineSelection) * 0.1
+        } else {
+            return 1.0 + Double(chlorineSelection - 10) * 0.5
+        }
+    }
 
     private var phConfig: TickConfig {
         .init(
@@ -221,6 +227,7 @@ struct MessenSheet: View {
                     VStack(spacing: 4) {
                         HStack {
                             Label("pH-Wert", systemImage: "drop.fill")
+                                .foregroundStyle(.white)
                             Spacer()
                             Text(String(format: "%.1f", phValue))
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -229,12 +236,13 @@ struct MessenSheet: View {
                                 .animation(.snappy, value: phSelection)
                         }
 
-                        TickPicker(count: 30, config: phConfig, selection: $phSelection)
+                        TickPicker(count: 12, config: phConfig, selection: $phSelection)
                     }
 
                     VStack(spacing: 4) {
                         HStack {
                             Label("Chlor", systemImage: "allergens.fill")
+                                .foregroundStyle(.white)
                             Spacer()
                             Text(String(format: "%.1f mg/l", chlorineValue))
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -243,12 +251,15 @@ struct MessenSheet: View {
                                 .animation(.snappy, value: chlorineSelection)
                         }
 
-                        TickPicker(count: 50, config: chlorineConfig, selection: $chlorineSelection)
+                        TickPicker(count: 18, config: chlorineConfig, selection: $chlorineSelection)
                     }
+                }
 
+                Section {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Label("Wassertemperatur", systemImage: "thermometer.medium")
+                                .foregroundStyle(.white)
                             Spacer()
                             Text(String(format: "%.0f °C", waterTemperature))
                                 .foregroundStyle(.secondary)
@@ -257,7 +268,7 @@ struct MessenSheet: View {
                                 .animation(.snappy, value: waterTemperature)
                         }
                         Slider(value: $waterTemperature, in: 10.0...40.0, step: 1.0)
-                            .tint(.orange)
+                            .tint(Color(hue: 0.6 * (1.0 - (waterTemperature - 10.0) / 30.0), saturation: 0.75, brightness: 0.9))
                     }
                 }
 
@@ -268,6 +279,7 @@ struct MessenSheet: View {
                         displayedComponents: [.date, .hourAndMinute]
                     ) {
                         Label("Zeitpunkt", systemImage: "clock")
+                            .foregroundStyle(.white)
                     }
                 }
             }
@@ -300,8 +312,12 @@ struct MessenSheet: View {
         }
         .onAppear {
             // Initialize with last measured values
-            phSelection = Int(((poolWaterState.lastPH - 6.0) / 0.1).rounded())
-            chlorineSelection = Int((poolWaterState.lastChlorine / 0.1).rounded())
+            phSelection = min(12, max(0, Int(((poolWaterState.lastPH - 6.8) / 0.1).rounded())))
+            if poolWaterState.lastChlorine <= 1.0 {
+                chlorineSelection = min(10, max(0, Int((poolWaterState.lastChlorine / 0.1).rounded())))
+            } else {
+                chlorineSelection = min(18, max(10, 10 + Int(((poolWaterState.lastChlorine - 1.0) / 0.5).rounded())))
+            }
         }
     }
 }
@@ -374,6 +390,7 @@ struct DosierenSheet: View {
                     VStack(spacing: 4) {
                         HStack {
                             Label("pH", systemImage: "drop.fill")
+                                .foregroundStyle(.white)
                             Spacer()
                             Text(String(format: "%.0f g", phAmount))
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -396,6 +413,7 @@ struct DosierenSheet: View {
                     VStack(spacing: 4) {
                         HStack {
                             Label("Chlor", systemImage: "allergens.fill")
+                                .foregroundStyle(.white)
                             Spacer()
                             Text(String(format: "%.0f g", chlorineAmount))
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -415,6 +433,7 @@ struct DosierenSheet: View {
                         displayedComponents: [.date, .hourAndMinute]
                     ) {
                         Label("Zeitpunkt", systemImage: "clock")
+                            .foregroundStyle(.white)
                     }
                 }
             }

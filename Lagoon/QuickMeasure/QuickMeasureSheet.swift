@@ -14,8 +14,9 @@ struct QuickMeasureSheet: View {
     @State private var currentDetent: PresentationDetent = QuickMeasureSheet.messenDetent
 
     // Messen values
-    @State private var phSelection: Int = 12
+    @State private var phSelection: Int = 6
     @State private var chlorineSelection: Int = 10
+    @State private var waterTemperature: Double = 26.0
 
     // Dosieren computed values
     @State private var recommendedPHAmount: Double = 0
@@ -31,8 +32,14 @@ struct QuickMeasureSheet: View {
     @State private var chlorineAmountSelection: Int = 0
     @State private var phType: PHType = .minus
 
-    private var phValue: Double { 6.0 + Double(phSelection) * 0.1 }
-    private var chlorineValue: Double { Double(chlorineSelection) * 0.1 }
+    private var phValue: Double { 6.8 + Double(phSelection) * 0.1 }
+    private var chlorineValue: Double {
+        if chlorineSelection <= 10 {
+            return Double(chlorineSelection) * 0.1
+        } else {
+            return 1.0 + Double(chlorineSelection - 10) * 0.5
+        }
+    }
     private var editedPHAmount: Double { Double(phAmountSelection) * 5.0 }
     private var editedChlorineAmount: Double { Double(chlorineAmountSelection) * 5.0 }
 
@@ -74,8 +81,17 @@ struct QuickMeasureSheet: View {
         )
     }
 
-    private static let messenDetent = PresentationDetent.height(320)
-    private static let dosierenDetent = PresentationDetent.height(300)
+    private static let messenDetent = PresentationDetent.height(415)
+
+    private var dosierenDetent: PresentationDetent {
+        if phInRange && chlorineInRange {
+            return .height(200)
+        } else if !phInRange && !chlorineInRange && recommendedPHAmount > 0 && recommendedChlorineAmount > 0 {
+            return .height(262)
+        } else {
+            return .height(212)
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -100,7 +116,7 @@ struct QuickMeasureSheet: View {
                             withAnimation {
                                 if phase == .bearbeiten {
                                     phase = .dosieren
-                                    currentDetent = Self.dosierenDetent
+                                    currentDetent = dosierenDetent
                                 } else {
                                     phase = .messen
                                     currentDetent = Self.messenDetent
@@ -118,7 +134,7 @@ struct QuickMeasureSheet: View {
                             prepareEditValues()
                             withAnimation {
                                 phase = .bearbeiten
-                                currentDetent = .medium
+                                currentDetent = .height(494)
                             }
                         } label: {
                             Image(systemName: "slider.horizontal.3")
@@ -127,11 +143,15 @@ struct QuickMeasureSheet: View {
                 }
             }
         }
-        .presentationDetents([Self.messenDetent, Self.dosierenDetent, .medium], selection: $currentDetent)
+        .presentationDetents([Self.messenDetent, .height(200), .height(212), .height(262), .height(494)], selection: $currentDetent)
         .interactiveDismissDisabled(phase != .messen)
         .onAppear {
-            phSelection = Int(((poolWaterState.lastPH - 6.0) / 0.1).rounded())
-            chlorineSelection = Int((poolWaterState.lastChlorine / 0.1).rounded())
+            phSelection = min(12, max(0, Int(((poolWaterState.lastPH - 6.8) / 0.1).rounded())))
+            if poolWaterState.lastChlorine <= 1.0 {
+                chlorineSelection = min(10, max(0, Int((poolWaterState.lastChlorine / 0.1).rounded())))
+            } else {
+                chlorineSelection = min(18, max(10, 10 + Int(((poolWaterState.lastChlorine - 1.0) / 0.5).rounded())))
+            }
         }
     }
 
@@ -151,6 +171,7 @@ struct QuickMeasureSheet: View {
             VStack(spacing: 4) {
                 HStack {
                     Label("pH-Wert", systemImage: "drop.fill")
+                        .foregroundStyle(.white)
                     Spacer()
                     Text(String(format: "%.1f", phValue))
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -158,12 +179,13 @@ struct QuickMeasureSheet: View {
                         .contentTransition(.numericText())
                         .animation(.snappy, value: phSelection)
                 }
-                TickPicker(count: 30, config: phTickConfig, selection: $phSelection)
+                TickPicker(count: 12, config: phTickConfig, selection: $phSelection)
             }
 
             VStack(spacing: 4) {
                 HStack {
                     Label("Chlor", systemImage: "allergens.fill")
+                        .foregroundStyle(.white)
                     Spacer()
                     Text(String(format: "%.1f mg/l", chlorineValue))
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -171,7 +193,25 @@ struct QuickMeasureSheet: View {
                         .contentTransition(.numericText())
                         .animation(.snappy, value: chlorineSelection)
                 }
-                TickPicker(count: 50, config: chlorineTickConfig, selection: $chlorineSelection)
+                TickPicker(count: 18, config: chlorineTickConfig, selection: $chlorineSelection)
+            }
+        }
+        .listSectionSpacing(16)
+
+        Section {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Label("Wassertemperatur", systemImage: "thermometer.medium")
+                        .foregroundStyle(.white)
+                    Spacer()
+                    Text(String(format: "%.0f °C", waterTemperature))
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                        .animation(.snappy, value: waterTemperature)
+                }
+                Slider(value: $waterTemperature, in: 10.0...40.0, step: 1.0)
+                    .tint(Color(hue: 0.6 * (1.0 - (waterTemperature - 10.0) / 30.0), saturation: 0.75, brightness: 0.9))
             }
         }
 
@@ -180,7 +220,7 @@ struct QuickMeasureSheet: View {
                 calculateRecommendation()
                 withAnimation {
                     phase = .dosieren
-                    currentDetent = Self.dosierenDetent
+                    currentDetent = dosierenDetent
                 }
             } label: {
                 Text("Messen")
@@ -193,6 +233,7 @@ struct QuickMeasureSheet: View {
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
         }
+        .listSectionSpacing(16)
     }
 
     // MARK: - Dosieren (Compact)
@@ -214,6 +255,7 @@ struct QuickMeasureSheet: View {
                 if !phInRange && recommendedPHAmount > 0 {
                     HStack {
                         Label(phProductName, systemImage: "drop.fill")
+                            .foregroundStyle(.white)
                         Spacer()
                         Text(String(format: "%.0f g", recommendedPHAmount))
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -224,6 +266,7 @@ struct QuickMeasureSheet: View {
                 if !chlorineInRange && recommendedChlorineAmount > 0 {
                     HStack {
                         Label(chlorineProductName, systemImage: "allergens.fill")
+                            .foregroundStyle(.white)
                         Spacer()
                         Text(String(format: "%.0f g", recommendedChlorineAmount))
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -235,20 +278,15 @@ struct QuickMeasureSheet: View {
 
         Section {
             SlideToConfirm(
-                config: .init(
-                    idleText: phInRange && chlorineInRange ? "Speichern" : "Dosieren",
-                    onSwipeText: "Wird gespeichert...",
-                    confirmationText: "Gespeichert",
-                    tint: phInRange && chlorineInRange ? .green : .blue,
-                    foregroundColor: .white
-                )
+                label: phInRange && chlorineInRange ? "Speichern" : "Dosieren",
+                icon: "chevron.right"
             ) {
                 saveAll(phAmount: recommendedPHAmount, chlorineAmount: recommendedChlorineAmount)
             }
             .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
-            .frame(height: 60)
+            .listRowInsets(EdgeInsets(top: 8, leading: 4, bottom: 0, trailing: 4))
         }
+        .listSectionSpacing(8)
     }
 
     // MARK: - Bearbeiten (Expanded)
@@ -259,6 +297,7 @@ struct QuickMeasureSheet: View {
             VStack(spacing: 4) {
                 HStack {
                     Label("pH", systemImage: "drop.fill")
+                        .foregroundStyle(.white)
                     Spacer()
                     Text(String(format: "%.0f g", editedPHAmount))
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -282,6 +321,7 @@ struct QuickMeasureSheet: View {
             VStack(spacing: 4) {
                 HStack {
                     Label("Chlor", systemImage: "allergens.fill")
+                        .foregroundStyle(.white)
                     Spacer()
                     Text(String(format: "%.0f g", editedChlorineAmount))
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -296,19 +336,13 @@ struct QuickMeasureSheet: View {
 
         Section {
             SlideToConfirm(
-                config: .init(
-                    idleText: "Dosieren",
-                    onSwipeText: "Wird gespeichert...",
-                    confirmationText: "Gespeichert",
-                    tint: .blue,
-                    foregroundColor: .white
-                )
+                label: "Dosieren",
+                icon: "chevron.right"
             ) {
                 saveAll(phAmount: editedPHAmount, chlorineAmount: editedChlorineAmount)
             }
             .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
-            .frame(height: 60)
+            .listRowInsets(EdgeInsets(top: 18, leading: 4, bottom: 0, trailing: 4))
         }
     }
 
@@ -363,7 +397,8 @@ struct QuickMeasureSheet: View {
     private func saveAll(phAmount: Double, chlorineAmount: Double) {
         poolWaterState.recordMeasurement(
             chlorine: chlorineValue,
-            pH: phValue
+            pH: phValue,
+            waterTemperature: waterTemperature
         )
 
         if phAmount > 0 {

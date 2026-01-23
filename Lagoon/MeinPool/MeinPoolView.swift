@@ -85,9 +85,9 @@ struct MeinPoolView: View {
                     dismiss()
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.8))
-                        .frame(width: 36, height: 36)
+                        .frame(width: 44, height: 44)
                 }
                 .glassEffect(.regular.interactive(), in: .circle)
 
@@ -97,9 +97,9 @@ struct MeinPoolView: View {
                     showSettings = true
                 } label: {
                     Image(systemName: "gearshape")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.8))
-                        .frame(width: 36, height: 36)
+                        .frame(width: 44, height: 44)
                 }
                 .glassEffect(.regular.interactive(), in: .circle)
             }
@@ -175,6 +175,7 @@ struct EditMessenSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Label("pH-Wert", systemImage: "drop.fill")
+                                .foregroundStyle(.white)
                             Spacer()
                             Text(String(format: "%.1f", phValue))
                                 .foregroundStyle(.secondary)
@@ -189,6 +190,7 @@ struct EditMessenSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Label("Chlor", systemImage: "allergens.fill")
+                                .foregroundStyle(.white)
                             Spacer()
                             Text(String(format: "%.1f mg/l", chlorineValue))
                                 .foregroundStyle(.secondary)
@@ -203,6 +205,7 @@ struct EditMessenSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Label("Wassertemperatur", systemImage: "thermometer.medium")
+                                .foregroundStyle(.white)
                             Spacer()
                             Text(String(format: "%.0f °C", waterTemperature))
                                 .foregroundStyle(.secondary)
@@ -222,6 +225,7 @@ struct EditMessenSheet: View {
                         displayedComponents: [.date, .hourAndMinute]
                     ) {
                         Label("Zeitpunkt", systemImage: "clock")
+                            .foregroundStyle(.white)
                     }
                 }
             }
@@ -329,6 +333,7 @@ struct EditDosierenSheet: View {
                         displayedComponents: [.date, .hourAndMinute]
                     ) {
                         Label("Zeitpunkt", systemImage: "clock")
+                            .foregroundStyle(.white)
                     }
                 }
             }
