@@ -12,9 +12,14 @@ struct DashboardView: View {
 
     @State private var showMessenSheet = false
     @State private var showDosierenSheet = false
+    @State private var showQuickMeasure = false
     @State private var showPoolcare = false
     @State private var showMeinPool = false
     @Namespace private var namespace
+
+    private var anySheetPresented: Bool {
+        showMessenSheet || showDosierenSheet || showQuickMeasure
+    }
 
 
     var body: some View {
@@ -78,6 +83,8 @@ struct DashboardView: View {
                             prediction: poolWaterState.chlorinePrediction
                         )
                     }
+                    .offset(y: anySheetPresented ? -140 : 0)
+                    .animation(.smooth, value: anySheetPresented)
 
                     Spacer()
 
@@ -157,6 +164,12 @@ struct DashboardView: View {
         .sheet(isPresented: $showDosierenSheet) {
             DosierenSheet()
                 .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showQuickMeasure) {
+            QuickMeasureSheet()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openQuickMeasure)) { _ in
+            showQuickMeasure = true
         }
         .onAppear {
             poolWaterState.setModelContext(modelContext)
