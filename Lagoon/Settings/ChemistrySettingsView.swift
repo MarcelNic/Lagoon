@@ -12,6 +12,10 @@ struct ChemistrySettingsView: View {
     @AppStorage("chlorineMin") private var chlorineMin: Double = 0.5
     @AppStorage("chlorineMax") private var chlorineMax: Double = 1.5
 
+    // Dosiereinheit
+    @AppStorage("dosingUnit") private var dosingUnit: String = "gramm"
+    @AppStorage("cupGrams") private var cupGrams: Double = 50.0
+
     var body: some View {
         Form {
             Section("Idealbereich pH") {
@@ -57,6 +61,26 @@ struct ChemistrySettingsView: View {
                         .animation(.snappy, value: chlorineMax)
                     Stepper("", value: $chlorineMax, in: 0.0...5.0, step: 0.1)
                         .labelsHidden()
+                }
+            }
+
+            Section("Dosierung") {
+                Picker("Einheit", selection: $dosingUnit) {
+                    Text("Gramm").tag("gramm")
+                    Text("Becher").tag("becher")
+                }
+
+                if dosingUnit == "becher" {
+                    HStack {
+                        Text("Gramm pro Becher")
+                        Spacer()
+                        Text(String(format: "%.0f g", cupGrams))
+                            .monospacedDigit()
+                            .contentTransition(.numericText())
+                            .animation(.snappy, value: cupGrams)
+                        Stepper("", value: $cupGrams, in: 10...500, step: 5)
+                            .labelsHidden()
+                    }
                 }
             }
         }

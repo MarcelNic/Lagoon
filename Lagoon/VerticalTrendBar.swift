@@ -49,6 +49,7 @@ struct VerticalTrendBar: View {
     let unit: String
     let scalePosition: ScalePosition
     let prediction: PredictionData?
+    var compact: Bool = false
 
     @State private var showPredictionPopover = false
     @Namespace private var namespace
@@ -91,7 +92,8 @@ struct VerticalTrendBar: View {
         trend: TrendDirection = .stable,
         unit: String = "",
         scalePosition: ScalePosition = .leading,
-        prediction: PredictionData? = nil
+        prediction: PredictionData? = nil,
+        compact: Bool = false
     ) {
         self.title = title
         self.value = value
@@ -105,6 +107,7 @@ struct VerticalTrendBar: View {
         self.unit = unit
         self.scalePosition = scalePosition
         self.prediction = prediction
+        self.compact = compact
     }
 
     private var normalizedValue: CGFloat {
@@ -131,6 +134,7 @@ struct VerticalTrendBar: View {
                 if scalePosition == .leading {
                     ZStack(alignment: .topTrailing) {
                         scaleMarks(leading: true)
+                            .opacity(compact ? 0 : 1)
 
                         valueLabelView
                             .offset(y: markerYPosition - valuePillHeight / 2)
@@ -146,6 +150,7 @@ struct VerticalTrendBar: View {
                         .font(.system(size: 40, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
                         .fixedSize()
+                        .opacity(compact ? 0 : 1)
 
                     Button {
                         // Action für Bar-Details
@@ -172,6 +177,7 @@ struct VerticalTrendBar: View {
                 if scalePosition == .trailing {
                     ZStack(alignment: .topLeading) {
                         scaleMarks(leading: false)
+                            .opacity(compact ? 0 : 1)
 
                         valueLabelView
                             .offset(y: markerYPosition - valuePillHeight / 2)
@@ -182,6 +188,7 @@ struct VerticalTrendBar: View {
                 }
             }
         }
+        .animation(.smooth, value: compact)
     }
 
     // MARK: - Idealbereich Bar

@@ -14,6 +14,7 @@ struct DashboardView: View {
     @State private var showMessenSheet = false
     @State private var showDosierenSheet = false
     @State private var showQuickMeasure = false
+    @State private var quickMeasurePhase: Int = 0  // 0=messen, 1=dosieren, 2=bearbeiten
     @State private var showPoolcare = false
     @State private var showMeinPool = false
     @State private var timeOffsetSelection: Int = 0
@@ -21,6 +22,18 @@ struct DashboardView: View {
 
     private var anySheetPresented: Bool {
         showMessenSheet || showDosierenSheet || showQuickMeasure
+    }
+
+    private var barScale: CGFloat {
+        guard anySheetPresented else { return 1.0 }
+        if showQuickMeasure {
+            switch quickMeasurePhase {
+            case 1: return 1.0    // dosieren – kleines sheet
+            case 2: return 0.65   // bearbeiten – großes sheet
+            default: return 0.80  // messen
+            }
+        }
+        return 0.80
     }
 
     private var simulationTimeLabel: String {
@@ -77,7 +90,8 @@ struct DashboardView: View {
                             idealRangeColor: .phIdealColor,
                             trend: poolWaterState.phTrend,
                             scalePosition: .leading,
-                            prediction: poolWaterState.phPrediction
+                            prediction: poolWaterState.phPrediction,
+                            compact: anySheetPresented
                         )
 
                         VerticalTrendBar(
@@ -91,11 +105,14 @@ struct DashboardView: View {
                             idealRangeColor: .chlorineIdealColor,
                             trend: poolWaterState.chlorineTrend,
                             scalePosition: .trailing,
-                            prediction: poolWaterState.chlorinePrediction
+                            prediction: poolWaterState.chlorinePrediction,
+                            compact: anySheetPresented
                         )
                     }
+                    .scaleEffect(barScale, anchor: .top)
                     .offset(y: anySheetPresented ? -140 : 0)
                     .animation(.smooth, value: anySheetPresented)
+                    .animation(.smooth, value: quickMeasurePhase)
 
                     Spacer()
 
@@ -122,6 +139,8 @@ struct DashboardView: View {
                         .frame(height: 16)
                     }
                     .padding(.horizontal, 40)
+                    .opacity(anySheetPresented ? 0 : 1)
+                    .animation(.smooth, value: anySheetPresented)
                     .onChange(of: timeOffsetSelection) { _, newValue in
                         poolWaterState.simulationOffsetHours = Double(newValue)
                         poolWaterState.recalculate()
@@ -217,8 +236,8 @@ struct DashboardView: View {
             DosierenSheet()
                 .presentationDetents([.medium])
         }
-        .sheet(isPresented: $showQuickMeasure) {
-            QuickMeasureSheet()
+        .sheet(isPresented: $showQuickMeasure, onDismiss: { quickMeasurePhase = 0 }) {
+            QuickMeasureSheet(externalPhase: $quickMeasurePhase)
         }
         .onReceive(NotificationCenter.default.publisher(for: .openQuickMeasure)) { _ in
             showQuickMeasure = true
@@ -385,13 +404,24 @@ struct DosierenSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(PoolWaterState.self) private var poolWaterState
 
+    @AppStorage("dosingUnit") private var dosingUnit: String = "gramm"
+    @AppStorage("cupGrams") private var cupGrams: Double = 50.0
+
     @State private var phType: PHType = .minus
     @State private var phAmountSelection: Int = 0  // 0-60 → 0-300g (step 5)
     @State private var chlorineAmountSelection: Int = 0  // 0-100 → 0-500g (step 5)
     @State private var dosingDate: Date = Date()
 
-    private var phAmount: Double { Double(phAmountSelection) * 5.0 }
-    private var chlorineAmount: Double { Double(chlorineAmountSelection) * 5.0 }
+    private var phAmount: Double {
+        dosingUnit == "becher"
+            ? DosingFormatter.cupTickToGrams(phAmountSelection, cupGrams: cupGrams)
+            : Double(phAmountSelection) * 5.0
+    }
+    private var chlorineAmount: Double {
+        dosingUnit == "becher"
+            ? DosingFormatter.cupTickToGrams(chlorineAmountSelection, cupGrams: cupGrams)
+            : Double(chlorineAmountSelection) * 5.0
+    }
 
     enum PHType: String, CaseIterable {
         case minus, plus
@@ -449,7 +479,7 @@ struct DosierenSheet: View {
                             Label("pH", systemImage: "drop.fill")
                                 .foregroundStyle(.white)
                             Spacer()
-                            Text(String(format: "%.0f g", phAmount))
+                            Text(DosingFormatter.format(grams: phAmount, unit: dosingUnit, cupGrams: cupGrams))
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                                 .monospacedDigit()
                                 .contentTransition(.numericText())
@@ -462,7 +492,7 @@ struct DosierenSheet: View {
                         .pickerStyle(.segmented)
                         .labelsHidden()
 
-                        TickPicker(count: 60, config: phConfig, selection: $phAmountSelection)
+                        TickPicker(count: dosingUnit == "becher" ? DosingFormatter.cupTickCount : 60, config: phConfig, selection: $phAmountSelection)
                     }
                 }
 
@@ -472,14 +502,14 @@ struct DosierenSheet: View {
                             Label("Chlor", systemImage: "allergens.fill")
                                 .foregroundStyle(.white)
                             Spacer()
-                            Text(String(format: "%.0f g", chlorineAmount))
+                            Text(DosingFormatter.format(grams: chlorineAmount, unit: dosingUnit, cupGrams: cupGrams))
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                                 .monospacedDigit()
                                 .contentTransition(.numericText())
                                 .animation(.snappy, value: chlorineAmountSelection)
                         }
 
-                        TickPicker(count: 100, config: chlorineConfig, selection: $chlorineAmountSelection)
+                        TickPicker(count: dosingUnit == "becher" ? DosingFormatter.cupTickCount : 100, config: chlorineConfig, selection: $chlorineAmountSelection)
                     }
                 }
 

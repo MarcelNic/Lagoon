@@ -4,10 +4,15 @@ struct QuickMeasureSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(PoolWaterState.self) private var poolWaterState
 
-    enum Phase {
-        case messen
-        case dosieren
-        case bearbeiten
+    @AppStorage("dosingUnit") private var dosingUnit: String = "gramm"
+    @AppStorage("cupGrams") private var cupGrams: Double = 50.0
+
+    @Binding var externalPhase: Int
+
+    enum Phase: Int {
+        case messen = 0
+        case dosieren = 1
+        case bearbeiten = 2
     }
 
     @State private var phase: Phase = .messen
@@ -40,8 +45,16 @@ struct QuickMeasureSheet: View {
             return 1.0 + Double(chlorineSelection - 10) * 0.5
         }
     }
-    private var editedPHAmount: Double { Double(phAmountSelection) * 5.0 }
-    private var editedChlorineAmount: Double { Double(chlorineAmountSelection) * 5.0 }
+    private var editedPHAmount: Double {
+        dosingUnit == "becher"
+            ? DosingFormatter.cupTickToGrams(phAmountSelection, cupGrams: cupGrams)
+            : Double(phAmountSelection) * 5.0
+    }
+    private var editedChlorineAmount: Double {
+        dosingUnit == "becher"
+            ? DosingFormatter.cupTickToGrams(chlorineAmountSelection, cupGrams: cupGrams)
+            : Double(chlorineAmountSelection) * 5.0
+    }
 
     enum PHType: String, CaseIterable {
         case minus, plus
@@ -153,6 +166,9 @@ struct QuickMeasureSheet: View {
                 chlorineSelection = min(18, max(10, 10 + Int(((poolWaterState.lastChlorine - 1.0) / 0.5).rounded())))
             }
         }
+        .onChange(of: phase) { _, newPhase in
+            externalPhase = newPhase.rawValue
+        }
     }
 
     private var headerTitle: String {
@@ -257,7 +273,7 @@ struct QuickMeasureSheet: View {
                         Label(phProductName, systemImage: "drop.fill")
                             .foregroundStyle(.white)
                         Spacer()
-                        Text(String(format: "%.0f g", recommendedPHAmount))
+                        Text(DosingFormatter.format(grams: recommendedPHAmount, unit: dosingUnit, cupGrams: cupGrams))
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .monospacedDigit()
                     }
@@ -268,7 +284,7 @@ struct QuickMeasureSheet: View {
                         Label(chlorineProductName, systemImage: "allergens.fill")
                             .foregroundStyle(.white)
                         Spacer()
-                        Text(String(format: "%.0f g", recommendedChlorineAmount))
+                        Text(DosingFormatter.format(grams: recommendedChlorineAmount, unit: dosingUnit, cupGrams: cupGrams))
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .monospacedDigit()
                     }
@@ -299,7 +315,7 @@ struct QuickMeasureSheet: View {
                     Label("pH", systemImage: "drop.fill")
                         .foregroundStyle(.white)
                     Spacer()
-                    Text(String(format: "%.0f g", editedPHAmount))
+                    Text(DosingFormatter.format(grams: editedPHAmount, unit: dosingUnit, cupGrams: cupGrams))
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .contentTransition(.numericText())
@@ -313,7 +329,7 @@ struct QuickMeasureSheet: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
 
-                TickPicker(count: 60, config: phTickConfig, selection: $phAmountSelection)
+                TickPicker(count: dosingUnit == "becher" ? DosingFormatter.cupTickCount : 60, config: phTickConfig, selection: $phAmountSelection)
             }
         }
 
@@ -323,14 +339,14 @@ struct QuickMeasureSheet: View {
                     Label("Chlor", systemImage: "allergens.fill")
                         .foregroundStyle(.white)
                     Spacer()
-                    Text(String(format: "%.0f g", editedChlorineAmount))
+                    Text(DosingFormatter.format(grams: editedChlorineAmount, unit: dosingUnit, cupGrams: cupGrams))
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .contentTransition(.numericText())
                         .animation(.snappy, value: chlorineAmountSelection)
                 }
 
-                TickPicker(count: 100, config: chlorineTickConfig, selection: $chlorineAmountSelection)
+                TickPicker(count: dosingUnit == "becher" ? DosingFormatter.cupTickCount : 100, config: chlorineTickConfig, selection: $chlorineAmountSelection)
             }
         }
 
@@ -390,8 +406,13 @@ struct QuickMeasureSheet: View {
     }
 
     private func prepareEditValues() {
-        phAmountSelection = Int((recommendedPHAmount / 5.0).rounded())
-        chlorineAmountSelection = Int((recommendedChlorineAmount / 5.0).rounded())
+        if dosingUnit == "becher" {
+            phAmountSelection = DosingFormatter.gramsToCupTick(recommendedPHAmount, cupGrams: cupGrams)
+            chlorineAmountSelection = DosingFormatter.gramsToCupTick(recommendedChlorineAmount, cupGrams: cupGrams)
+        } else {
+            phAmountSelection = Int((recommendedPHAmount / 5.0).rounded())
+            chlorineAmountSelection = Int((recommendedChlorineAmount / 5.0).rounded())
+        }
     }
 
     private func saveAll(phAmount: Double, chlorineAmount: Double) {

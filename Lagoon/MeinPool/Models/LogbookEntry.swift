@@ -165,10 +165,15 @@ extension Measurement {
 extension DosingEventModel {
     /// Convert SwiftData DosingEventModel to LogbookEntry
     func toLogbookEntry() -> LogbookEntry {
-        LogbookEntry(
+        let dosingUnit = UserDefaults.standard.string(forKey: "dosingUnit") ?? "gramm"
+        let cupGrams = UserDefaults.standard.double(forKey: "cupGrams")
+        let effectiveCupGrams = cupGrams > 0 ? cupGrams : 50.0
+        let formattedAmount = DosingFormatter.format(grams: amount, unit: dosingUnit, cupGrams: effectiveCupGrams)
+
+        return LogbookEntry(
             type: .dosieren,
             timestamp: timestamp,
-            summary: summary,
+            summary: "\(formattedAmount) \(productName)",
             product: productName,
             amount: amount,
             unit: unit
