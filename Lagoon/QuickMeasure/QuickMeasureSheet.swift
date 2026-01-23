@@ -106,6 +106,17 @@ struct QuickMeasureSheet: View {
         }
     }
 
+    private var targetDetent: PresentationDetent {
+        switch phase {
+        case .messen:
+            return Self.messenDetent
+        case .dosieren:
+            return dosierenDetent
+        case .bearbeiten:
+            return .height(494)
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -158,6 +169,11 @@ struct QuickMeasureSheet: View {
         }
         .presentationDetents([Self.messenDetent, .height(200), .height(212), .height(262), .height(494)], selection: $currentDetent)
         .interactiveDismissDisabled(phase != .messen)
+        .onChange(of: currentDetent) { _, newDetent in
+            if newDetent != targetDetent {
+                currentDetent = targetDetent
+            }
+        }
         .onAppear {
             phSelection = min(12, max(0, Int(((poolWaterState.lastPH - 6.8) / 0.1).rounded())))
             if poolWaterState.lastChlorine <= 1.0 {
