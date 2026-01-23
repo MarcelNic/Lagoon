@@ -285,6 +285,9 @@ struct VerticalTrendBar: View {
 
                 Text(formatValue(value) + (unit.isEmpty ? "" : " \(unit)"))
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+                    .animation(.snappy, value: value)
 
                 // Apple Intelligence Icon rechts bei trailing (Cl)
                 if scalePosition == .trailing && prediction != nil {

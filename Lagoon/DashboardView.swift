@@ -61,21 +61,8 @@ struct DashboardView: View {
                 .ignoresSafeArea()
 
                 VStack {
-                    HStack {
-                        Spacer()
-                        Button {
-                            NotificationCenter.default.post(name: .openQuickMeasure, object: nil)
-                        } label: {
-                            Image(systemName: "bell.badge")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(.orange.opacity(0.7))
-                        }
-                        .padding(.trailing, 20)
-                        .padding(.top, 8)
-                    }
-
                     Spacer()
-                        .frame(maxHeight: 120)
+                        .frame(maxHeight: 100)
 
                     // Dashboard Content - Classic Style
                     HStack(spacing: 60) {
@@ -110,6 +97,8 @@ struct DashboardView: View {
                     .offset(y: anySheetPresented ? -140 : 0)
                     .animation(.smooth, value: anySheetPresented)
 
+                    Spacer()
+
                     // Time simulation picker
                     VStack(spacing: 4) {
                         Text(simulationTimeLabel)
@@ -133,7 +122,6 @@ struct DashboardView: View {
                         .frame(height: 16)
                     }
                     .padding(.horizontal, 40)
-                    .padding(.top, 20)
                     .onChange(of: timeOffsetSelection) { _, newValue in
                         poolWaterState.simulationOffsetHours = Double(newValue)
                         poolWaterState.recalculate()
@@ -198,6 +186,17 @@ struct DashboardView: View {
                         }
                     }
                     .padding(.bottom, 8)
+                }
+                .overlay(alignment: .topTrailing) {
+                    Button {
+                        NotificationCenter.default.post(name: .openQuickMeasure, object: nil)
+                    } label: {
+                        Image(systemName: "bell.badge")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.orange.opacity(0.7))
+                    }
+                    .padding(.trailing, 20)
+                    .padding(.top, 8)
                 }
                 .toolbar(.hidden, for: .navigationBar)
                 .navigationDestination(isPresented: $showPoolcare) {
