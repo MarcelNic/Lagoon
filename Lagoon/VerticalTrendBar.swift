@@ -138,7 +138,7 @@ struct VerticalTrendBar: View {
 
                         valueLabelView
                             .offset(y: markerYPosition - valuePillHeight / 2)
-                            .padding(.trailing, 4)
+                            .padding(.trailing, 15)
                     }
                     .padding(.trailing, 12)
                     .padding(.top, titleHeight + titleBarSpacing)
@@ -150,6 +150,7 @@ struct VerticalTrendBar: View {
                         .font(.system(size: 40, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
                         .fixedSize()
+                        .frame(width: barWidth)
                         .opacity(compact ? 0 : 1)
 
                     Button {
@@ -181,7 +182,7 @@ struct VerticalTrendBar: View {
 
                         valueLabelView
                             .offset(y: markerYPosition - valuePillHeight / 2)
-                            .padding(.leading, 4)
+                            .padding(.leading, 15)
                     }
                     .padding(.leading, 12)
                     .padding(.top, titleHeight + titleBarSpacing)
@@ -223,6 +224,7 @@ struct VerticalTrendBar: View {
     private func scaleMarks(leading: Bool) -> some View {
         let steps = 10
         let majorInterval = 2
+        let labelHeight: CGFloat = 14
 
         return ZStack {
             ForEach(0...steps, id: \.self) { i in
@@ -230,6 +232,12 @@ struct VerticalTrendBar: View {
                 let normalizedPosition = CGFloat(steps - i) / CGFloat(steps)
                 let scaleValue = minValue + Double(normalizedPosition) * (maxValue - minValue)
                 let yPosition = scaleTopOffset + (1 - normalizedPosition) * scaleHeight - barHeight / 2
+
+                // Check overlap with value pill
+                let labelY = scaleTopOffset + (1 - normalizedPosition) * scaleHeight
+                let distance = abs(markerYPosition - labelY)
+                let overlapThreshold = (valuePillHeight + labelHeight) / 2
+                let labelVisible = !isMajor || distance >= overlapThreshold
 
                 HStack(spacing: 4) {
                     if leading {
@@ -239,6 +247,7 @@ struct VerticalTrendBar: View {
                                 .font(.system(size: 10, weight: .medium, design: .rounded))
                                 .foregroundStyle(.white.opacity(0.6))
                                 .frame(width: 28, alignment: .trailing)
+                                .opacity(labelVisible ? 1 : 0)
                         } else {
                             Color.clear
                                 .frame(width: 28)
@@ -264,6 +273,7 @@ struct VerticalTrendBar: View {
                                 .font(.system(size: 10, weight: .medium, design: .rounded))
                                 .foregroundStyle(.white.opacity(0.6))
                                 .frame(width: 28, alignment: .leading)
+                                .opacity(labelVisible ? 1 : 0)
                         } else {
                             Color.clear
                                 .frame(width: 28)
@@ -274,6 +284,7 @@ struct VerticalTrendBar: View {
             }
         }
         .frame(height: barHeight)
+        .animation(.smooth, value: normalizedValue)
     }
 
     // MARK: - Wert Label mit Apple Intelligence Icon

@@ -95,10 +95,9 @@ struct DashboardView: View {
 
                 VStack {
                     Spacer()
-                        .frame(maxHeight: 100)
 
                     // Dashboard Content - Classic Style
-                    HStack(spacing: 60) {
+                    HStack(spacing: 72) {
                         VerticalTrendBar(
                             title: "pH",
                             value: poolWaterState.estimatedPH,
@@ -113,6 +112,7 @@ struct DashboardView: View {
                             prediction: poolWaterState.phPrediction,
                             compact: anySheetPresented
                         )
+                        .frame(maxWidth: .infinity, alignment: .trailing)
 
                         VerticalTrendBar(
                             title: "Cl",
@@ -128,13 +128,13 @@ struct DashboardView: View {
                             prediction: poolWaterState.chlorinePrediction,
                             compact: anySheetPresented
                         )
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .scaleEffect(barScale, anchor: .top)
-                    .offset(y: anySheetPresented ? -140 : 0)
+                    .offset(y: anySheetPresented ? -100 : 0)
                     .animation(.smooth, value: anySheetPresented)
                     .animation(.smooth, value: quickMeasurePhase)
-
-                    Spacer()
+                    .padding(.bottom, 20)
 
                     // Dosing status pill
                     if poolWaterState.recentDosingActive {
@@ -185,6 +185,7 @@ struct DashboardView: View {
                         .frame(height: 16)
                     }
                     .padding(.horizontal, 40)
+                    .padding(.top, 20)
                     .opacity(anySheetPresented ? 0 : 1)
                     .animation(.smooth, value: anySheetPresented)
                     .onChange(of: timeOffsetSelection) { _, newValue in
