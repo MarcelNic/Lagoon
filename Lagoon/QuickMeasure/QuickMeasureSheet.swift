@@ -432,10 +432,14 @@ struct QuickMeasureSheet: View {
     }
 
     private func saveAll(phAmount: Double, chlorineAmount: Double) {
+        let now = Date()
+        let dosingDate = now.addingTimeInterval(1)
+
         poolWaterState.recordMeasurement(
             chlorine: chlorineValue,
             pH: phValue,
-            waterTemperature: waterTemperature
+            waterTemperature: waterTemperature,
+            date: now
         )
 
         if phAmount > 0 {
@@ -443,7 +447,8 @@ struct QuickMeasureSheet: View {
                 productId: phType.productId,
                 productName: phType.productName,
                 amount: phAmount,
-                unit: "g"
+                unit: "g",
+                date: dosingDate
             )
         }
 
@@ -452,7 +457,8 @@ struct QuickMeasureSheet: View {
                 productId: "chlorine",
                 productName: "Chlorgranulat",
                 amount: chlorineAmount,
-                unit: "g"
+                unit: "g",
+                date: dosingDate
             )
         }
 
