@@ -29,15 +29,15 @@ struct SlideToConfirm: View {
             let progress = min(1, max(0, offset / maxOffset))
 
             ZStack(alignment: .leading) {
-                // Track (Liquid Glass Clear)
+                // Track (Liquid Glass)
                 Color.clear
-                    .glassEffect(.clear, in: .capsule(style: .continuous))
+                    .glassEffect(.regular.tint(Color.black.opacity(0.1)), in: .capsule(style: .continuous))
 
                 // Dots across the track
                 HStack(spacing: 16) {
                     ForEach(0..<8, id: \.self) { _ in
                         Circle()
-                            .fill(.secondary.opacity(0.3))
+                            .fill(Color(light: Color.black, dark: Color.white).opacity(0.5))
                             .frame(width: 6, height: 6)
                     }
                 }

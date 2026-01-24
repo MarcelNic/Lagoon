@@ -17,8 +17,8 @@ struct PoolcareView: View {
             // Background
             LinearGradient(
                 colors: [
-                    Color(hex: "0a1628"),
-                    Color(hex: "1a3a5c")
+                    Color(light: Color(hex: "3ab4d6"), dark: Color(hex: "0a1628")),
+                    Color(light: Color(hex: "0e94c4"), dark: Color(hex: "1a3a5c"))
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -50,7 +50,7 @@ struct PoolcareView: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.8))
+                        .foregroundStyle(Color(light: Color.black, dark: Color.white))
                         .frame(width: 44, height: 44)
                 }
                 .glassEffect(.regular.interactive(), in: .circle)
@@ -59,7 +59,7 @@ struct PoolcareView: View {
 
                 Text("Poolcare")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color(light: Color.black, dark: Color.white))
 
                 Spacer()
 
@@ -68,7 +68,7 @@ struct PoolcareView: View {
                 } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.8))
+                        .foregroundStyle(Color(light: Color.black, dark: Color.white))
                         .frame(width: 44, height: 44)
                 }
                 .glassEffect(.regular.interactive(), in: .circle)

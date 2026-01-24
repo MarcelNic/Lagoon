@@ -16,7 +16,7 @@ struct ScenarioZone: View {
             HStack {
                 Text("Szenarien")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.5))
                     .textCase(.uppercase)
                 Spacer()
             }
@@ -60,16 +60,16 @@ struct ScenarioButton: View {
             HStack(spacing: 10) {
                 Image(systemName: icon)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color(light: Color.black, dark: Color.white))
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title)
                         .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color(light: Color.black, dark: Color.white))
 
                     Text(status)
                         .font(.system(size: 12))
-                        .foregroundStyle(isActive ? .green : .white.opacity(0.5))
+                        .foregroundStyle(isActive ? .green : Color(light: Color.black, dark: Color.white).opacity(0.5))
                 }
 
                 Spacer()

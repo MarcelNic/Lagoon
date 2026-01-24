@@ -43,7 +43,7 @@ struct QuickActionButton: View {
                 Text(type.title)
                     .font(.system(size: 15, weight: .medium))
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(Color(light: Color.black, dark: Color.white))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
         }
@@ -62,16 +62,16 @@ struct ActiveActionCard: View {
         HStack(spacing: 14) {
             Image(systemName: action.type.icon)
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(Color(light: Color.black, dark: Color.white))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(action.type.activeLabel)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color(light: Color.black, dark: Color.white))
 
                 Text(formatRemainingTime(action.remainingTime))
                     .font(.system(size: 14, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.6))
                     .contentTransition(.numericText())
             }
 
@@ -79,11 +79,11 @@ struct ActiveActionCard: View {
 
             ZStack {
                 Circle()
-                    .stroke(.white.opacity(0.2), lineWidth: 3)
+                    .stroke(Color(light: Color.black, dark: Color.white).opacity(0.2), lineWidth: 3)
 
                 Circle()
                     .trim(from: 0, to: action.progress)
-                    .stroke(.white, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .stroke(Color(light: Color.black, dark: Color.white), style: StrokeStyle(lineWidth: 3, lineCap: .round))
                     .rotationEffect(.degrees(-90))
             }
             .frame(width: 32, height: 32)
@@ -95,7 +95,7 @@ struct ActiveActionCard: View {
             } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.6))
                     .frame(width: 32, height: 32)
             }
             .buttonStyle(.plain)

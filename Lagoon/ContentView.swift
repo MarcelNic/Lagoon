@@ -19,8 +19,8 @@ struct ContentView: View {
             ZStack {
                 LinearGradient(
                     colors: [
-                        Color(hex: "0a1628"),
-                        Color(hex: "1a3a5c")
+                        Color(light: Color(hex: "3ab4d6"), dark: Color(hex: "0a1628")),
+                        Color(light: Color(hex: "0e94c4"), dark: Color(hex: "1a3a5c"))
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -39,7 +39,7 @@ struct ContentView: View {
                             } label: {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 50, style: .continuous)
-                                        .fill(.white.opacity(0.001))
+                                        .fill(Color(light: Color.black, dark: Color.white).opacity(0.001))
 
                                     CircularArcProgressView(
                                         value: 0.35,
@@ -54,7 +54,7 @@ struct ContentView: View {
                                         HStack {
                                             Text("pH")
                                                 .font(.system(size: 17, weight: .semibold))
-                                                .foregroundStyle(.white)
+                                                .foregroundStyle(Color(light: Color.black, dark: Color.white))
                                             Spacer()
                                             Text("vor 2 Std.")
                                                 .font(.system(size: 15, weight: .medium))
@@ -65,7 +65,7 @@ struct ContentView: View {
 
                                         Text("7.2")
                                             .font(.system(size: 28, weight: .bold, design: .rounded))
-                                            .foregroundStyle(.white)
+                                            .foregroundStyle(Color(light: Color.black, dark: Color.white))
                                     }
                                     .padding(.horizontal, 35)
                                     .padding(.vertical, 30)
@@ -81,7 +81,7 @@ struct ContentView: View {
                             } label: {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 50, style: .continuous)
-                                        .fill(.white.opacity(0.001))
+                                        .fill(Color(light: Color.black, dark: Color.white).opacity(0.001))
 
                                     CircularArcProgressView(
                                         value: 0.3,
@@ -96,7 +96,7 @@ struct ContentView: View {
                                         HStack {
                                             Text("Chlor")
                                                 .font(.system(size: 17, weight: .semibold))
-                                                .foregroundStyle(.white)
+                                                .foregroundStyle(Color(light: Color.black, dark: Color.white))
                                             Spacer()
                                             Text("vor 5 Std.")
                                                 .font(.system(size: 15, weight: .medium))
@@ -107,7 +107,7 @@ struct ContentView: View {
 
                                         Text("1.5")
                                             .font(.system(size: 28, weight: .bold, design: .rounded))
-                                            .foregroundStyle(.white)
+                                            .foregroundStyle(Color(light: Color.black, dark: Color.white))
                                     }
                                     .padding(.horizontal, 35)
                                     .padding(.vertical, 30)
@@ -132,7 +132,7 @@ struct ContentView: View {
                                 } label: {
                                     Image(systemName: "checklist")
                                         .font(.system(size: 20, weight: .semibold))
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(Color(light: Color.black, dark: Color.white))
                                         .padding(.leading, 24)
                                         .padding(.trailing, 12)
                                         .frame(height: 52)
@@ -140,7 +140,7 @@ struct ContentView: View {
                                 .matchedTransitionSource(id: "poolcare", in: namespace)
 
                                 Rectangle()
-                                    .fill(.white.opacity(0.3))
+                                    .fill(Color(light: Color.black, dark: Color.white).opacity(0.3))
                                     .frame(width: 1, height: 26)
 
                                 Button {
@@ -148,7 +148,7 @@ struct ContentView: View {
                                 } label: {
                                     Text("Mein Pool")
                                         .font(.system(size: 17, weight: .medium))
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(Color(light: Color.black, dark: Color.white))
                                         .padding(.leading, 12)
                                         .padding(.trailing, 24)
                                         .frame(height: 52)
@@ -163,7 +163,7 @@ struct ContentView: View {
                             } label: {
                                 Image(systemName: "testtube.2")
                                     .font(.system(size: 20, weight: .semibold))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(Color(light: Color.black, dark: Color.white))
                             }
                             .frame(width: 52, height: 52)
                             .glassEffect(.clear.interactive(), in: .circle)
@@ -174,7 +174,7 @@ struct ContentView: View {
                             } label: {
                                 Image(systemName: "circle.grid.cross")
                                     .font(.system(size: 20, weight: .semibold))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(Color(light: Color.black, dark: Color.white))
                             }
                             .frame(width: 52, height: 52)
                             .glassEffect(.clear.interactive(), in: .circle)

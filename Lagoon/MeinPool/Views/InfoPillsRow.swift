@@ -32,7 +32,7 @@ struct InfoPill: View {
             Text(text)
                 .font(.system(size: 13, weight: .medium))
         }
-        .foregroundStyle(.white.opacity(0.8))
+        .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.8))
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .glassEffect(
@@ -45,7 +45,10 @@ struct InfoPill: View {
 #Preview {
     ZStack {
         LinearGradient(
-            colors: [Color(hex: "0a1628"), Color(hex: "1a3a5c")],
+            colors: [
+                Color(light: Color(hex: "3ab4d6"), dark: Color(hex: "0a1628")),
+                Color(light: Color(hex: "0e94c4"), dark: Color(hex: "1a3a5c"))
+            ],
             startPoint: .top,
             endPoint: .bottom
         )

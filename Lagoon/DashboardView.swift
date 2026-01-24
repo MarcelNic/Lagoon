@@ -84,8 +84,8 @@ struct DashboardView: View {
             ZStack {
                 LinearGradient(
                     colors: [
-                        Color(hex: "0a1628"),
-                        Color(hex: "1a3a5c")
+                        Color(light: Color(hex: "3ab4d6"), dark: Color(hex: "0a1628")),
+                        Color(light: Color(hex: "0e94c4"), dark: Color(hex: "1a3a5c"))
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -143,6 +143,7 @@ struct DashboardView: View {
                                 icon: "checkmark.circle.fill",
                                 text: recentDosingLabel
                             )
+                            .environment(\.colorScheme, .dark)
                         }
                         .buttonStyle(.plain)
                         .transition(.scale.combined(with: .opacity))
@@ -155,6 +156,7 @@ struct DashboardView: View {
                                 text: "Dosierung",
                                 tint: .red.opacity(0.5)
                             )
+                            .environment(\.colorScheme, .dark)
                         }
                         .buttonStyle(.plain)
                         .transition(.scale.combined(with: .opacity))
@@ -166,7 +168,7 @@ struct DashboardView: View {
                     VStack(spacing: 4) {
                         Text(simulationTimeLabel)
                             .font(.system(size: 13, weight: .medium, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.6))
+                            .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.6))
                             .contentTransition(.numericText())
                             .animation(.snappy, value: timeOffsetSelection)
 
@@ -176,8 +178,8 @@ struct DashboardView: View {
                                 tickWidth: 1.5,
                                 tickHeight: 16,
                                 tickHPadding: 3,
-                                activeTint: .white.opacity(0.8),
-                                inActiveTint: .white.opacity(0.2),
+                                activeTint: Color(light: Color.black, dark: Color.white).opacity(0.8),
+                                inActiveTint: Color(light: Color.black, dark: Color.white).opacity(0.2),
                                 alignment: .center
                             ),
                             selection: $timeOffsetSelection
@@ -204,7 +206,7 @@ struct DashboardView: View {
                                 } label: {
                                     Image(systemName: "checklist")
                                         .font(.system(size: 20, weight: .semibold))
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(Color(light: Color.black, dark: Color.white))
                                         .padding(.leading, 24)
                                         .padding(.trailing, 12)
                                         .frame(height: 52)
@@ -212,7 +214,7 @@ struct DashboardView: View {
                                 .matchedTransitionSource(id: "poolcare", in: namespace)
 
                                 Rectangle()
-                                    .fill(.white.opacity(0.3))
+                                    .fill(Color(light: Color.black, dark: Color.white).opacity(0.3))
                                     .frame(width: 1, height: 26)
 
                                 Button {
@@ -220,7 +222,7 @@ struct DashboardView: View {
                                 } label: {
                                     Text("Mein Pool")
                                         .font(.system(size: 17, weight: .medium))
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(Color(light: Color.black, dark: Color.white))
                                         .padding(.leading, 12)
                                         .padding(.trailing, 24)
                                         .frame(height: 52)
@@ -234,7 +236,7 @@ struct DashboardView: View {
                             } label: {
                                 Image(systemName: "testtube.2")
                                     .font(.system(size: 20, weight: .semibold))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(Color(light: Color.black, dark: Color.white))
                             }
                             .frame(width: 52, height: 52)
                             .glassEffect(.clear.interactive(), in: .circle)
@@ -244,7 +246,7 @@ struct DashboardView: View {
                             } label: {
                                 Image(systemName: "circle.grid.cross")
                                     .font(.system(size: 20, weight: .semibold))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(Color(light: Color.black, dark: Color.white))
                             }
                             .frame(width: 52, height: 52)
                             .glassEffect(.clear.interactive(), in: .circle)
@@ -327,7 +329,7 @@ struct MessenSheet: View {
             tickHeight: 24,
             tickHPadding: 4,
             activeTint: .phIdealColor,
-            inActiveTint: .white.opacity(0.6),
+            inActiveTint: .secondary,
             alignment: .center
         )
     }
@@ -338,7 +340,7 @@ struct MessenSheet: View {
             tickHeight: 24,
             tickHPadding: 4,
             activeTint: .chlorineIdealColor,
-            inActiveTint: .white.opacity(0.6),
+            inActiveTint: .secondary,
             alignment: .center
         )
     }
@@ -350,7 +352,7 @@ struct MessenSheet: View {
                     VStack(spacing: 4) {
                         HStack {
                             Label("pH-Wert", systemImage: "drop.fill")
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                             Spacer()
                             Text(String(format: "%.1f", phValue))
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -365,7 +367,7 @@ struct MessenSheet: View {
                     VStack(spacing: 4) {
                         HStack {
                             Label("Chlor", systemImage: "allergens.fill")
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                             Spacer()
                             Text(String(format: "%.1f mg/l", chlorineValue))
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -382,7 +384,7 @@ struct MessenSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Label("Wassertemperatur", systemImage: "thermometer.medium")
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                             Spacer()
                             Text(String(format: "%.0f °C", waterTemperature))
                                 .foregroundStyle(.secondary)
@@ -402,7 +404,7 @@ struct MessenSheet: View {
                         displayedComponents: [.date, .hourAndMinute]
                     ) {
                         Label("Zeitpunkt", systemImage: "clock")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                     }
                 }
             }
@@ -501,7 +503,7 @@ struct DosierenSheet: View {
             tickHeight: 24,
             tickHPadding: 4,
             activeTint: .phIdealColor,
-            inActiveTint: .white.opacity(0.6),
+            inActiveTint: .secondary,
             alignment: .center
         )
     }
@@ -512,7 +514,7 @@ struct DosierenSheet: View {
             tickHeight: 24,
             tickHPadding: 4,
             activeTint: .chlorineIdealColor,
-            inActiveTint: .white.opacity(0.6),
+            inActiveTint: .secondary,
             alignment: .center
         )
     }
@@ -524,7 +526,7 @@ struct DosierenSheet: View {
                     VStack(spacing: 4) {
                         HStack {
                             Label("pH", systemImage: "drop.fill")
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                             Spacer()
                             Text(DosingFormatter.format(grams: phAmount, unit: dosingUnit, cupGrams: cupGrams))
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -547,7 +549,7 @@ struct DosierenSheet: View {
                     VStack(spacing: 4) {
                         HStack {
                             Label("Chlor", systemImage: "allergens.fill")
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                             Spacer()
                             Text(DosingFormatter.format(grams: chlorineAmount, unit: dosingUnit, cupGrams: cupGrams))
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -567,7 +569,7 @@ struct DosierenSheet: View {
                         displayedComponents: [.date, .hourAndMinute]
                     ) {
                         Label("Zeitpunkt", systemImage: "clock")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                     }
                 }
             }

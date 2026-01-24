@@ -48,7 +48,7 @@ struct LogbookSection: View {
             HStack {
                 Text("Logbuch")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.5))
                     .textCase(.uppercase)
 
                 Spacer()
@@ -74,7 +74,7 @@ struct LogbookSection: View {
                 } label: {
                     Image(systemName: filterIcon)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.8))
+                        .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.8))
                         .frame(width: 36, height: 36)
                 }
                 .glassEffect(.clear.interactive(), in: .circle)
@@ -93,11 +93,11 @@ struct LogbookSection: View {
         VStack(spacing: 12) {
             Image(systemName: "book.closed")
                 .font(.system(size: 32, weight: .medium))
-                .foregroundStyle(.white.opacity(0.3))
+                .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.3))
 
             Text("Keine Einträge")
                 .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(.white.opacity(0.5))
+                .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.5))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
@@ -128,7 +128,7 @@ struct RoundedCornerBackground: View {
             .overlay(alignment: .bottom) {
                 if !isLast {
                     Divider()
-                        .background(Color.white.opacity(0.15))
+                        .background(Color(light: Color.black, dark: Color.white).opacity(0.15))
                         .padding(.leading, 42)
                 }
             }
@@ -138,7 +138,10 @@ struct RoundedCornerBackground: View {
 #Preview {
     ZStack {
         LinearGradient(
-            colors: [Color(red: 0.04, green: 0.09, blue: 0.16), Color(red: 0.10, green: 0.23, blue: 0.36)],
+            colors: [
+                Color(light: Color(hex: "3ab4d6"), dark: Color(hex: "0a1628")),
+                Color(light: Color(hex: "0e94c4"), dark: Color(hex: "1a3a5c"))
+            ],
             startPoint: .top,
             endPoint: .bottom
         )

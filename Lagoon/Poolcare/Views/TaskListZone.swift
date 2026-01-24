@@ -14,7 +14,7 @@ struct TaskListZone: View {
             HStack {
                 Text("Aufgaben")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.5))
                     .textCase(.uppercase)
 
                 Spacer()
@@ -35,7 +35,7 @@ struct TaskListZone: View {
 
                         if task.id != state.recentlyCompletedTasks.last?.id {
                             Divider()
-                                .background(.white.opacity(0.1))
+                                .background(Color(light: Color.black, dark: Color.white).opacity(0.1))
                         }
                     }
 
@@ -43,7 +43,7 @@ struct TaskListZone: View {
                     ForEach(state.dueTasks) { task in
                         if !state.recentlyCompletedTasks.isEmpty || task.id != state.dueTasks.first?.id {
                             Divider()
-                                .background(.white.opacity(0.1))
+                                .background(Color(light: Color.black, dark: Color.white).opacity(0.1))
                         }
                         TaskRowView(task: task, state: state)
                     }
@@ -52,15 +52,15 @@ struct TaskListZone: View {
                     if !state.upcomingTasks.isEmpty && !state.dueTasks.isEmpty {
                         HStack(spacing: 12) {
                             Rectangle()
-                                .fill(.white.opacity(0.15))
+                                .fill(Color(light: Color.black, dark: Color.white).opacity(0.15))
                                 .frame(height: 1)
 
                             Text("Demnächst")
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(.white.opacity(0.4))
+                                .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.4))
 
                             Rectangle()
-                                .fill(.white.opacity(0.15))
+                                .fill(Color(light: Color.black, dark: Color.white).opacity(0.15))
                                 .frame(height: 1)
                         }
                         .padding(.vertical, 8)
@@ -70,7 +70,7 @@ struct TaskListZone: View {
                     ForEach(state.upcomingTasks) { task in
                         if state.dueTasks.isEmpty && task.id != state.upcomingTasks.first?.id {
                             Divider()
-                                .background(.white.opacity(0.1))
+                                .background(Color(light: Color.black, dark: Color.white).opacity(0.1))
                         }
                         TaskRowView(task: task, state: state, isDimmed: true)
                     }

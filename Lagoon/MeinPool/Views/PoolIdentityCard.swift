@@ -13,15 +13,15 @@ struct PoolIdentityCard: View {
         VStack(spacing: 16) {
             Image(systemName: "figure.pool.swim")
                 .font(.system(size: 48, weight: .medium))
-                .foregroundStyle(.white)
+                .foregroundStyle(Color(light: Color.black, dark: Color.white))
 
             Text(poolName)
                 .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(Color(light: Color.black, dark: Color.white))
 
             Text(statusText)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.6))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 32)
@@ -37,7 +37,10 @@ struct PoolIdentityCard: View {
 #Preview {
     ZStack {
         LinearGradient(
-            colors: [Color(hex: "0a1628"), Color(hex: "1a3a5c")],
+            colors: [
+                Color(light: Color(hex: "3ab4d6"), dark: Color(hex: "0a1628")),
+                Color(light: Color(hex: "0e94c4"), dark: Color(hex: "1a3a5c"))
+            ],
             startPoint: .top,
             endPoint: .bottom
         )

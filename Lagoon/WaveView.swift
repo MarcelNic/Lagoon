@@ -35,49 +35,49 @@ struct WaveView: View {
             ZStack {
                 // Wave 1
                 getWaveLine(interval: size.width * 0.8, amplitude: 40, baseline: size.height * 0.05 + bob1)
-                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                    .stroke(Color(light: Color.black, dark: Color.white).opacity(0.5), lineWidth: 2)
                     .blur(radius: 3)
                     .offset(x: phase1)
 
                 // Wave 2
                 getWaveLine(interval: size.width * 1.1, amplitude: 60, baseline: size.height * 0.2 + bob2)
-                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                    .stroke(Color(light: Color.black, dark: Color.white).opacity(0.5), lineWidth: 2)
                     .blur(radius: 3)
                     .offset(x: phase2)
 
                 // Wave 3
                 getWaveLine(interval: size.width * 0.9, amplitude: 35, baseline: size.height * 0.35 + bob3)
-                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                    .stroke(Color(light: Color.black, dark: Color.white).opacity(0.5), lineWidth: 2)
                     .blur(radius: 3)
                     .offset(x: phase3)
 
                 // Wave 4
                 getWaveLine(interval: size.width * 1.3, amplitude: 70, baseline: size.height * 0.5 + bob4)
-                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                    .stroke(Color(light: Color.black, dark: Color.white).opacity(0.5), lineWidth: 2)
                     .blur(radius: 3)
                     .offset(x: phase4)
 
                 // Wave 5
                 getWaveLine(interval: size.width * 1.0, amplitude: 50, baseline: size.height * 0.65 + bob5)
-                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                    .stroke(Color(light: Color.black, dark: Color.white).opacity(0.5), lineWidth: 2)
                     .blur(radius: 3)
                     .offset(x: phase5)
 
                 // Wave 6
                 getWaveLine(interval: size.width * 1.4, amplitude: 80, baseline: size.height * 0.8 + bob6)
-                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                    .stroke(Color(light: Color.black, dark: Color.white).opacity(0.5), lineWidth: 2)
                     .blur(radius: 3)
                     .offset(x: phase6)
 
                 // Wave 7
                 getWaveLine(interval: size.width * 1.2, amplitude: 55, baseline: size.height * 0.9 + bob7)
-                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                    .stroke(Color(light: Color.black, dark: Color.white).opacity(0.5), lineWidth: 2)
                     .blur(radius: 3)
                     .offset(x: phase7)
 
                 // Wave 8
                 getWaveLine(interval: size.width * 1.6, amplitude: 90, baseline: size.height * 1.0 + bob8)
-                    .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                    .stroke(Color(light: Color.black, dark: Color.white).opacity(0.5), lineWidth: 2)
                     .blur(radius: 3)
                     .offset(x: phase8)
             }

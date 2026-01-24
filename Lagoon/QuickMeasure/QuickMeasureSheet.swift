@@ -78,7 +78,7 @@ struct QuickMeasureSheet: View {
             tickHeight: 24,
             tickHPadding: 4,
             activeTint: .phIdealColor,
-            inActiveTint: .white.opacity(0.6),
+            inActiveTint: .secondary,
             alignment: .center
         )
     }
@@ -89,7 +89,7 @@ struct QuickMeasureSheet: View {
             tickHeight: 24,
             tickHPadding: 4,
             activeTint: .chlorineIdealColor,
-            inActiveTint: .white.opacity(0.6),
+            inActiveTint: .secondary,
             alignment: .center
         )
     }
@@ -203,7 +203,7 @@ struct QuickMeasureSheet: View {
             VStack(spacing: 4) {
                 HStack {
                     Label("pH-Wert", systemImage: "drop.fill")
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                     Spacer()
                     Text(String(format: "%.1f", phValue))
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -217,7 +217,7 @@ struct QuickMeasureSheet: View {
             VStack(spacing: 4) {
                 HStack {
                     Label("Chlor", systemImage: "allergens.fill")
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                     Spacer()
                     Text(String(format: "%.1f mg/l", chlorineValue))
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -234,7 +234,7 @@ struct QuickMeasureSheet: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Label("Wassertemperatur", systemImage: "thermometer.medium")
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                     Spacer()
                     Text(String(format: "%.0f °C", waterTemperature))
                         .foregroundStyle(.secondary)
@@ -287,7 +287,7 @@ struct QuickMeasureSheet: View {
                 if !phInRange && recommendedPHAmount > 0 {
                     HStack {
                         Label(phProductName, systemImage: "drop.fill")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                         Spacer()
                         Text(DosingFormatter.format(grams: recommendedPHAmount, unit: dosingUnit, cupGrams: cupGrams))
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -298,7 +298,7 @@ struct QuickMeasureSheet: View {
                 if !chlorineInRange && recommendedChlorineAmount > 0 {
                     HStack {
                         Label(chlorineProductName, systemImage: "allergens.fill")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                         Spacer()
                         Text(DosingFormatter.format(grams: recommendedChlorineAmount, unit: dosingUnit, cupGrams: cupGrams))
                             .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -329,7 +329,7 @@ struct QuickMeasureSheet: View {
             VStack(spacing: 4) {
                 HStack {
                     Label("pH", systemImage: "drop.fill")
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                     Spacer()
                     Text(DosingFormatter.format(grams: editedPHAmount, unit: dosingUnit, cupGrams: cupGrams))
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -353,7 +353,7 @@ struct QuickMeasureSheet: View {
             VStack(spacing: 4) {
                 HStack {
                     Label("Chlor", systemImage: "allergens.fill")
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                     Spacer()
                     Text(DosingFormatter.format(grams: editedChlorineAmount, unit: dosingUnit, cupGrams: cupGrams))
                         .font(.system(size: 17, weight: .semibold, design: .rounded))

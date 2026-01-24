@@ -26,8 +26,8 @@ struct MeinPoolView: View {
             // Background
             LinearGradient(
                 colors: [
-                    Color(hex: "0a1628"),
-                    Color(hex: "1a3a5c")
+                    Color(light: Color(hex: "3ab4d6"), dark: Color(hex: "0a1628")),
+                    Color(light: Color(hex: "0e94c4"), dark: Color(hex: "1a3a5c"))
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -87,7 +87,7 @@ struct MeinPoolView: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.8))
+                        .foregroundStyle(Color(light: Color.black, dark: Color.white))
                         .frame(width: 44, height: 44)
                 }
                 .glassEffect(.regular.interactive(), in: .circle)
@@ -99,7 +99,7 @@ struct MeinPoolView: View {
                 } label: {
                     Image(systemName: "gearshape")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.8))
+                        .foregroundStyle(Color(light: Color.black, dark: Color.white))
                         .frame(width: 44, height: 44)
                 }
                 .glassEffect(.regular.interactive(), in: .circle)
@@ -180,7 +180,7 @@ struct EditMessenSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Label("pH-Wert", systemImage: "drop.fill")
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                             Spacer()
                             Text(String(format: "%.1f", phValue))
                                 .foregroundStyle(.secondary)
@@ -195,7 +195,7 @@ struct EditMessenSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Label("Chlor", systemImage: "allergens.fill")
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                             Spacer()
                             Text(String(format: "%.1f mg/l", chlorineValue))
                                 .foregroundStyle(.secondary)
@@ -210,7 +210,7 @@ struct EditMessenSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Label("Wassertemperatur", systemImage: "thermometer.medium")
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.primary)
                             Spacer()
                             Text(String(format: "%.0f °C", waterTemperature))
                                 .foregroundStyle(.secondary)
@@ -230,7 +230,7 @@ struct EditMessenSheet: View {
                         displayedComponents: [.date, .hourAndMinute]
                     ) {
                         Label("Zeitpunkt", systemImage: "clock")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                     }
                 }
             }
@@ -338,7 +338,7 @@ struct EditDosierenSheet: View {
                         displayedComponents: [.date, .hourAndMinute]
                     ) {
                         Label("Zeitpunkt", systemImage: "clock")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                     }
                 }
             }
@@ -391,14 +391,14 @@ struct UndoToast: View {
         HStack(spacing: 16) {
             Text(message)
                 .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(.white)
+                .foregroundStyle(Color(light: Color.black, dark: Color.white))
 
             Button {
                 onUndo()
             } label: {
                 Text("Rückgängig")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color(light: Color.black, dark: Color.white))
             }
             .buttonStyle(.glass)
         }

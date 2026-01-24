@@ -21,7 +21,7 @@ struct TaskRowView: View {
             } label: {
                 Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 22, weight: .regular))
-                    .foregroundStyle(isCompleted ? .green : .white.opacity(0.4))
+                    .foregroundStyle(isCompleted ? .green : Color(light: Color.black, dark: Color.white).opacity(0.4))
             }
             .buttonStyle(.plain)
             .disabled(isCompleted)
@@ -30,8 +30,8 @@ struct TaskRowView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(task.title)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(isCompleted ? .white.opacity(0.4) : .white)
-                    .strikethrough(isCompleted, color: .white.opacity(0.4))
+                    .foregroundStyle(isCompleted ? Color(light: Color.black, dark: Color.white).opacity(0.4) : Color(light: Color.black, dark: Color.white))
+                    .strikethrough(isCompleted, color: Color(light: Color.black, dark: Color.white).opacity(0.4))
 
                 Text(task.subtitle)
                     .font(.system(size: 13))
@@ -56,12 +56,12 @@ struct TaskRowView: View {
     }
 
     private var subtitleColor: Color {
-        if isCompleted { return .white.opacity(0.3) }
+        if isCompleted { return Color(light: Color.black, dark: Color.white).opacity(0.3) }
 
         switch task.urgency {
         case .overdue: return .red
         case .dueToday: return .orange
-        case .upcoming, .future: return .white.opacity(0.5)
+        case .upcoming, .future: return Color(light: Color.black, dark: Color.white).opacity(0.5)
         }
     }
 }
@@ -74,7 +74,7 @@ struct PostponeButton: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.white.opacity(0.6))
+                .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.6))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
         }
