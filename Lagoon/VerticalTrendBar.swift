@@ -59,7 +59,7 @@ struct VerticalTrendBar: View {
     private let barHeight: CGFloat = 400
     private let markerDiameter: CGFloat = 30
     private let markerPadding: CGFloat = 2
-    private let markerEndPadding: CGFloat = 5  // Abstand Marker-Rand zu Bar-Ende
+    private let markerEndPadding: CGFloat = 1  // Abstand Marker-Rand zu Bar-Ende
     private let valuePillHeight: CGFloat = 28  // Geschätzte Höhe mit Glass Button Style
     private let titleHeight: CGFloat = 48  // Approximate height of title text
     private let titleBarSpacing: CGFloat = 20
@@ -168,6 +168,7 @@ struct VerticalTrendBar: View {
                             // Marker (aktueller Wert)
                             markerView
                                 .offset(y: markerYPosition - markerTotalSize / 2)
+                                .animation(.smooth, value: value)
                         }
                     }
                     .buttonStyle(.plain)
@@ -212,9 +213,20 @@ struct VerticalTrendBar: View {
                 .fill(.white)
                 .frame(width: markerDiameter, height: markerDiameter)
 
-            Image(systemName: trend.chevronName)
+            Image(systemName: "chevron.up")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(.black)
+                .opacity(trend == .up ? 1 : 0)
+
+            Image(systemName: "chevron.down")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.black)
+                .opacity(trend == .down ? 1 : 0)
+
+            Image(systemName: "minus")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.black)
+                .opacity(trend == .stable ? 1 : 0)
         }
         .padding(markerPadding)
     }
