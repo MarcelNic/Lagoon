@@ -122,11 +122,13 @@ struct MeinPoolView: View {
                 showPflegeSheet = true
             }
         }
-        .sheet(isPresented: $showSettings, onDismiss: {
-            poolWaterState.reloadSettings()
-        }) {
+        .navigationDestination(isPresented: $showSettings) {
             SettingsView()
-                .presentationDetents([.medium, .large])
+        }
+        .onChange(of: showSettings) { _, isShowing in
+            if !isShowing {
+                poolWaterState.reloadSettings()
+            }
         }
         .sheet(isPresented: $showMessenSheet) {
             EditMessenSheet(entry: entryToEdit, state: meinPoolState)

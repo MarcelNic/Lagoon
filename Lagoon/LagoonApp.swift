@@ -45,6 +45,7 @@ struct LagoonApp: App {
             DashboardView()
                 .preferredColorScheme(colorScheme)
                 .environment(poolWaterState)
+                .environment(notificationManager)
                 .task {
                     await notificationManager.requestPermission()
                 }

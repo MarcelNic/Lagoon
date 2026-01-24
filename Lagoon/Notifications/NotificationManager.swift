@@ -50,7 +50,10 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     // MARK: - Scheduling
 
-    func scheduleDailyReminder(hour: Int = 10, minute: Int = 0) {
+    func scheduleDailyReminder(hour: Int? = nil, minute: Int? = nil) {
+        let defaults = UserDefaults.standard
+        let hour = hour ?? (defaults.object(forKey: "reminderHour") as? Int ?? 10)
+        let minute = minute ?? (defaults.object(forKey: "reminderMinute") as? Int ?? 0)
         let center = UNUserNotificationCenter.current()
 
         // Remove existing daily reminders
