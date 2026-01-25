@@ -143,7 +143,6 @@ struct DashboardView: View {
                                 icon: "checkmark.circle.fill",
                                 text: recentDosingLabel
                             )
-                            .environment(\.colorScheme, .dark)
                         }
                         .buttonStyle(.plain)
                         .transition(.scale.combined(with: .opacity))
@@ -154,9 +153,8 @@ struct DashboardView: View {
                             InfoPill(
                                 icon: "exclamationmark.triangle.fill",
                                 text: "Dosierung",
-                                tint: .red.opacity(0.5)
+                                tint: Color(light: .red.opacity(0.8), dark: .red.opacity(0.5))
                             )
-                            .environment(\.colorScheme, .dark)
                         }
                         .buttonStyle(.plain)
                         .transition(.scale.combined(with: .opacity))
@@ -168,7 +166,7 @@ struct DashboardView: View {
                     VStack(spacing: 4) {
                         Text(simulationTimeLabel)
                             .font(.system(size: 13, weight: .medium, design: .rounded))
-                            .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.6))
+                            .foregroundStyle(Color(light: Color.black, dark: Color.white.opacity(0.6)))
                             .contentTransition(.numericText())
                             .animation(.snappy, value: timeOffsetSelection)
 
@@ -178,8 +176,8 @@ struct DashboardView: View {
                                 tickWidth: 1.5,
                                 tickHeight: 16,
                                 tickHPadding: 3,
-                                activeTint: Color(light: Color.black, dark: Color.white).opacity(0.8),
-                                inActiveTint: Color(light: Color.black, dark: Color.white).opacity(0.2),
+                                activeTint: Color(light: Color.black, dark: Color.white.opacity(0.8)),
+                                inActiveTint: Color(light: Color.black.opacity(0.3), dark: Color.white.opacity(0.2)),
                                 alignment: .center
                             ),
                             selection: $timeOffsetSelection

@@ -21,6 +21,8 @@ struct InfoPillsRow: View {
 }
 
 struct InfoPill: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     let icon: String
     let text: String
     var tint: Color? = nil
@@ -32,13 +34,21 @@ struct InfoPill: View {
             Text(text)
                 .font(.system(size: 13, weight: .medium))
         }
-        .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.8))
+        .foregroundStyle(Color.white.opacity(0.8))
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .glassEffect(
-            tint.map { .clear.tint($0).interactive() } ?? .clear.interactive(),
+            glassStyle,
             in: .capsule
         )
+    }
+
+    private var glassStyle: Glass {
+        if let tint = tint {
+            return .clear.tint(tint).interactive()
+        } else {
+            return .clear.interactive()
+        }
     }
 }
 
