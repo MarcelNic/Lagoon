@@ -84,13 +84,13 @@ struct DashboardView: View {
             ZStack {
                 LinearGradient(
                     colors: [
-                        Color(light: Color(hex: "3ab4d6"), dark: Color(hex: "0a1628")),
-                        Color(light: Color(hex: "0e94c4"), dark: Color(hex: "1a3a5c"))
+                        Color(light: Color(hex: "0a2463"), dark: Color(hex: "0a1628")),
+                        Color(light: Color(hex: "5c9ce5"), dark: Color(hex: "1a3a5c")),
+                        Color(light: Color(hex: "b8e6cf"), dark: Color(hex: "1a3a5c"))
                     ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
-                .scaleEffect(1.2)
                 .ignoresSafeArea()
 
                 VStack {
