@@ -83,10 +83,10 @@ struct DashboardView: View {
         NavigationStack {
             ZStack {
                 LinearGradient(
-                    colors: [
-                        Color(light: Color(hex: "0a2463"), dark: Color(hex: "0a1628")),
-                        Color(light: Color(hex: "5c9ce5"), dark: Color(hex: "1a3a5c")),
-                        Color(light: Color(hex: "b8e6cf"), dark: Color(hex: "1a3a5c"))
+                    stops: [
+                        .init(color: Color(light: Color(hex: "0a2463"), dark: Color(hex: "0a1628")), location: 0.0),
+                        .init(color: Color(light: Color(hex: "5c9ce5"), dark: Color(hex: "1a3a5c")), location: 0.35),
+                        .init(color: Color(light: Color(hex: "b8e6cf"), dark: Color(hex: "1a3a5c")), location: 0.75)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
