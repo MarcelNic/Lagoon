@@ -84,9 +84,9 @@ struct DashboardView: View {
             ZStack {
                 LinearGradient(
                     stops: [
-                        .init(color: Color(light: Color(hex: "0a2463"), dark: Color(hex: "0a1628")), location: 0.0),
-                        .init(color: Color(light: Color(hex: "5c9ce5"), dark: Color(hex: "1a3a5c")), location: 0.35),
-                        .init(color: Color(light: Color(hex: "b8e6cf"), dark: Color(hex: "1a3a5c")), location: 0.75)
+                        .init(color: Color(light: Color(hex: "0443a6"), dark: Color(hex: "0a1628")), location: 0.0),
+                        .init(color: Color(light: Color(hex: "b2e1ec"), dark: Color(hex: "1a3a5c")), location: 0.5),
+                        .init(color: Color(light: Color(hex: "2fb4a0"), dark: Color(hex: "1a3a5c")), location: 1.0)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
