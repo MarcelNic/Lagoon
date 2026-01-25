@@ -34,7 +34,7 @@ struct InfoPill: View {
             Text(text)
                 .font(.system(size: 13, weight: .medium))
         }
-        .foregroundStyle(Color.white.opacity(0.8))
+        .foregroundStyle(Color.white)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .glassEffect(

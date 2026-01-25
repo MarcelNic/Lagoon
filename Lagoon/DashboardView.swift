@@ -153,7 +153,7 @@ struct DashboardView: View {
                             InfoPill(
                                 icon: "exclamationmark.triangle.fill",
                                 text: "Dosierung",
-                                tint: Color(light: .red.opacity(0.8), dark: .red.opacity(0.5))
+                                tint: Color(light: .red.opacity(0.9), dark: .red.opacity(0.5))
                             )
                         }
                         .buttonStyle(.plain)
