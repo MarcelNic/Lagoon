@@ -26,6 +26,7 @@ struct InfoPill: View {
     let icon: String
     let text: String
     var tint: Color? = nil
+    var foregroundColor: Color = .white
 
     var body: some View {
         HStack(spacing: 6) {
@@ -34,7 +35,7 @@ struct InfoPill: View {
             Text(text)
                 .font(.system(size: 13, weight: .medium))
         }
-        .foregroundStyle(Color.white)
+        .foregroundStyle(foregroundColor)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .glassEffect(

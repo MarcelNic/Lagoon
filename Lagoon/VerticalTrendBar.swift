@@ -138,6 +138,7 @@ struct VerticalTrendBar: View {
 
                         valueLabelView
                             .offset(y: markerYPosition - valuePillHeight / 2)
+                            .animation(.smooth, value: value)
                             .padding(.trailing, 15)
                     }
                     .padding(.trailing, 12)
@@ -183,6 +184,7 @@ struct VerticalTrendBar: View {
 
                         valueLabelView
                             .offset(y: markerYPosition - valuePillHeight / 2)
+                            .animation(.smooth, value: value)
                             .padding(.leading, 15)
                     }
                     .padding(.leading, 12)
@@ -266,14 +268,14 @@ struct VerticalTrendBar: View {
                         }
 
                         Rectangle()
-                            .fill(Color(light: isMajor ? Color.black : Color.black.opacity(0.5), dark: Color.white.opacity(isMajor ? 0.4 : 0.25)))
+                            .fill(Color(light: isMajor ? Color.black.opacity(0.8) : Color.black.opacity(0.4), dark: Color.white.opacity(isMajor ? 0.4 : 0.25)))
                             .frame(
                                 width: isMajor ? 10 : 6,
                                 height: isMajor ? 2 : 1
                             )
                     } else {
                         Rectangle()
-                            .fill(Color(light: isMajor ? Color.black : Color.black.opacity(0.5), dark: Color.white.opacity(isMajor ? 0.4 : 0.25)))
+                            .fill(Color(light: isMajor ? Color.black.opacity(0.8) : Color.black.opacity(0.4), dark: Color.white.opacity(isMajor ? 0.4 : 0.25)))
                             .frame(
                                 width: isMajor ? 10 : 6,
                                 height: isMajor ? 2 : 1

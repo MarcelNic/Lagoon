@@ -141,7 +141,8 @@ struct DashboardView: View {
                         Button { showQuickMeasure = true } label: {
                             InfoPill(
                                 icon: "checkmark.circle.fill",
-                                text: recentDosingLabel
+                                text: recentDosingLabel,
+                                foregroundColor: .black
                             )
                         }
                         .buttonStyle(.plain)
