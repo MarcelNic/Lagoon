@@ -75,7 +75,15 @@ struct AddItemSheet: View {
                 state.startAction(.robot)
                 dismiss()
             } label: {
-                Label("Roboter starten", systemImage: "figure.pool.swim")
+                Label {
+                    Text("Roboter starten")
+                } icon: {
+                    Image("Robi")
+                        .renderingMode(.template)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 24, height: 24)
+                }
             }
 
             Button {

@@ -5,6 +5,24 @@
 
 import SwiftUI
 
+struct ActionIcon: View {
+    let type: ActionType
+    let size: CGFloat
+
+    var body: some View {
+        if type.isCustomIcon {
+            Image(type.icon)
+                .resizable()
+                .renderingMode(.template)
+                .aspectRatio(contentMode: .fit)
+                .frame(width: size, height: size)
+        } else {
+            Image(systemName: type.icon)
+                .font(.system(size: size, weight: .semibold))
+        }
+    }
+}
+
 struct ActiveActionsZone: View {
     @Bindable var state: PoolcareState
     @Namespace private var actionsNamespace
@@ -37,8 +55,7 @@ struct QuickActionButton: View {
             }
         } label: {
             HStack(spacing: 10) {
-                Image(systemName: type.icon)
-                    .font(.system(size: 18, weight: .semibold))
+                ActionIcon(type: type, size: 24)
 
                 Text(type.title)
                     .font(.system(size: 15, weight: .medium))
@@ -60,8 +77,7 @@ struct ActiveActionCard: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: action.type.icon)
-                .font(.system(size: 20, weight: .semibold))
+            ActionIcon(type: action.type, size: 28)
                 .foregroundStyle(Color(light: Color.black, dark: Color.white))
 
             VStack(alignment: .leading, spacing: 2) {

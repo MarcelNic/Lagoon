@@ -6,11 +6,62 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		253E2C752F27FF0D00272C43 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 253E2C742F27FF0D00272C43 /* WidgetKit.framework */; };
+		253E2C772F27FF0D00272C43 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 253E2C762F27FF0D00272C43 /* SwiftUI.framework */; };
+		253E2C882F27FF0E00272C43 /* LagoonWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 253E2C722F27FF0D00272C43 /* LagoonWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		253E2C862F27FF0E00272C43 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 25ADA22D2F144D45002033E8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 253E2C712F27FF0D00272C43;
+			remoteInfo = LagoonWidgetsExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		253E2C8D2F27FF0E00272C43 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				253E2C882F27FF0E00272C43 /* LagoonWidgetsExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		253E2C722F27FF0D00272C43 /* LagoonWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LagoonWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		253E2C742F27FF0D00272C43 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		253E2C762F27FF0D00272C43 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		25ADA2352F144D45002033E8 /* Lagoon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lagoon.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		253E2C892F27FF0E00272C43 /* Exceptions for "LagoonWidgets" folder in "LagoonWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 253E2C712F27FF0D00272C43 /* LagoonWidgetsExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		253E2C782F27FF0D00272C43 /* LagoonWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				253E2C892F27FF0E00272C43 /* Exceptions for "LagoonWidgets" folder in "LagoonWidgetsExtension" target */,
+			);
+			path = LagoonWidgets;
+			sourceTree = "<group>";
+		};
 		25ADA2372F144D45002033E8 /* Lagoon */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Lagoon;
@@ -19,6 +70,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		253E2C6F2F27FF0D00272C43 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				253E2C772F27FF0D00272C43 /* SwiftUI.framework in Frameworks */,
+				253E2C752F27FF0D00272C43 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		25ADA2322F144D45002033E8 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -29,10 +89,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		253E2C732F27FF0D00272C43 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				253E2C742F27FF0D00272C43 /* WidgetKit.framework */,
+				253E2C762F27FF0D00272C43 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		25ADA22C2F144D45002033E8 = {
 			isa = PBXGroup;
 			children = (
 				25ADA2372F144D45002033E8 /* Lagoon */,
+				253E2C782F27FF0D00272C43 /* LagoonWidgets */,
+				253E2C732F27FF0D00272C43 /* Frameworks */,
 				25ADA2362F144D45002033E8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +112,7 @@
 			isa = PBXGroup;
 			children = (
 				25ADA2352F144D45002033E8 /* Lagoon.app */,
+				253E2C722F27FF0D00272C43 /* LagoonWidgetsExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,6 +120,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		253E2C712F27FF0D00272C43 /* LagoonWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 253E2C8A2F27FF0E00272C43 /* Build configuration list for PBXNativeTarget "LagoonWidgetsExtension" */;
+			buildPhases = (
+				253E2C6E2F27FF0D00272C43 /* Sources */,
+				253E2C6F2F27FF0D00272C43 /* Frameworks */,
+				253E2C702F27FF0D00272C43 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				253E2C782F27FF0D00272C43 /* LagoonWidgets */,
+			);
+			name = LagoonWidgetsExtension;
+			packageProductDependencies = (
+			);
+			productName = LagoonWidgetsExtension;
+			productReference = 253E2C722F27FF0D00272C43 /* LagoonWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		25ADA2342F144D45002033E8 /* Lagoon */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 25ADA2402F144D46002033E8 /* Build configuration list for PBXNativeTarget "Lagoon" */;
@@ -55,10 +149,12 @@
 				25ADA2312F144D45002033E8 /* Sources */,
 				25ADA2322F144D45002033E8 /* Frameworks */,
 				25ADA2332F144D45002033E8 /* Resources */,
+				253E2C8D2F27FF0E00272C43 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				253E2C872F27FF0E00272C43 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				25ADA2372F144D45002033E8 /* Lagoon */,
@@ -80,6 +176,9 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
+					253E2C712F27FF0D00272C43 = {
+						CreatedOnToolsVersion = 26.2;
+					};
 					25ADA2342F144D45002033E8 = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -100,11 +199,19 @@
 			projectRoot = "";
 			targets = (
 				25ADA2342F144D45002033E8 /* Lagoon */,
+				253E2C712F27FF0D00272C43 /* LagoonWidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		253E2C702F27FF0D00272C43 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		25ADA2332F144D45002033E8 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -115,6 +222,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		253E2C6E2F27FF0D00272C43 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		25ADA2312F144D45002033E8 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -124,7 +238,75 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		253E2C872F27FF0E00272C43 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 253E2C712F27FF0D00272C43 /* LagoonWidgetsExtension */;
+			targetProxy = 253E2C862F27FF0E00272C43 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		253E2C8B2F27FF0E00272C43 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9XG836D44F;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LagoonWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LagoonWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.marcel.Lagoon.LagoonWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		253E2C8C2F27FF0E00272C43 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9XG836D44F;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LagoonWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LagoonWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.marcel.Lagoon.LagoonWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		25ADA23E2F144D46002033E8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -256,6 +438,7 @@
 				DEVELOPMENT_TEAM = 9XG836D44F;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -288,6 +471,7 @@
 				DEVELOPMENT_TEAM = 9XG836D44F;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -313,6 +497,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		253E2C8A2F27FF0E00272C43 /* Build configuration list for PBXNativeTarget "LagoonWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				253E2C8B2F27FF0E00272C43 /* Debug */,
+				253E2C8C2F27FF0E00272C43 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		25ADA2302F144D45002033E8 /* Build configuration list for PBXProject "Lagoon" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

@@ -18,8 +18,15 @@ enum ActionType: String, CaseIterable {
 
     var icon: String {
         switch self {
-        case .robot: return "figure.pool.swim"
+        case .robot: return "Robi"
         case .backwash: return "arrow.circlepath"
+        }
+    }
+
+    var isCustomIcon: Bool {
+        switch self {
+        case .robot: return true
+        case .backwash: return false
         }
     }
 
