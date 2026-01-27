@@ -28,38 +28,30 @@ extension Color {
     static let robotCyan = Color(red: 0.396, green: 0.792, blue: 1.0) // #65CAFF
 }
 
-// MARK: - Time Formatting
+// MARK: - Bottom Arc Shape (unterer Teil eines Kreises)
 
-/// Formats remaining time as "H:MM" without seconds
-func formatRemainingTime(until endTime: Date) -> String {
-    let remaining = max(0, endTime.timeIntervalSinceNow)
-    let hours = Int(remaining) / 3600
-    let minutes = (Int(remaining) % 3600) / 60
-    return "\(hours):\(String(format: "%02d", minutes))"
-}
-
-// MARK: - Circular Arc Shape (180° flipped - opens downward, same geometry as Dashboard)
-
-struct CircularArcShape: Shape {
-    var arcHeight: CGFloat = 0.7
+struct BottomArcShape: Shape {
+    /// Wie tief der Bogen reicht (0.0 - 1.0, relativ zur Höhe)
+    var arcDepth: CGFloat = 0.9
 
     func path(in rect: CGRect) -> Path {
         var path = Path()
 
-        // Start- und Endpunkt: Oben links/rechts (gespiegelt vom Dashboard)
+        // Start- und Endpunkt: Oben links/rechts
         let startPoint = CGPoint(x: 0, y: 0)
         let endPoint = CGPoint(x: rect.width, y: 0)
 
-        // Unterster Punkt: Mitte, arcHeight von unten
-        let bottomY = rect.height * arcHeight
+        // Tiefster Punkt: Mitte, arcDepth von oben
+        let bottomY = rect.height * arcDepth
 
-        // Kreismittelpunkt und Radius berechnen (gleiche Formel wie Dashboard, gespiegelt)
+        // Kreismittelpunkt und Radius berechnen
         let halfWidth = rect.width / 2
-
-        // Formel angepasst für nach unten öffnenden Bogen
-        let centerY = (halfWidth * halfWidth + bottomY * bottomY) / (2 * bottomY)
         let centerX = halfWidth
-        let radius = centerY
+
+        // Formel: r² = (w/2)² + (cy)² und r = bottomY - cy
+        // Aufgelöst: cy = (bottomY² - w²/4) / (2 * bottomY)
+        let centerY = (bottomY * bottomY - halfWidth * halfWidth) / (2 * bottomY)
+        let radius = bottomY - centerY
 
         // Winkel berechnen
         let startAngle = Angle(radians: atan2(startPoint.y - centerY, startPoint.x - centerX))
@@ -82,24 +74,34 @@ struct CircularArcShape: Shape {
 struct TimerArcProgressView: View {
     let progress: Double
     let lineWidth: CGFloat
-    let arcHeight: CGFloat
+    let arcDepth: CGFloat
+    let foregroundColor: Color
+    let backgroundColor: Color
 
-    init(progress: Double, lineWidth: CGFloat = 14, arcHeight: CGFloat = 0.7) {
+    init(
+        progress: Double,
+        lineWidth: CGFloat = 20,
+        arcDepth: CGFloat = 0.9,
+        foregroundColor: Color = .robotCyan,
+        backgroundColor: Color = .robotCyan.opacity(0.3)
+    ) {
         self.progress = progress
         self.lineWidth = lineWidth
-        self.arcHeight = arcHeight
+        self.arcDepth = arcDepth
+        self.foregroundColor = foregroundColor
+        self.backgroundColor = backgroundColor
     }
 
     var body: some View {
         ZStack {
             // Background arc
-            CircularArcShape(arcHeight: arcHeight)
-                .stroke(Color.robotCyan.opacity(0.3), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+            BottomArcShape(arcDepth: arcDepth)
+                .stroke(backgroundColor, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
 
             // Progress arc
-            CircularArcShape(arcHeight: arcHeight)
+            BottomArcShape(arcDepth: arcDepth)
                 .trim(from: 0, to: progress)
-                .stroke(Color.robotCyan, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .stroke(foregroundColor, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
         }
     }
 }
@@ -126,16 +128,19 @@ struct LagoonWidgetsLiveActivity: Widget {
                         .foregroundStyle(Color.robotCyan)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    TimerArcProgressView(
-                        progress: context.state.progress,
-                        lineWidth: 14,
-                        arcHeight: 0.7
-                    )
-                    .frame(height: 70)
-                    .padding(.horizontal, 24)
+                    VStack(spacing: 0) {
+                        Color.clear.frame(height: 30)
+                        TimerArcProgressView(
+                            progress: context.state.progress,
+                            lineWidth: 20,
+                            arcDepth: 0.9
+                        )
+                        .frame(height: 70)
+                        .padding(.horizontal, 24)
+                        Color.clear.frame(height: 20)
+                    }
                 }
             } compactLeading: {
-                // Robi icon
                 Image("Robi")
                     .resizable()
                     .renderingMode(.template)
@@ -143,13 +148,11 @@ struct LagoonWidgetsLiveActivity: Widget {
                     .frame(width: 20, height: 20)
                     .foregroundStyle(Color.robotCyan)
             } compactTrailing: {
-                // Time in H:MM format (no seconds)
-                Text(formatRemainingTime(until: context.state.endTime))
+                Text(timerInterval: context.attributes.startTime...context.state.endTime, countsDown: true, showsHours: true)
                     .monospacedDigit()
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white)
             } minimal: {
-                // Robi icon only
                 Image("Robi")
                     .resizable()
                     .renderingMode(.template)
@@ -171,7 +174,6 @@ struct LockScreenView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            // Header: Title left, Time right
             HStack {
                 Text("Pool Roboter")
                     .font(.system(size: 16, weight: .semibold))
@@ -185,40 +187,20 @@ struct LockScreenView: View {
                     .foregroundStyle(isDarkMode ? Color.robotCyan : .black)
             }
 
-            // Arc progress
-            LockScreenArcView(progress: context.state.progress, isDarkMode: isDarkMode)
-                .frame(height: 80)
-                .padding(.horizontal, 8)
+            TimerArcProgressView(
+                progress: context.state.progress,
+                lineWidth: 20,
+                arcDepth: 0.9,
+                foregroundColor: isDarkMode ? .robotCyan : .black,
+                backgroundColor: isDarkMode ? .robotCyan.opacity(0.3) : .black.opacity(0.2)
+            )
+            .frame(height: 80)
+            .padding(.horizontal, 8)
         }
         .padding(16)
         .activityBackgroundTint(isDarkMode ? .black : Color.robotCyan)
     }
 }
-
-// Separate arc for Lock Screen with color scheme support
-struct LockScreenArcView: View {
-    let progress: Double
-    let isDarkMode: Bool
-    let lineWidth: CGFloat = 14
-
-    var body: some View {
-        ZStack {
-            CircularArcShape(arcHeight: 0.7)
-                .stroke(
-                    isDarkMode ? Color.robotCyan.opacity(0.3) : Color.black.opacity(0.2),
-                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
-                )
-
-            CircularArcShape(arcHeight: 0.7)
-                .trim(from: 0, to: progress)
-                .stroke(
-                    isDarkMode ? Color.robotCyan : Color.black,
-                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
-                )
-        }
-    }
-}
-
 
 // MARK: - Preview
 
