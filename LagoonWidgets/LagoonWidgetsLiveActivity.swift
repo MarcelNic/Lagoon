@@ -19,13 +19,6 @@ struct RobotActivityAttributes: ActivityAttributes {
 
     let startTime: Date
     let duration: TimeInterval
-    let actionTitle: String
-}
-
-// MARK: - Cyan Color
-
-extension Color {
-    static let robotCyan = Color(red: 0.396, green: 0.792, blue: 1.0)
 }
 
 // MARK: - Bottom Arc Shape
@@ -60,24 +53,75 @@ struct BottomArcShape: Shape {
     }
 }
 
-// MARK: - Timer Arc Progress View
+// MARK: - Timer Arc View
 
-struct TimerArcProgressView: View {
+struct TimerArcView: View {
     let progress: Double
     var lineWidth: CGFloat = 20
     var arcDepth: CGFloat = 0.9
-    var foregroundColor: Color = .robotCyan
-    var backgroundColor: Color = .robotCyan.opacity(0.3)
 
     var body: some View {
         ZStack {
             BottomArcShape(arcDepth: arcDepth)
-                .stroke(backgroundColor, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .stroke(.white.opacity(0.3), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
 
             BottomArcShape(arcDepth: arcDepth)
                 .trim(from: 0, to: progress)
-                .stroke(foregroundColor, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .stroke(.white, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
         }
+    }
+}
+
+// MARK: - Progress Bar View
+
+struct ProgressBarView: View {
+    let progress: Double
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // Background track
+                Capsule()
+                    .fill(.white.opacity(0.3))
+
+                // Progress fill
+                Capsule()
+                    .fill(.white)
+                    .frame(width: geometry.size.width * progress)
+            }
+        }
+    }
+}
+
+// MARK: - Live Activity Content
+
+struct LiveActivityContent: View {
+    let context: ActivityViewContext<RobotActivityAttributes>
+
+    var body: some View {
+        VStack(spacing: 12) {
+            // Header: Roboter links, Timer rechts
+            HStack {
+                HStack(spacing: 6) {
+                    Image(systemName: "figure.pool.swim")
+                        .font(.title3)
+                    Text("Roboter")
+                        .font(.headline)
+                }
+
+                Spacer()
+
+                Text(timerInterval: context.attributes.startTime...context.state.endTime, countsDown: true)
+                    .monospacedDigit()
+                    .font(.title2)
+                    .fontWeight(.semibold)
+            }
+
+            // Fortschrittsbalken
+            ProgressBarView(progress: context.state.progress)
+                .frame(height: 8)
+        }
+        .padding(16)
     }
 }
 
@@ -86,49 +130,42 @@ struct TimerArcProgressView: View {
 struct LagoonWidgetsLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: RobotActivityAttributes.self) { context in
-            // Lock Screen - max 160pt
-            VStack {
-                TimerArcProgressView(progress: context.state.progress)
-                    .frame(height: 70)
-                    .padding(.horizontal, 24)
-                Spacer()
-                HStack {
-                    Text("Pool Roboter")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
-                    Spacer()
-                }
-            }
-            .padding(.top, 16)
-            .padding(.horizontal, 16)
-            .padding(.bottom, 12)
-            .frame(height: 160)
-            .activityBackgroundTint(.black)
+            // Lock Screen
+            LiveActivityContent(context: context)
         } dynamicIsland: { context in
             DynamicIsland {
+                // Expanded: Oben links Pool
+                DynamicIslandExpandedRegion(.leading) {
+                    Text("Pool")
+                        .font(.headline)
+                        .padding(.leading, 60)
+                }
+
+                // Expanded: Oben rechts Timer
+                DynamicIslandExpandedRegion(.trailing) {
+                    Text(timerInterval: context.attributes.startTime...context.state.endTime, countsDown: true)
+                        .monospacedDigit()
+                        .font(.headline)
+                        .padding(.trailing, 20)
+                }
+
+                // Expanded: Unten Arc
                 DynamicIslandExpandedRegion(.bottom) {
-                    VStack {
-                        TimerArcProgressView(progress: context.state.progress)
-                            .frame(height: 70)
-                            .padding(.horizontal, 24)
-                        Spacer()
-                    }
-                    .frame(height: 150)
+                    TimerArcView(progress: context.state.progress, arcDepth: 0.8)
+                        .frame(height: 80)
+                        .padding(.horizontal, 14)
+                        .padding(.top, 15)
                 }
             } compactLeading: {
                 Image(systemName: "figure.pool.swim")
-                    .foregroundStyle(Color.robotCyan)
             } compactTrailing: {
                 Text(timerInterval: context.attributes.startTime...context.state.endTime, countsDown: true)
                     .monospacedDigit()
                     .font(.caption2)
-                    .foregroundStyle(.white)
             } minimal: {
                 Image(systemName: "figure.pool.swim")
-                    .foregroundStyle(Color.robotCyan)
             }
-            .contentMargins(.bottom, 0, for: .expanded)
-            .contentMargins(.top, 0, for: .expanded)
+            .contentMargins(.bottom, 20, for: .expanded)
         }
     }
 }
@@ -137,8 +174,7 @@ struct LagoonWidgetsLiveActivity: Widget {
 
 #Preview("Lock Screen", as: .content, using: RobotActivityAttributes(
     startTime: .now,
-    duration: 7200,
-    actionTitle: "Roboter läuft"
+    duration: 7200
 )) {
     LagoonWidgetsLiveActivity()
 } contentStates: {
