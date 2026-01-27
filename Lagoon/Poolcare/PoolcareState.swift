@@ -71,6 +71,7 @@ final class PoolcareState {
             .sink { [weak self] date in
                 self?.timerTick = date
                 self?.checkExpiredActions()
+                self?.updateRobotLiveActivity()
             }
     }
 
@@ -144,6 +145,20 @@ final class PoolcareState {
             print("Started robot Live Activity")
         } catch {
             print("Failed to start Live Activity: \(error)")
+        }
+    }
+
+    private func updateRobotLiveActivity() {
+        guard let activity = robotActivity,
+              let robotAction = activeActions.first(where: { $0.type == .robot }) else { return }
+
+        let updatedState = RobotActivityAttributes.ContentState(
+            endTime: robotAction.endTime,
+            progress: robotAction.progress
+        )
+
+        Task {
+            await activity.update(.init(state: updatedState, staleDate: robotAction.endTime))
         }
     }
 

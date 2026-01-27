@@ -413,3 +413,88 @@ struct PoolSettingsSheet: View {
 #Preview {
     ContentView()
 }
+
+// MARK: - Arc Test View
+struct ArcTestView: View {
+    @State private var progress: Double = 0
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Progress: \(Int(progress * 100))%")
+                .font(.headline)
+                .foregroundStyle(.white)
+
+            TestArcView(progress: progress)
+                .frame(height: 100)
+                .padding(.horizontal, 20)
+
+            Slider(value: $progress, in: 0...1)
+                .padding(.horizontal, 40)
+        }
+        .padding()
+        .background(Color.black)
+    }
+}
+
+struct TestArcView: View {
+    let progress: Double
+    let lineWidth: CGFloat = 20
+    let arcDepth: CGFloat = 0.8
+
+    var body: some View {
+        GeometryReader { geometry in
+            let width = geometry.size.width
+            let height = geometry.size.height
+            let bottomY = height * arcDepth
+            let halfWidth = width / 2
+            let centerX = halfWidth
+            let centerY = (bottomY * bottomY - halfWidth * halfWidth) / (2 * bottomY)
+            let radius = bottomY - centerY
+
+            // Winkel für Start und Ende
+            let startAngle = atan2(0 - centerY, 0 - centerX)
+            let endAngle = atan2(0 - centerY, width - centerX)
+
+            // Aktueller Winkel basierend auf Progress
+            let currentAngle = startAngle + (endAngle - startAngle) * progress
+
+            // Position auf dem Kreis
+            let dotX = centerX + radius * cos(currentAngle)
+            let dotY = centerY + radius * sin(currentAngle)
+
+            ZStack {
+                // Arc background
+                TestArcShape(arcDepth: arcDepth)
+                    .stroke(.white.opacity(0.3), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+
+                // Dot
+                Circle()
+                    .fill(.white)
+                    .frame(width: 12, height: 12)
+                    .position(x: dotX, y: dotY)
+            }
+        }
+    }
+}
+
+struct TestArcShape: Shape {
+    var arcDepth: CGFloat = 0.8
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let bottomY = rect.height * arcDepth
+        let halfWidth = rect.width / 2
+        let centerY = (bottomY * bottomY - halfWidth * halfWidth) / (2 * bottomY)
+        let radius = bottomY - centerY
+
+        let startAngle = Angle(radians: atan2(0 - centerY, 0 - halfWidth))
+        let endAngle = Angle(radians: atan2(0 - centerY, rect.width - halfWidth))
+
+        path.addArc(center: CGPoint(x: halfWidth, y: centerY), radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: true)
+        return path
+    }
+}
+
+#Preview("Arc Test") {
+    ArcTestView()
+}

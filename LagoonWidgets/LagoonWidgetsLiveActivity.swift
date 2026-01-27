@@ -19,6 +19,7 @@ struct RobotActivityAttributes: ActivityAttributes {
 
     let startTime: Date
     let duration: TimeInterval
+    let actionTitle: String
 }
 
 // MARK: - Bottom Arc Shape
@@ -56,18 +57,56 @@ struct BottomArcShape: Shape {
 // MARK: - Timer Arc View
 
 struct TimerArcView: View {
-    let progress: Double
+    let startTime: Date
+    let duration: TimeInterval
     var lineWidth: CGFloat = 20
     var arcDepth: CGFloat = 0.9
 
     var body: some View {
-        ZStack {
-            BottomArcShape(arcDepth: arcDepth)
-                .stroke(.white.opacity(0.3), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+        TimelineView(.periodic(from: startTime, by: 1.0)) { timeline in
+            let elapsed = timeline.date.timeIntervalSince(startTime)
+            let progress = min(1.0, max(0.0, elapsed / duration))
 
-            BottomArcShape(arcDepth: arcDepth)
-                .trim(from: 0, to: progress)
-                .stroke(.white, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+            ArcWithDot(progress: progress, lineWidth: lineWidth, arcDepth: arcDepth)
+        }
+    }
+}
+
+struct ArcWithDot: View {
+    let progress: Double
+    let lineWidth: CGFloat
+    let arcDepth: CGFloat
+
+    var body: some View {
+        GeometryReader { geometry in
+            let width = geometry.size.width
+            let height = geometry.size.height
+            let bottomY = height * arcDepth
+            let halfWidth = width / 2
+            let centerX = halfWidth
+            let centerY = (bottomY * bottomY - halfWidth * halfWidth) / (2 * bottomY)
+            let radius = bottomY - centerY
+
+            // Winkel für Start und Ende
+            let startAngle = atan2(0 - centerY, 0 - centerX)
+            let endAngle = atan2(0 - centerY, width - centerX)
+
+            // Aktueller Winkel basierend auf Progress
+            let currentAngle = startAngle + (endAngle - startAngle) * progress
+
+            // Position auf dem Kreis
+            let dotX = centerX + radius * cos(currentAngle)
+            let dotY = centerY + radius * sin(currentAngle)
+
+            ZStack {
+                BottomArcShape(arcDepth: arcDepth)
+                    .stroke(.white.opacity(0.3), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+
+                Circle()
+                    .fill(.white)
+                    .frame(width: lineWidth * 0.5, height: lineWidth * 0.5)
+                    .position(x: dotX, y: dotY)
+            }
         }
     }
 }
@@ -151,10 +190,14 @@ struct LagoonWidgetsLiveActivity: Widget {
 
                 // Expanded: Unten Arc
                 DynamicIslandExpandedRegion(.bottom) {
-                    TimerArcView(progress: context.state.progress, arcDepth: 0.8)
-                        .frame(height: 80)
-                        .padding(.horizontal, 14)
-                        .padding(.top, 15)
+                    TimerArcView(
+                        startTime: context.attributes.startTime,
+                        duration: context.attributes.duration,
+                        arcDepth: 0.8
+                    )
+                    .frame(height: 80)
+                    .padding(.horizontal, 14)
+                    .padding(.top, 15)
                 }
             } compactLeading: {
                 Image(systemName: "figure.pool.swim")
@@ -172,9 +215,20 @@ struct LagoonWidgetsLiveActivity: Widget {
 
 // MARK: - Preview
 
+#Preview("Arc Test") {
+    VStack(spacing: 20) {
+        // 60 Sekunden Timer, gerade gestartet
+        TimerArcView(startTime: .now, duration: 60, arcDepth: 0.8)
+            .frame(height: 80)
+    }
+    .padding()
+    .background(Color.black)
+}
+
 #Preview("Lock Screen", as: .content, using: RobotActivityAttributes(
     startTime: .now,
-    duration: 7200
+    duration: 7200,
+    actionTitle: "Roboter läuft"
 )) {
     LagoonWidgetsLiveActivity()
 } contentStates: {
