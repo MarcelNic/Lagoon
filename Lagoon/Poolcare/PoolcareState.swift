@@ -65,13 +65,15 @@ final class PoolcareState {
 
     // MARK: - Timer Management
 
+    private var lastLiveActivityUpdate: Date = .distantPast
+
     private func startTimerUpdates() {
         timerCancellable = Timer.publish(every: 1.0, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] date in
                 self?.timerTick = date
                 self?.checkExpiredActions()
-                self?.updateRobotLiveActivity()
+                self?.updateRobotLiveActivityIfNeeded()
             }
     }
 
@@ -99,8 +101,8 @@ final class PoolcareState {
 
     // MARK: - Zone 1: Action Methods
 
-    func startAction(_ type: ActionType) {
-        let action = ActiveAction(type: type)
+    func startAction(_ type: ActionType, duration: TimeInterval? = nil) {
+        let action = ActiveAction(type: type, duration: duration)
         activeActions.append(action)
 
         // Start Live Activity for robot
@@ -126,6 +128,9 @@ final class PoolcareState {
             return
         }
 
+        // Reset für erstes Update
+        lastLiveActivityUpdate = .distantPast
+
         let attributes = RobotActivityAttributes(
             startTime: action.startTime,
             duration: action.duration,
@@ -143,14 +148,23 @@ final class PoolcareState {
                 content: .init(state: initialState, staleDate: action.endTime)
             )
             print("Started robot Live Activity")
+
+            // Schedule background refresh for Live Activity updates
+            LiveActivityBackgroundManager.shared.scheduleBackgroundRefresh()
         } catch {
             print("Failed to start Live Activity: \(error)")
         }
     }
 
-    private func updateRobotLiveActivity() {
+    private func updateRobotLiveActivityIfNeeded() {
         guard let activity = robotActivity,
               let robotAction = activeActions.first(where: { $0.type == .robot }) else { return }
+
+        // Nur alle 30 Sekunden aktualisieren (iOS drosselt zu häufige Updates)
+        let now = Date()
+        guard now.timeIntervalSince(lastLiveActivityUpdate) >= 30 else { return }
+
+        lastLiveActivityUpdate = now
 
         let updatedState = RobotActivityAttributes.ContentState(
             endTime: robotAction.endTime,
@@ -164,6 +178,9 @@ final class PoolcareState {
 
     private func endRobotLiveActivity() {
         guard let activity = robotActivity else { return }
+
+        // Cancel background refresh since Live Activity is ending
+        LiveActivityBackgroundManager.shared.cancelBackgroundRefresh()
 
         let finalState = RobotActivityAttributes.ContentState(
             endTime: Date(),

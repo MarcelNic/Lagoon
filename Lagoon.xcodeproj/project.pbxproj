@@ -51,6 +51,13 @@
 			);
 			target = 253E2C712F27FF0D00272C43 /* LagoonWidgetsExtension */;
 		};
+		2556C7192F2A401A005357BF /* Exceptions for "Lagoon" folder in "Lagoon" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 25ADA2342F144D45002033E8 /* Lagoon */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -64,6 +71,9 @@
 		};
 		25ADA2372F144D45002033E8 /* Lagoon */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				2556C7192F2A401A005357BF /* Exceptions for "Lagoon" folder in "Lagoon" target */,
+			);
 			path = Lagoon;
 			sourceTree = "<group>";
 		};
@@ -438,6 +448,7 @@
 				DEVELOPMENT_TEAM = 9XG836D44F;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Lagoon/Info.plist;
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -471,6 +482,7 @@
 				DEVELOPMENT_TEAM = 9XG836D44F;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Lagoon/Info.plist;
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

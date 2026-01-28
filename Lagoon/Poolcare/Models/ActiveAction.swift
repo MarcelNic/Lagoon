@@ -39,8 +39,8 @@ enum ActionType: String, CaseIterable {
 
     var defaultDuration: TimeInterval {
         switch self {
-        case .robot: return 1 * 60            // 1 minute (TEST)
-        case .backwash: return 3 * 60        // 3 minutes
+        case .robot: return 2 * 60 * 60      // 2 Stunden
+        case .backwash: return 3 * 60        // 3 Minuten
         }
     }
 

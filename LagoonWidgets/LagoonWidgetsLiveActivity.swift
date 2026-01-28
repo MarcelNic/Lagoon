@@ -54,23 +54,7 @@ struct BottomArcShape: Shape {
     }
 }
 
-// MARK: - Timer Arc View
-
-struct TimerArcView: View {
-    let startTime: Date
-    let duration: TimeInterval
-    var lineWidth: CGFloat = 20
-    var arcDepth: CGFloat = 0.9
-
-    var body: some View {
-        TimelineView(.periodic(from: startTime, by: 1.0)) { timeline in
-            let elapsed = timeline.date.timeIntervalSince(startTime)
-            let progress = min(1.0, max(0.0, elapsed / duration))
-
-            ArcWithDot(progress: progress, lineWidth: lineWidth, arcDepth: arcDepth)
-        }
-    }
-}
+// MARK: - Arc with Dot (uses progress from ContentState)
 
 struct ArcWithDot: View {
     let progress: Double
@@ -87,12 +71,13 @@ struct ArcWithDot: View {
             let centerY = (bottomY * bottomY - halfWidth * halfWidth) / (2 * bottomY)
             let radius = bottomY - centerY
 
-            // Winkel für Start und Ende
+            // Winkel für Start (links) und Ende (rechts)
             let startAngle = atan2(0 - centerY, 0 - centerX)
             let endAngle = atan2(0 - centerY, width - centerX)
 
-            // Aktueller Winkel basierend auf Progress
-            let currentAngle = startAngle + (endAngle - startAngle) * progress
+            // Der Arc geht clockwise von startAngle zu endAngle
+            let angleDiff = startAngle - endAngle
+            let currentAngle = startAngle - angleDiff * progress
 
             // Position auf dem Kreis
             let dotX = centerX + radius * cos(currentAngle)
@@ -107,6 +92,25 @@ struct ArcWithDot: View {
                     .frame(width: lineWidth * 0.5, height: lineWidth * 0.5)
                     .position(x: dotX, y: dotY)
             }
+        }
+    }
+}
+
+// MARK: - Remaining Time Text
+
+struct RemainingTimeText: View {
+    let startTime: Date
+    let endTime: Date
+
+    var body: some View {
+        TimelineView(.periodic(from: startTime, by: 60.0)) { timeline in
+            let remaining = max(0, endTime.timeIntervalSince(timeline.date))
+            let hours = Int(remaining) / 3600
+            let minutes = (Int(remaining) % 3600) / 60
+
+            Text(hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m")
+                .monospacedDigit()
+                .font(.headline)
         }
     }
 }
@@ -173,26 +177,30 @@ struct LagoonWidgetsLiveActivity: Widget {
             LiveActivityContent(context: context)
         } dynamicIsland: { context in
             DynamicIsland {
-                // Expanded: Oben links Pool
+                // Expanded: Oben links - Roboter Label
                 DynamicIslandExpandedRegion(.leading) {
-                    Text("Pool")
-                        .font(.headline)
-                        .padding(.leading, 60)
+                    HStack(spacing: 6) {
+                        Image(systemName: "figure.pool.swim")
+                        Text("Roboter")
+                    }
+                    .font(.headline)
+                    .padding(.leading, 4)
                 }
 
-                // Expanded: Oben rechts Timer
+                // Expanded: Oben rechts - Verbleibende Zeit
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(timerInterval: context.attributes.startTime...context.state.endTime, countsDown: true)
-                        .monospacedDigit()
-                        .font(.headline)
-                        .padding(.trailing, 20)
+                    RemainingTimeText(
+                        startTime: context.attributes.startTime,
+                        endTime: context.state.endTime
+                    )
+                    .padding(.trailing, 4)
                 }
 
-                // Expanded: Unten Arc
+                // Expanded: Unten - Arc mit Punkt
                 DynamicIslandExpandedRegion(.bottom) {
-                    TimerArcView(
-                        startTime: context.attributes.startTime,
-                        duration: context.attributes.duration,
+                    ArcWithDot(
+                        progress: context.state.progress,
+                        lineWidth: 20,
                         arcDepth: 0.8
                     )
                     .frame(height: 80)
@@ -217,8 +225,11 @@ struct LagoonWidgetsLiveActivity: Widget {
 
 #Preview("Arc Test") {
     VStack(spacing: 20) {
-        // 60 Sekunden Timer, gerade gestartet
-        TimerArcView(startTime: .now, duration: 60, arcDepth: 0.8)
+        ArcWithDot(progress: 0.0, lineWidth: 20, arcDepth: 0.8)
+            .frame(height: 80)
+        ArcWithDot(progress: 0.5, lineWidth: 20, arcDepth: 0.8)
+            .frame(height: 80)
+        ArcWithDot(progress: 1.0, lineWidth: 20, arcDepth: 0.8)
             .frame(height: 80)
     }
     .padding()

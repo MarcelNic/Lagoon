@@ -7,10 +7,16 @@
 
 import SwiftUI
 import SwiftData
+import BackgroundTasks
 
 @main
 struct LagoonApp: App {
     @AppStorage("appearanceMode") private var appearanceMode: String = AppearanceMode.system.rawValue
+
+    init() {
+        // Register background task for Live Activity updates
+        LiveActivityBackgroundManager.shared.registerBackgroundTask()
+    }
 
     let sharedModelContainer: ModelContainer = {
         let schema = Schema([
