@@ -96,24 +96,7 @@ struct ArcWithDot: View {
     }
 }
 
-// MARK: - Remaining Time Text
-
-struct RemainingTimeText: View {
-    let startTime: Date
-    let endTime: Date
-
-    var body: some View {
-        TimelineView(.periodic(from: startTime, by: 60.0)) { timeline in
-            let remaining = max(0, endTime.timeIntervalSince(timeline.date))
-            let hours = Int(remaining) / 3600
-            let minutes = (Int(remaining) % 3600) / 60
-
-            Text(hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m")
-                .monospacedDigit()
-                .font(.headline)
-        }
-    }
-}
+// MARK: - Remaining Time (uses auto-updating Text timerInterval)
 
 // MARK: - Progress Bar View
 
@@ -187,13 +170,12 @@ struct LagoonWidgetsLiveActivity: Widget {
                     .padding(.leading, 4)
                 }
 
-                // Expanded: Oben rechts - Verbleibende Zeit
+                // Expanded: Oben rechts - Verbleibende Zeit (auto-updating)
                 DynamicIslandExpandedRegion(.trailing) {
-                    RemainingTimeText(
-                        startTime: context.attributes.startTime,
-                        endTime: context.state.endTime
-                    )
-                    .padding(.trailing, 4)
+                    Text(timerInterval: context.attributes.startTime...context.state.endTime, countsDown: true)
+                        .monospacedDigit()
+                        .font(.headline)
+                        .multilineTextAlignment(.trailing)
                 }
 
                 // Expanded: Unten - Arc mit Punkt
