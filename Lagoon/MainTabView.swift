@@ -88,7 +88,7 @@ struct MainTabView: View {
                     .frame(width: innerSize.width, height: innerSize.height)
                     .position(x: geo.size.width / 2, y: geo.size.height / 2)
                 }
-                .glassEffect(.regular.interactive(), in: .capsule)
+                .glassEffect(.clear.interactive(), in: .capsule)
 
                 // Action Button 1 (wechselt Icon je nach Tab mit blurFade)
                 Button {
@@ -110,7 +110,7 @@ struct MainTabView: View {
                     .foregroundStyle(Color(light: .black, dark: .white))
                 }
                 .frame(width: tabBarHeight, height: tabBarHeight)
-                .glassEffect(.regular.interactive(), in: .capsule)
+                .glassEffect(.clear.interactive(), in: .capsule)
 
                 // Action Button 2 (nur bei Home sichtbar)
                 if activeTab == .home {
@@ -122,7 +122,7 @@ struct MainTabView: View {
                             .foregroundStyle(Color(light: .black, dark: .white))
                     }
                     .frame(width: tabBarHeight, height: tabBarHeight)
-                    .glassEffect(.regular.interactive(), in: .capsule)
+                    .glassEffect(.clear.interactive(), in: .capsule)
                     .transition(.blurReplace)
                 }
             }
