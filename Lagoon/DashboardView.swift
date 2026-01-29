@@ -27,6 +27,10 @@ struct DashboardView: View {
         showMessenSheet || showDosierenSheet || showQuickMeasure
     }
 
+    private var showDosingPill: Bool {
+        poolWaterState.recentDosingActive || poolWaterState.dosingNeeded
+    }
+
     private var barScale: CGFloat {
         guard anySheetPresented else { return 1.0 }
         if showQuickMeasure {
@@ -131,9 +135,10 @@ struct DashboardView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .scaleEffect(barScale, anchor: .top)
-                    .offset(y: anySheetPresented ? -100 : 0)
+                    .offset(y: anySheetPresented ? -100 : (showDosingPill ? -12 : 0))
                     .animation(.smooth, value: anySheetPresented)
                     .animation(.smooth, value: quickMeasurePhase)
+                    .animation(.smooth(duration: 0.35), value: showDosingPill)
                     .padding(.bottom, 20)
 
                     // Dosing status pill
@@ -146,7 +151,7 @@ struct DashboardView: View {
                             )
                         }
                         .buttonStyle(.plain)
-                        .transition(.scale.combined(with: .opacity))
+                        .transition(.blurReplace.combined(with: .scale(0.8)).combined(with: .opacity))
                         .opacity(anySheetPresented ? 0 : 1)
                         .animation(.smooth, value: anySheetPresented)
                     } else if poolWaterState.dosingNeeded {
@@ -158,7 +163,7 @@ struct DashboardView: View {
                             )
                         }
                         .buttonStyle(.plain)
-                        .transition(.scale.combined(with: .opacity))
+                        .transition(.blurReplace.combined(with: .scale(0.8)).combined(with: .opacity))
                         .opacity(anySheetPresented ? 0 : 1)
                         .animation(.smooth, value: anySheetPresented)
                     }
@@ -187,8 +192,10 @@ struct DashboardView: View {
                     }
                     .padding(.horizontal, 40)
                     .padding(.top, 20)
+                    .offset(y: showDosingPill ? 8 : 0)
                     .opacity(anySheetPresented ? 0 : 1)
                     .animation(.smooth, value: anySheetPresented)
+                    .animation(.smooth(duration: 0.35), value: showDosingPill)
                     .onChange(of: timeOffsetSelection) { _, newValue in
                         poolWaterState.simulationOffsetHours = Double(newValue)
                         poolWaterState.recalculate()
@@ -254,6 +261,7 @@ struct DashboardView: View {
                     }
                     .padding(.bottom, 8)
                 }
+                .animation(.smooth(duration: 0.35), value: showDosingPill)
                 .overlay(alignment: .topTrailing) {
                     Button {
                         NotificationCenter.default.post(name: .openQuickMeasure, object: nil)
@@ -307,48 +315,49 @@ struct MessenSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(PoolWaterState.self) private var poolWaterState
 
-    // TickPicker uses Int, we convert to/from Double
-    @State private var phSelection: Int = 6  // 6.8 + 6*0.1 = 7.4
-    @State private var chlorineSelection: Int = 10  // 0.0 + 10*0.1 = 1.0
+    @State private var phValue: Double = 7.4
+    @State private var chlorineIndex: Double = 10  // Index in chlorineSteps
     @State private var waterTemperature: Double = 26.0
     @State private var measurementDate: Date = Date()
 
-    private var phValue: Double { 6.8 + Double(phSelection) * 0.1 }
+    // 0-1 in 0.1er Schritten, 1-3 in 0.5er Schritten, 3-5 in 1er Schritten
+    private let chlorineSteps: [Double] = [
+        0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,  // Index 0-10
+        1.5, 2.0, 2.5, 3.0,  // Index 11-14
+        4.0, 5.0  // Index 15-16
+    ]
+
     private var chlorineValue: Double {
-        if chlorineSelection <= 10 {
-            return Double(chlorineSelection) * 0.1
+        chlorineSteps[Int(chlorineIndex)]
+    }
+
+    private func temperatureColor(for temp: Double) -> Color {
+        // 10: blau, 20: grün, 25: gelb, 30+: rot
+        let hue: Double
+        if temp < 20 {
+            // 10-20: blau (0.6) → grün (0.33)
+            let t = (temp - 10) / 10
+            hue = 0.6 - t * 0.27
+        } else if temp < 25 {
+            // 20-25: grün (0.33) → gelb (0.15)
+            let t = (temp - 20) / 5
+            hue = 0.33 - t * 0.18
+        } else if temp < 30 {
+            // 25-30: gelb (0.15) → rot (0.0)
+            let t = (temp - 25) / 5
+            hue = 0.15 - t * 0.15
         } else {
-            return 1.0 + Double(chlorineSelection - 10) * 0.5
+            // 30+: rot
+            hue = 0.0
         }
-    }
-
-    private var phConfig: TickConfig {
-        .init(
-            tickWidth: 2,
-            tickHeight: 24,
-            tickHPadding: 4,
-            activeTint: .phIdealColor,
-            inActiveTint: .secondary,
-            alignment: .center
-        )
-    }
-
-    private var chlorineConfig: TickConfig {
-        .init(
-            tickWidth: 2,
-            tickHeight: 24,
-            tickHPadding: 4,
-            activeTint: .chlorineIdealColor,
-            inActiveTint: .secondary,
-            alignment: .center
-        )
+        return Color(hue: hue, saturation: 0.75, brightness: 0.9)
     }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    VStack(spacing: 4) {
+                    VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Label("pH-Wert", systemImage: "drop.fill")
                                 .foregroundStyle(.primary)
@@ -357,13 +366,13 @@ struct MessenSheet: View {
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                                 .monospacedDigit()
                                 .contentTransition(.numericText())
-                                .animation(.snappy, value: phSelection)
+                                .animation(.snappy, value: phValue)
                         }
-
-                        TickPicker(count: 12, config: phConfig, selection: $phSelection)
+                        Slider(value: $phValue, in: 6.8...8.0, step: 0.1)
+                            .tint(.phIdealColor)
                     }
 
-                    VStack(spacing: 4) {
+                    VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Label("Chlor", systemImage: "allergens.fill")
                                 .foregroundStyle(.primary)
@@ -372,10 +381,10 @@ struct MessenSheet: View {
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                                 .monospacedDigit()
                                 .contentTransition(.numericText())
-                                .animation(.snappy, value: chlorineSelection)
+                                .animation(.snappy, value: chlorineIndex)
                         }
-
-                        TickPicker(count: 18, config: chlorineConfig, selection: $chlorineSelection)
+                        Slider(value: $chlorineIndex, in: 0...Double(chlorineSteps.count - 1), step: 1)
+                            .tint(.chlorineIdealColor)
                     }
                 }
 
@@ -392,7 +401,7 @@ struct MessenSheet: View {
                                 .animation(.snappy, value: waterTemperature)
                         }
                         Slider(value: $waterTemperature, in: 10.0...40.0, step: 1.0)
-                            .tint(Color(hue: 0.6 * (1.0 - (waterTemperature - 10.0) / 30.0), saturation: 0.75, brightness: 0.9))
+                            .tint(temperatureColor(for: waterTemperature))
                     }
                 }
 
@@ -435,12 +444,11 @@ struct MessenSheet: View {
             }
         }
         .onAppear {
-            // Initialize with last measured values
-            phSelection = min(12, max(0, Int(((poolWaterState.lastPH - 6.8) / 0.1).rounded())))
-            if poolWaterState.lastChlorine <= 1.0 {
-                chlorineSelection = min(10, max(0, Int((poolWaterState.lastChlorine / 0.1).rounded())))
-            } else {
-                chlorineSelection = min(18, max(10, 10 + Int(((poolWaterState.lastChlorine - 1.0) / 0.5).rounded())))
+            phValue = poolWaterState.lastPH
+            // Find closest index for chlorine value
+            let lastCl = poolWaterState.lastChlorine
+            if let idx = chlorineSteps.enumerated().min(by: { abs($0.element - lastCl) < abs($1.element - lastCl) })?.offset {
+                chlorineIndex = Double(idx)
             }
         }
     }
@@ -456,19 +464,20 @@ struct DosierenSheet: View {
     @AppStorage("cupGrams") private var cupGrams: Double = 50.0
 
     @State private var phType: PHType = .minus
-    @State private var phAmountSelection: Int = 0  // 0-60 → 0-300g (step 5)
-    @State private var chlorineAmountSelection: Int = 0  // 0-100 → 0-500g (step 5)
+    @State private var phAmount: Double = 0
+    @State private var chlorineAmount: Double = 0
     @State private var dosingDate: Date = Date()
 
-    private var phAmount: Double {
-        dosingUnit == "becher"
-            ? DosingFormatter.cupTickToGrams(phAmountSelection, cupGrams: cupGrams)
-            : Double(phAmountSelection) * 5.0
+    private var maxPHAmount: Double {
+        dosingUnit == "becher" ? cupGrams * 10 : 300
     }
-    private var chlorineAmount: Double {
-        dosingUnit == "becher"
-            ? DosingFormatter.cupTickToGrams(chlorineAmountSelection, cupGrams: cupGrams)
-            : Double(chlorineAmountSelection) * 5.0
+
+    private var maxChlorineAmount: Double {
+        dosingUnit == "becher" ? cupGrams * 10 : 500
+    }
+
+    private var stepSize: Double {
+        dosingUnit == "becher" ? cupGrams * 0.25 : 5.0
     }
 
     enum PHType: String, CaseIterable {
@@ -496,33 +505,11 @@ struct DosierenSheet: View {
         }
     }
 
-    private var phConfig: TickConfig {
-        .init(
-            tickWidth: 2,
-            tickHeight: 24,
-            tickHPadding: 4,
-            activeTint: .phIdealColor,
-            inActiveTint: .secondary,
-            alignment: .center
-        )
-    }
-
-    private var chlorineConfig: TickConfig {
-        .init(
-            tickWidth: 2,
-            tickHeight: 24,
-            tickHPadding: 4,
-            activeTint: .chlorineIdealColor,
-            inActiveTint: .secondary,
-            alignment: .center
-        )
-    }
-
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    VStack(spacing: 4) {
+                    VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Label("pH", systemImage: "drop.fill")
                                 .foregroundStyle(.primary)
@@ -531,7 +518,7 @@ struct DosierenSheet: View {
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                                 .monospacedDigit()
                                 .contentTransition(.numericText())
-                                .animation(.snappy, value: phAmountSelection)
+                                .animation(.snappy, value: phAmount)
                         }
                         Picker("pH", selection: $phType) {
                             Text("pH-").tag(PHType.minus)
@@ -540,12 +527,13 @@ struct DosierenSheet: View {
                         .pickerStyle(.segmented)
                         .labelsHidden()
 
-                        TickPicker(count: dosingUnit == "becher" ? DosingFormatter.cupTickCount : 60, config: phConfig, selection: $phAmountSelection)
+                        Slider(value: $phAmount, in: 0...maxPHAmount, step: stepSize)
+                            .tint(.phIdealColor)
                     }
                 }
 
                 Section {
-                    VStack(spacing: 4) {
+                    VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Label("Chlor", systemImage: "allergens.fill")
                                 .foregroundStyle(.primary)
@@ -554,10 +542,11 @@ struct DosierenSheet: View {
                                 .font(.system(size: 17, weight: .semibold, design: .rounded))
                                 .monospacedDigit()
                                 .contentTransition(.numericText())
-                                .animation(.snappy, value: chlorineAmountSelection)
+                                .animation(.snappy, value: chlorineAmount)
                         }
 
-                        TickPicker(count: dosingUnit == "becher" ? DosingFormatter.cupTickCount : 100, config: chlorineConfig, selection: $chlorineAmountSelection)
+                        Slider(value: $chlorineAmount, in: 0...maxChlorineAmount, step: stepSize)
+                            .tint(.chlorineIdealColor)
                     }
                 }
 

@@ -19,9 +19,20 @@ struct QuickMeasureSheet: View {
     @State private var currentDetent: PresentationDetent = QuickMeasureSheet.messenDetent
 
     // Messen values
-    @State private var phSelection: Int = 6
-    @State private var chlorineSelection: Int = 10
+    @State private var phValue: Double = 7.4
+    @State private var chlorineIndex: Double = 10  // Index in chlorineSteps
     @State private var waterTemperature: Double = 26.0
+
+    // 0-1 in 0.1er Schritten, 1-3 in 0.5er Schritten, 3-5 in 1er Schritten
+    private let chlorineSteps: [Double] = [
+        0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,  // Index 0-10
+        1.5, 2.0, 2.5, 3.0,  // Index 11-14
+        4.0, 5.0  // Index 15-16
+    ]
+
+    private var chlorineValue: Double {
+        chlorineSteps[Int(chlorineIndex)]
+    }
 
     // Dosieren computed values
     @State private var recommendedPHAmount: Double = 0
@@ -33,27 +44,20 @@ struct QuickMeasureSheet: View {
     @State private var chlorineInRange: Bool = false
 
     // Bearbeiten adjusted values
-    @State private var phAmountSelection: Int = 0
-    @State private var chlorineAmountSelection: Int = 0
+    @State private var editedPHAmount: Double = 0
+    @State private var editedChlorineAmount: Double = 0
     @State private var phType: PHType = .minus
 
-    private var phValue: Double { 6.8 + Double(phSelection) * 0.1 }
-    private var chlorineValue: Double {
-        if chlorineSelection <= 10 {
-            return Double(chlorineSelection) * 0.1
-        } else {
-            return 1.0 + Double(chlorineSelection - 10) * 0.5
-        }
+    private var maxPHAmount: Double {
+        dosingUnit == "becher" ? cupGrams * 10 : 300
     }
-    private var editedPHAmount: Double {
-        dosingUnit == "becher"
-            ? DosingFormatter.cupTickToGrams(phAmountSelection, cupGrams: cupGrams)
-            : Double(phAmountSelection) * 5.0
+
+    private var maxChlorineAmount: Double {
+        dosingUnit == "becher" ? cupGrams * 10 : 500
     }
-    private var editedChlorineAmount: Double {
-        dosingUnit == "becher"
-            ? DosingFormatter.cupTickToGrams(chlorineAmountSelection, cupGrams: cupGrams)
-            : Double(chlorineAmountSelection) * 5.0
+
+    private var stepSize: Double {
+        dosingUnit == "becher" ? cupGrams * 0.25 : 5.0
     }
 
     enum PHType: String, CaseIterable {
@@ -72,26 +76,26 @@ struct QuickMeasureSheet: View {
         }
     }
 
-    private var phTickConfig: TickConfig {
-        .init(
-            tickWidth: 2,
-            tickHeight: 24,
-            tickHPadding: 4,
-            activeTint: .phIdealColor,
-            inActiveTint: .secondary,
-            alignment: .center
-        )
-    }
-
-    private var chlorineTickConfig: TickConfig {
-        .init(
-            tickWidth: 2,
-            tickHeight: 24,
-            tickHPadding: 4,
-            activeTint: .chlorineIdealColor,
-            inActiveTint: .secondary,
-            alignment: .center
-        )
+    private func temperatureColor(for temp: Double) -> Color {
+        // 10: blau, 20: grün, 25: gelb, 30+: rot
+        let hue: Double
+        if temp < 20 {
+            // 10-20: blau (0.6) → grün (0.33)
+            let t = (temp - 10) / 10
+            hue = 0.6 - t * 0.27
+        } else if temp < 25 {
+            // 20-25: grün (0.33) → gelb (0.15)
+            let t = (temp - 20) / 5
+            hue = 0.33 - t * 0.18
+        } else if temp < 30 {
+            // 25-30: gelb (0.15) → rot (0.0)
+            let t = (temp - 25) / 5
+            hue = 0.15 - t * 0.15
+        } else {
+            // 30+: rot
+            hue = 0.0
+        }
+        return Color(hue: hue, saturation: 0.75, brightness: 0.9)
     }
 
     private static let messenDetent = PresentationDetent.height(415)
@@ -175,11 +179,11 @@ struct QuickMeasureSheet: View {
             }
         }
         .onAppear {
-            phSelection = min(12, max(0, Int(((poolWaterState.lastPH - 6.8) / 0.1).rounded())))
-            if poolWaterState.lastChlorine <= 1.0 {
-                chlorineSelection = min(10, max(0, Int((poolWaterState.lastChlorine / 0.1).rounded())))
-            } else {
-                chlorineSelection = min(18, max(10, 10 + Int(((poolWaterState.lastChlorine - 1.0) / 0.5).rounded())))
+            phValue = poolWaterState.lastPH
+            // Find closest index for chlorine value
+            let lastCl = poolWaterState.lastChlorine
+            if let idx = chlorineSteps.enumerated().min(by: { abs($0.element - lastCl) < abs($1.element - lastCl) })?.offset {
+                chlorineIndex = Double(idx)
             }
         }
         .onChange(of: phase) { _, newPhase in
@@ -200,7 +204,7 @@ struct QuickMeasureSheet: View {
     @ViewBuilder
     private var messenSections: some View {
         Section {
-            VStack(spacing: 4) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Label("pH-Wert", systemImage: "drop.fill")
                         .foregroundStyle(.primary)
@@ -209,12 +213,13 @@ struct QuickMeasureSheet: View {
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .contentTransition(.numericText())
-                        .animation(.snappy, value: phSelection)
+                        .animation(.snappy, value: phValue)
                 }
-                TickPicker(count: 12, config: phTickConfig, selection: $phSelection)
+                Slider(value: $phValue, in: 6.8...8.0, step: 0.1)
+                    .tint(.phIdealColor)
             }
 
-            VStack(spacing: 4) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Label("Chlor", systemImage: "allergens.fill")
                         .foregroundStyle(.primary)
@@ -223,9 +228,10 @@ struct QuickMeasureSheet: View {
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .contentTransition(.numericText())
-                        .animation(.snappy, value: chlorineSelection)
+                        .animation(.snappy, value: chlorineIndex)
                 }
-                TickPicker(count: 18, config: chlorineTickConfig, selection: $chlorineSelection)
+                Slider(value: $chlorineIndex, in: 0...Double(chlorineSteps.count - 1), step: 1)
+                    .tint(.chlorineIdealColor)
             }
         }
         .listSectionSpacing(16)
@@ -243,7 +249,7 @@ struct QuickMeasureSheet: View {
                         .animation(.snappy, value: waterTemperature)
                 }
                 Slider(value: $waterTemperature, in: 10.0...40.0, step: 1.0)
-                    .tint(Color(hue: 0.6 * (1.0 - (waterTemperature - 10.0) / 30.0), saturation: 0.75, brightness: 0.9))
+                    .tint(temperatureColor(for: waterTemperature))
             }
         }
 
@@ -326,7 +332,7 @@ struct QuickMeasureSheet: View {
     @ViewBuilder
     private var bearbeitenSections: some View {
         Section {
-            VStack(spacing: 4) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Label("pH", systemImage: "drop.fill")
                         .foregroundStyle(.primary)
@@ -335,7 +341,7 @@ struct QuickMeasureSheet: View {
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .contentTransition(.numericText())
-                        .animation(.snappy, value: phAmountSelection)
+                        .animation(.snappy, value: editedPHAmount)
                 }
 
                 Picker("pH", selection: $phType) {
@@ -345,12 +351,13 @@ struct QuickMeasureSheet: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
 
-                TickPicker(count: dosingUnit == "becher" ? DosingFormatter.cupTickCount : 60, config: phTickConfig, selection: $phAmountSelection)
+                Slider(value: $editedPHAmount, in: 0...maxPHAmount, step: stepSize)
+                    .tint(.phIdealColor)
             }
         }
 
         Section {
-            VStack(spacing: 4) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Label("Chlor", systemImage: "allergens.fill")
                         .foregroundStyle(.primary)
@@ -359,10 +366,11 @@ struct QuickMeasureSheet: View {
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .contentTransition(.numericText())
-                        .animation(.snappy, value: chlorineAmountSelection)
+                        .animation(.snappy, value: editedChlorineAmount)
                 }
 
-                TickPicker(count: dosingUnit == "becher" ? DosingFormatter.cupTickCount : 100, config: chlorineTickConfig, selection: $chlorineAmountSelection)
+                Slider(value: $editedChlorineAmount, in: 0...maxChlorineAmount, step: stepSize)
+                    .tint(.chlorineIdealColor)
             }
         }
 
@@ -422,13 +430,8 @@ struct QuickMeasureSheet: View {
     }
 
     private func prepareEditValues() {
-        if dosingUnit == "becher" {
-            phAmountSelection = DosingFormatter.gramsToCupTick(recommendedPHAmount, cupGrams: cupGrams)
-            chlorineAmountSelection = DosingFormatter.gramsToCupTick(recommendedChlorineAmount, cupGrams: cupGrams)
-        } else {
-            phAmountSelection = Int((recommendedPHAmount / 5.0).rounded())
-            chlorineAmountSelection = Int((recommendedChlorineAmount / 5.0).rounded())
-        }
+        editedPHAmount = recommendedPHAmount
+        editedChlorineAmount = recommendedChlorineAmount
     }
 
     private func saveAll(phAmount: Double, chlorineAmount: Double) {

@@ -52,6 +52,7 @@ struct VerticalTrendBar: View {
     var compact: Bool = false
 
     @State private var showPredictionPopover = false
+    @State private var isShimmering = false
     @Namespace private var namespace
 
     // Dimensionen
@@ -301,7 +302,7 @@ struct VerticalTrendBar: View {
         .animation(.smooth, value: normalizedValue)
     }
 
-    // MARK: - Wert Label mit Apple Intelligence Icon
+    // MARK: - Wert Label mit Schimmer-Effekt
 
     private var valueLabelView: some View {
         Button {
@@ -309,28 +310,21 @@ struct VerticalTrendBar: View {
                 showPredictionPopover = true
             }
         } label: {
-            HStack(spacing: 2) {
-                // Apple Intelligence Icon links bei leading (pH)
-                if scalePosition == .leading && prediction != nil {
-                    appleIntelligenceIcon
-                }
-
-                Text(formatValue(value) + (unit.isEmpty ? "" : " \(unit)"))
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                    .contentTransition(.numericText())
-                    .animation(.snappy, value: value)
-
-                // Apple Intelligence Icon rechts bei trailing (Cl)
-                if scalePosition == .trailing && prediction != nil {
-                    appleIntelligenceIcon
-                }
-            }
-            .padding(.horizontal, 4)
-            .matchedTransitionSource(id: "PREDICTION_\(title)", in: namespace)
+            Text(formatValue(value) + (unit.isEmpty ? "" : " \(unit)"))
+                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+                .contentTransition(.numericText())
+                .animation(.snappy, value: value)
+                .padding(.horizontal, 4)
+                .matchedTransitionSource(id: "PREDICTION_\(title)", in: namespace)
         }
         .buttonStyle(.glass(.clear.interactive()))
         .fixedSize()
+        .background {
+            if prediction != nil {
+                shimmerBackground
+            }
+        }
         .popover(isPresented: $showPredictionPopover) {
             if let prediction = prediction {
                 PopoverHelper {
@@ -347,16 +341,36 @@ struct VerticalTrendBar: View {
         }
     }
 
-    private var appleIntelligenceIcon: some View {
-        Image(systemName: "apple.intelligence")
-            .font(.system(size: 14))
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [.red, .orange, .yellow, .green, .blue, .purple],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+    @ViewBuilder
+    private var shimmerBackground: some View {
+        let shape = Capsule()
+        let shimmerGradient = AngularGradient(
+            colors: [
+                Color(hex: "fdab27").opacity(0.5),
+                Color(hex: "ff3668").opacity(0.4),
+                Color(hex: "f57fe7").opacity(0.3),
+                Color(hex: "34c1fd").opacity(0.4),
+                Color(hex: "fdab27").opacity(0.5)
+            ],
+            center: .center,
+            angle: .init(degrees: isShimmering ? 360 : 0)
+        )
+
+        ZStack {
+            // Rotierender Schimmer
+            shape
+                .stroke(
+                    shimmerGradient,
+                    style: .init(lineWidth: 5, lineCap: .round, lineJoin: .round)
                 )
-            )
+                .blur(radius: 6)
+        }
+        .padding(-1)
+        .onAppear {
+            withAnimation(.linear(duration: 5).repeatForever(autoreverses: false)) {
+                isShimmering = true
+            }
+        }
     }
 
     // MARK: - Helpers

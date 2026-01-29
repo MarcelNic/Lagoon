@@ -23,25 +23,84 @@ struct InfoPillsRow: View {
 struct InfoPill: View {
     @Environment(\.colorScheme) private var colorScheme
 
-    let icon: String
+    let icon: String?
     let text: String
     var tint: Color? = nil
     var foregroundColor: Color = .white
+    var shimmer: Bool = false
+    var shimmerColor: Color = .green
+
+    @State private var isShimmering: Bool = false
+
+    init(icon: String, text: String, tint: Color? = nil, foregroundColor: Color = .white) {
+        self.icon = icon
+        self.text = text
+        self.tint = tint
+        self.foregroundColor = foregroundColor
+        self.shimmer = false
+        self.shimmerColor = .green
+    }
+
+    init(text: String, tint: Color? = nil, foregroundColor: Color = .white, shimmer: Bool = false, shimmerColor: Color = .green) {
+        self.icon = nil
+        self.text = text
+        self.tint = tint
+        self.foregroundColor = foregroundColor
+        self.shimmer = shimmer
+        self.shimmerColor = shimmerColor
+    }
 
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.system(size: 13, weight: .medium))
+            if let icon = icon {
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .medium))
+            }
             Text(text)
                 .font(.system(size: 13, weight: .medium))
         }
         .foregroundStyle(foregroundColor)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
+        .background {
+            if shimmer {
+                shimmerBackground
+            }
+        }
         .glassEffect(
             glassStyle,
             in: .capsule
         )
+    }
+
+    @ViewBuilder
+    private var shimmerBackground: some View {
+        let shape = Capsule()
+        let clearColors: [Color] = Array(repeating: .clear, count: 3)
+
+        shape
+            .stroke(
+                shimmerColor.gradient,
+                style: .init(lineWidth: 2.5, lineCap: .round, lineJoin: .round)
+            )
+            .mask {
+                shape
+                    .fill(AngularGradient(
+                        colors: clearColors + [Color.white] + clearColors,
+                        center: .center,
+                        angle: .init(degrees: isShimmering ? 360 : 0)
+                    ))
+            }
+            .padding(-1.25)
+            .blur(radius: 1.5)
+            .onAppear {
+                withAnimation(.linear(duration: 2.5).repeatForever(autoreverses: false)) {
+                    isShimmering = true
+                }
+            }
+            .onDisappear {
+                isShimmering = false
+            }
     }
 
     private var glassStyle: Glass {
