@@ -156,5 +156,6 @@ struct TickPicker: View {
 }
 
 #Preview {
-    ContentView()
+    MainTabView()
+        .environment(PoolWaterState())
 }

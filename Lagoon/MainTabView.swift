@@ -19,8 +19,11 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $activeTab) {
             Tab(value: .home) {
-                DashboardTabView()
-                    .toolbarVisibility(.hidden, for: .tabBar)
+                DashboardTabView(
+                    showMessenSheet: $showMessenSheet,
+                    showDosierenSheet: $showDosierenSheet
+                )
+                .toolbarVisibility(.hidden, for: .tabBar)
             }
 
             Tab(value: .care) {
@@ -127,12 +130,32 @@ struct DashboardTabView: View {
     @AppStorage("dosingUnit") private var dosingUnit: String = "gramm"
     @AppStorage("cupGrams") private var cupGrams: Double = 50.0
 
+    // Sheet Bindings from MainTabView
+    @Binding var showMessenSheet: Bool
+    @Binding var showDosierenSheet: Bool
+
     @State private var showQuickMeasure = false
     @State private var quickMeasurePhase: Int = 0
     @State private var timeOffsetSelection: Int = 0
 
+    private var anySheetPresented: Bool {
+        showMessenSheet || showDosierenSheet || showQuickMeasure
+    }
+
     private var showDosingPill: Bool {
         poolWaterState.recentDosingActive || poolWaterState.dosingNeeded
+    }
+
+    private var barScale: CGFloat {
+        guard anySheetPresented else { return 1.0 }
+        if showQuickMeasure {
+            switch quickMeasurePhase {
+            case 1: return 1.0    // dosieren – kleines sheet
+            case 2: return 0.65   // bearbeiten – großes sheet
+            default: return 0.80  // messen
+            }
+        }
+        return 0.80
     }
 
     private var recentDosingLabel: String {
@@ -188,8 +211,8 @@ struct DashboardTabView: View {
             )
             .ignoresSafeArea()
 
-            VStack {
-                Spacer()
+            VStack(spacing: 0) {
+                Spacer(minLength: 20)
 
                 // Dashboard Content - Classic Style
                 HStack(spacing: 72) {
@@ -205,7 +228,7 @@ struct DashboardTabView: View {
                         trend: poolWaterState.phTrend,
                         scalePosition: .leading,
                         prediction: poolWaterState.phPrediction,
-                        compact: showQuickMeasure
+                        compact: anySheetPresented
                     )
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
@@ -221,13 +244,15 @@ struct DashboardTabView: View {
                         trend: poolWaterState.chlorineTrend,
                         scalePosition: .trailing,
                         prediction: poolWaterState.chlorinePrediction,
-                        compact: showQuickMeasure
+                        compact: anySheetPresented
                     )
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .offset(y: showDosingPill ? -12 : 0)
+                .scaleEffect(barScale, anchor: .top)
+                .offset(y: anySheetPresented ? -80 : (showDosingPill ? -12 : 0))
+                .animation(.smooth, value: anySheetPresented)
+                .animation(.smooth, value: quickMeasurePhase)
                 .animation(.smooth(duration: 0.35), value: showDosingPill)
-                .padding(.bottom, 20)
 
                 // Dosing status pill
                 if poolWaterState.recentDosingActive {
@@ -240,6 +265,9 @@ struct DashboardTabView: View {
                     }
                     .buttonStyle(.plain)
                     .transition(.blurReplace.combined(with: .scale(0.8)).combined(with: .opacity))
+                    .opacity(anySheetPresented ? 0 : 1)
+                    .animation(.smooth, value: anySheetPresented)
+                    .padding(.top, 20)
                 } else if poolWaterState.dosingNeeded {
                     Button { showQuickMeasure = true } label: {
                         InfoPill(
@@ -250,6 +278,9 @@ struct DashboardTabView: View {
                     }
                     .buttonStyle(.plain)
                     .transition(.blurReplace.combined(with: .scale(0.8)).combined(with: .opacity))
+                    .opacity(anySheetPresented ? 0 : 1)
+                    .animation(.smooth, value: anySheetPresented)
+                    .padding(.top, 20)
                 }
 
                 // Time simulation picker
@@ -275,15 +306,16 @@ struct DashboardTabView: View {
                     .frame(height: 16)
                 }
                 .padding(.horizontal, 40)
-                .padding(.top, 20)
-                .offset(y: showDosingPill ? 8 : 0)
+                .padding(.top, showDosingPill ? 28 : 20)
+                .opacity(anySheetPresented ? 0 : 1)
+                .animation(.smooth, value: anySheetPresented)
                 .animation(.smooth(duration: 0.35), value: showDosingPill)
                 .onChange(of: timeOffsetSelection) { _, newValue in
                     poolWaterState.simulationOffsetHours = Double(newValue)
                     poolWaterState.recalculate()
                 }
 
-                Spacer()
+                Spacer(minLength: 30)
             }
             .animation(.smooth(duration: 0.35), value: showDosingPill)
             .overlay(alignment: .topTrailing) {
