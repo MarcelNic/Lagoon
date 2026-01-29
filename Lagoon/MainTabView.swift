@@ -57,13 +57,22 @@ struct MainTabView: View {
         }
     }
 
+    // TabBar Dimensionen
+    private let tabBarHeight: CGFloat = 55
+    private let tabBarSpacing: CGFloat = 10
+    private let segmentPadding: CGFloat = 5  // Abstand für Concentricity
+
     @ViewBuilder
     private func LagoonTabBarView() -> some View {
-        GlassEffectContainer(spacing: 10) {
-            HStack(spacing: 10) {
-                // TabBar (erweitert sich wenn weniger Action-Buttons)
+        GlassEffectContainer(spacing: tabBarSpacing) {
+            HStack(spacing: tabBarSpacing) {
+                // TabBar mit Padding-Container für Concentricity
                 GeometryReader { geo in
-                    LagoonTabBar(size: geo.size, activeTab: $activeTab) { tab in
+                    let innerSize = CGSize(
+                        width: geo.size.width - (segmentPadding * 2),
+                        height: geo.size.height - (segmentPadding * 2)
+                    )
+                    LagoonTabBar(size: innerSize, activeTab: $activeTab) { tab in
                         VStack(spacing: 3) {
                             Image(systemName: tab.symbol)
                                 .font(.title3)
@@ -75,8 +84,10 @@ struct MainTabView: View {
                         .symbolVariant(.fill)
                         .frame(maxWidth: .infinity)
                     }
-                    .glassEffect(.regular.interactive(), in: .capsule)
+                    .frame(width: innerSize.width, height: innerSize.height)
+                    .position(x: geo.size.width / 2, y: geo.size.height / 2)
                 }
+                .glassEffect(.regular.interactive(), in: .capsule)
 
                 // Action Button 1 (wechselt Icon je nach Tab mit blurFade)
                 Button {
@@ -94,11 +105,11 @@ struct MainTabView: View {
                         Image(systemName: "gearshape")
                             .blurFade(activeTab == .pool)
                     }
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.system(size: 22, weight: .semibold))
                     .foregroundStyle(Color(light: .black, dark: .white))
                 }
-                .frame(width: 52, height: 52)
-                .glassEffect(.regular.interactive(), in: .circle)
+                .frame(width: tabBarHeight, height: tabBarHeight)
+                .glassEffect(.regular.interactive(), in: .capsule)
 
                 // Action Button 2 (nur bei Home sichtbar)
                 if activeTab == .home {
@@ -106,17 +117,17 @@ struct MainTabView: View {
                         showDosierenSheet = true
                     } label: {
                         Image(systemName: "circle.grid.cross")
-                            .font(.system(size: 20, weight: .semibold))
+                            .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(Color(light: .black, dark: .white))
                     }
-                    .frame(width: 52, height: 52)
-                    .glassEffect(.regular.interactive(), in: .circle)
+                    .frame(width: tabBarHeight, height: tabBarHeight)
+                    .glassEffect(.regular.interactive(), in: .capsule)
                     .transition(.blurReplace)
                 }
             }
             .animation(.smooth(duration: 0.4), value: activeTab)
         }
-        .frame(height: 55)
+        .frame(height: tabBarHeight)
     }
 }
 
