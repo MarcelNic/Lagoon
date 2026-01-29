@@ -40,8 +40,8 @@ struct MainTabView: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             LagoonTabBarView()
-                .padding(.horizontal, 29)  // Mehr horizontales Padding für schmalere TabBar
-                .padding(.bottom, -5)  // Tiefer in Safe Area
+                .padding(.horizontal, 20)
+                .padding(.bottom, -15)
         }
         .sheet(isPresented: $showMessenSheet) {
             MessenSheet()
