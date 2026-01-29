@@ -12,8 +12,13 @@ struct MeinPoolView: View {
     @Environment(PoolWaterState.self) private var poolWaterState
     @AppStorage("poolName") private var poolName: String = "Pool"
     @State private var meinPoolState = MeinPoolState()
-    @State private var showSettings = false
+    @Binding var showSettings: Bool
     @State private var selectedEntry: LogbookEntry?
+
+    // Init für Binding
+    init(showSettings: Binding<Bool> = .constant(false)) {
+        self._showSettings = showSettings
+    }
 
     // Separate sheet states for each type
     @State private var showMessenSheet = false
@@ -83,27 +88,11 @@ struct MeinPoolView: View {
         }
         .safeAreaInset(edge: .top) {
             HStack {
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(Color(light: Color.black, dark: Color.white))
-                        .frame(width: 44, height: 44)
-                }
-                .glassEffect(.regular.interactive(), in: .circle)
+                Text("Mein Pool")
+                    .font(.largeTitle.bold())
+                    .foregroundStyle(Color(light: .black, dark: .white))
 
                 Spacer()
-
-                Button {
-                    showSettings = true
-                } label: {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(Color(light: Color.black, dark: Color.white))
-                        .frame(width: 44, height: 44)
-                }
-                .glassEffect(.regular.interactive(), in: .circle)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)

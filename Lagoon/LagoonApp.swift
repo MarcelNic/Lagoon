@@ -48,7 +48,7 @@ struct LagoonApp: App {
 
     var body: some Scene {
         WindowGroup {
-            DashboardView()
+            MainTabView()
                 .preferredColorScheme(colorScheme)
                 .environment(poolWaterState)
                 .environment(notificationManager)

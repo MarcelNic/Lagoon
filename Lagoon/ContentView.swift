@@ -8,191 +8,38 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var activeTab: LagoonTab = .home
     @State private var showMessenSheet = false
     @State private var showDosierenSheet = false
-    @State private var showPoolcare = false
-    @State private var showPoolOverview = false
-    @Namespace private var namespace
+    @State private var showAddTaskSheet = false
+    @State private var showSettings = false
+    @State private var poolcareState = PoolcareState()
+    @Namespace private var tabBarNamespace
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                LinearGradient(
-                    stops: [
-                        .init(color: Color(light: Color(hex: "0443a6"), dark: Color(hex: "0a1628")), location: 0.0),
-                        .init(color: Color(light: Color(hex: "b2e1ec"), dark: Color(hex: "1a3a5c")), location: 0.5),
-                        .init(color: Color(light: Color(hex: "2fb4a0"), dark: Color(hex: "1a3a5c")), location: 1.0)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
+        TabView(selection: $activeTab) {
+            Tab(value: .home) {
+                HomeView(
+                    showMessenSheet: $showMessenSheet,
+                    showDosierenSheet: $showDosierenSheet
                 )
-                .ignoresSafeArea()
-
-                VStack(spacing: 16) {
-                    Spacer()
-
-                    // Live Activity Style Stacks
-                    GlassEffectContainer {
-                        VStack(spacing: 12) {
-                            // Stack 1 - pH
-                            Button {
-                                // TODO: pH action
-                            } label: {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 50, style: .continuous)
-                                        .fill(Color(light: Color.black, dark: Color.white).opacity(0.001))
-
-                                    CircularArcProgressView(
-                                        value: 0.35,
-                                        idealMin: 0.35,
-                                        idealMax: 0.65,
-                                        color: Color(red: 0x42/255, green: 0xED/255, blue: 0xFE/255)
-                                    )
-                                    .padding(45)
-
-                                    // Header & Value - konzentrische Margins (20pt zum Rand)
-                                    VStack {
-                                        HStack {
-                                            Text("pH")
-                                                .font(.system(size: 17, weight: .semibold))
-                                                .foregroundStyle(Color(light: Color.black, dark: Color.white))
-                                            Spacer()
-                                            Text("vor 2 Std.")
-                                                .font(.system(size: 15, weight: .medium))
-                                                .foregroundStyle(Color(red: 0x42/255, green: 0xED/255, blue: 0xFE/255))
-                                        }
-
-                                        Spacer()
-
-                                        Text("7.2")
-                                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                                            .foregroundStyle(Color(light: Color.black, dark: Color.white))
-                                    }
-                                    .padding(.horizontal, 35)
-                                    .padding(.vertical, 30)
-                                }
-                                .frame(height: 180)
-                            }
-                            .buttonStyle(.plain)
-                            .glassEffect(.clear.interactive(), in: .rect(cornerRadius: 50))
-
-                            // Stack 2 - Chlor
-                            Button {
-                                // TODO: Chlor action
-                            } label: {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 50, style: .continuous)
-                                        .fill(Color(light: Color.black, dark: Color.white).opacity(0.001))
-
-                                    CircularArcProgressView(
-                                        value: 0.3,
-                                        idealMin: 0.2,
-                                        idealMax: 0.6,
-                                        color: Color(hex: "5df66d")
-                                    )
-                                    .padding(45)
-
-                                    // Header & Value - konzentrische Margins (20pt zum Rand)
-                                    VStack {
-                                        HStack {
-                                            Text("Chlor")
-                                                .font(.system(size: 17, weight: .semibold))
-                                                .foregroundStyle(Color(light: Color.black, dark: Color.white))
-                                            Spacer()
-                                            Text("vor 5 Std.")
-                                                .font(.system(size: 15, weight: .medium))
-                                                .foregroundStyle(Color(red: 0x42/255, green: 0xED/255, blue: 0xFE/255))
-                                        }
-
-                                        Spacer()
-
-                                        Text("1.5")
-                                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                                            .foregroundStyle(Color(light: Color.black, dark: Color.white))
-                                    }
-                                    .padding(.horizontal, 35)
-                                    .padding(.vertical, 30)
-                                }
-                                .frame(height: 180)
-                            }
-                            .buttonStyle(.plain)
-                            .glassEffect(.clear.interactive(), in: .rect(cornerRadius: 50))
-                        }
-                    }
-                    .padding(.horizontal, 16)
-
-                    Spacer()
-
-                    // Bottom Bar
-                    GlassEffectContainer(spacing: 12) {
-                        HStack(spacing: 12) {
-                            // Linker Button - Poolcare + Pool Name
-                            HStack(spacing: 0) {
-                                Button {
-                                    showPoolcare = true
-                                } label: {
-                                    Image(systemName: "checklist")
-                                        .font(.system(size: 20, weight: .semibold))
-                                        .foregroundStyle(Color(light: Color.black, dark: Color.white))
-                                        .padding(.leading, 24)
-                                        .padding(.trailing, 12)
-                                        .frame(height: 52)
-                                }
-                                .matchedTransitionSource(id: "poolcare", in: namespace)
-
-                                Rectangle()
-                                    .fill(Color(light: Color.black, dark: Color.white).opacity(0.3))
-                                    .frame(width: 1, height: 26)
-
-                                Button {
-                                    showPoolOverview = true
-                                } label: {
-                                    Text("Mein Pool")
-                                        .font(.system(size: 17, weight: .medium))
-                                        .foregroundStyle(Color(light: Color.black, dark: Color.white))
-                                        .padding(.leading, 12)
-                                        .padding(.trailing, 24)
-                                        .frame(height: 52)
-                                }
-                                .matchedTransitionSource(id: "poolOverview", in: namespace)
-                            }
-                            .glassEffect(.clear.interactive(), in: .capsule)
-
-                            // Mittlerer Button - Messen
-                            Button {
-                                showMessenSheet = true
-                            } label: {
-                                Image(systemName: "testtube.2")
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundStyle(Color(light: Color.black, dark: Color.white))
-                            }
-                            .frame(width: 52, height: 52)
-                            .glassEffect(.clear.interactive(), in: .circle)
-
-                            // Rechter Button - Dosieren
-                            Button {
-                                showDosierenSheet = true
-                            } label: {
-                                Image(systemName: "circle.grid.cross")
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundStyle(Color(light: Color.black, dark: Color.white))
-                            }
-                            .frame(width: 52, height: 52)
-                            .glassEffect(.clear.interactive(), in: .circle)
-                        }
-                    }
-                    .padding(.bottom, 8)
-                }
-                .navigationDestination(isPresented: $showPoolcare) {
-                    PoolcareView()
-                        .navigationTransition(.zoom(sourceID: "poolcare", in: namespace))
-                }
-                .navigationDestination(isPresented: $showPoolOverview) {
-                    PoolOverviewView()
-                        .navigationTransition(.zoom(sourceID: "poolOverview", in: namespace))
-                }
-                .toolbar(.hidden, for: .navigationBar)
+                .toolbarVisibility(.hidden, for: .tabBar)
             }
+
+            Tab(value: .care) {
+                PoolcareTabView(state: poolcareState)
+                    .toolbarVisibility(.hidden, for: .tabBar)
+            }
+
+            Tab(value: .pool) {
+                MeinPoolView()
+                    .toolbarVisibility(.hidden, for: .tabBar)
+            }
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            LagoonTabBarView()
+                .padding(.horizontal, 20)
+                .padding(.bottom, 8)
         }
         .sheet(isPresented: $showMessenSheet) {
             MessenSheet()
@@ -201,6 +48,216 @@ struct ContentView: View {
         .sheet(isPresented: $showDosierenSheet) {
             DosierenSheet()
                 .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showAddTaskSheet) {
+            AddItemSheet(state: poolcareState)
+                .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $showSettings) {
+            PoolSettingsSheet()
+        }
+    }
+
+    @ViewBuilder
+    private func LagoonTabBarView() -> some View {
+        GlassEffectContainer(spacing: 10) {
+            HStack(spacing: 10) {
+                // TabBar (erweitert sich wenn weniger Action-Buttons)
+                GeometryReader { geo in
+                    LagoonTabBar(size: geo.size, activeTab: $activeTab) { tab in
+                        VStack(spacing: 3) {
+                            Image(systemName: tab.symbol)
+                                .font(.title3)
+
+                            Text(tab.rawValue)
+                                .font(.system(size: 10))
+                                .fontWeight(.medium)
+                        }
+                        .symbolVariant(.fill)
+                        .frame(maxWidth: .infinity)
+                    }
+                    .glassEffect(.regular.interactive(), in: .capsule)
+                }
+
+                // Action-Buttons (animiert ein/aus je nach Tab)
+                if activeTab == .home {
+                    // Messen Button
+                    Button {
+                        showMessenSheet = true
+                    } label: {
+                        Image(systemName: "testtube.2")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(Color(light: .black, dark: .white))
+                    }
+                    .frame(width: 52, height: 52)
+                    .glassEffect(.regular.interactive(), in: .circle)
+                    .glassEffectID("action1", in: tabBarNamespace)
+                    .transition(.blurReplace)
+
+                    // Dosieren Button
+                    Button {
+                        showDosierenSheet = true
+                    } label: {
+                        Image(systemName: "circle.grid.cross")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(Color(light: .black, dark: .white))
+                    }
+                    .frame(width: 52, height: 52)
+                    .glassEffect(.regular.interactive(), in: .circle)
+                    .glassEffectID("action2", in: tabBarNamespace)
+                    .transition(.blurReplace)
+                }
+
+                if activeTab == .care {
+                    // Plus Button (Aufgabe hinzufügen)
+                    Button {
+                        showAddTaskSheet = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(Color(light: .black, dark: .white))
+                    }
+                    .frame(width: 52, height: 52)
+                    .glassEffect(.regular.interactive(), in: .circle)
+                    .glassEffectID("action1", in: tabBarNamespace)
+                    .transition(.blurReplace)
+                }
+
+                if activeTab == .pool {
+                    // Einstellungen Button
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(Color(light: .black, dark: .white))
+                    }
+                    .frame(width: 52, height: 52)
+                    .glassEffect(.regular.interactive(), in: .circle)
+                    .glassEffectID("action1", in: tabBarNamespace)
+                    .transition(.blurReplace)
+                }
+            }
+            .animation(.smooth(duration: 0.4), value: activeTab)
+        }
+        .frame(height: 55)
+    }
+}
+
+// MARK: - Home View
+
+struct HomeView: View {
+    @Binding var showMessenSheet: Bool
+    @Binding var showDosierenSheet: Bool
+
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                stops: [
+                    .init(color: Color(light: Color(hex: "0443a6"), dark: Color(hex: "0a1628")), location: 0.0),
+                    .init(color: Color(light: Color(hex: "b2e1ec"), dark: Color(hex: "1a3a5c")), location: 0.5),
+                    .init(color: Color(light: Color(hex: "2fb4a0"), dark: Color(hex: "1a3a5c")), location: 1.0)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            VStack(spacing: 16) {
+                Spacer()
+
+                // Live Activity Style Stacks
+                GlassEffectContainer {
+                    VStack(spacing: 12) {
+                        // Stack 1 - pH
+                        Button {
+                            // TODO: pH action
+                        } label: {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 50, style: .continuous)
+                                    .fill(Color(light: Color.black, dark: Color.white).opacity(0.001))
+
+                                CircularArcProgressView(
+                                    value: 0.35,
+                                    idealMin: 0.35,
+                                    idealMax: 0.65,
+                                    color: Color(red: 0x42/255, green: 0xED/255, blue: 0xFE/255)
+                                )
+                                .padding(45)
+
+                                // Header & Value
+                                VStack {
+                                    HStack {
+                                        Text("pH")
+                                            .font(.system(size: 17, weight: .semibold))
+                                            .foregroundStyle(Color(light: Color.black, dark: Color.white))
+                                        Spacer()
+                                        Text("vor 2 Std.")
+                                            .font(.system(size: 15, weight: .medium))
+                                            .foregroundStyle(Color(red: 0x42/255, green: 0xED/255, blue: 0xFE/255))
+                                    }
+
+                                    Spacer()
+
+                                    Text("7.2")
+                                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                                        .foregroundStyle(Color(light: Color.black, dark: Color.white))
+                                }
+                                .padding(.horizontal, 35)
+                                .padding(.vertical, 30)
+                            }
+                            .frame(height: 180)
+                        }
+                        .buttonStyle(.plain)
+                        .glassEffect(.clear.interactive(), in: .rect(cornerRadius: 50))
+
+                        // Stack 2 - Chlor
+                        Button {
+                            // TODO: Chlor action
+                        } label: {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 50, style: .continuous)
+                                    .fill(Color(light: Color.black, dark: Color.white).opacity(0.001))
+
+                                CircularArcProgressView(
+                                    value: 0.3,
+                                    idealMin: 0.2,
+                                    idealMax: 0.6,
+                                    color: Color(hex: "5df66d")
+                                )
+                                .padding(45)
+
+                                // Header & Value
+                                VStack {
+                                    HStack {
+                                        Text("Chlor")
+                                            .font(.system(size: 17, weight: .semibold))
+                                            .foregroundStyle(Color(light: Color.black, dark: Color.white))
+                                        Spacer()
+                                        Text("vor 5 Std.")
+                                            .font(.system(size: 15, weight: .medium))
+                                            .foregroundStyle(Color(red: 0x42/255, green: 0xED/255, blue: 0xFE/255))
+                                    }
+
+                                    Spacer()
+
+                                    Text("1.5")
+                                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                                        .foregroundStyle(Color(light: Color.black, dark: Color.white))
+                                }
+                                .padding(.horizontal, 35)
+                                .padding(.vertical, 30)
+                            }
+                            .frame(height: 180)
+                        }
+                        .buttonStyle(.plain)
+                        .glassEffect(.clear.interactive(), in: .rect(cornerRadius: 50))
+                    }
+                }
+                .padding(.horizontal, 16)
+
+                Spacer()
+            }
         }
     }
 }
