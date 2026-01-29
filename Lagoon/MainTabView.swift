@@ -40,8 +40,8 @@ struct MainTabView: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             LagoonTabBarView()
-                .padding(.horizontal, 20)
-                .padding(.bottom, 8)
+                .padding(.horizontal, 29)  // Mehr horizontales Padding für schmalere TabBar
+                .padding(.bottom, -5)  // Tiefer in Safe Area
         }
         .sheet(isPresented: $showMessenSheet) {
             MessenSheet()
@@ -58,9 +58,10 @@ struct MainTabView: View {
     }
 
     // TabBar Dimensionen
-    private let tabBarHeight: CGFloat = 55
-    private let tabBarSpacing: CGFloat = 10
-    private let segmentPadding: CGFloat = 5  // Abstand für Concentricity
+    private let tabBarHeight: CGFloat = 66
+    private let tabBarSpacing: CGFloat = 8  // Abstand zwischen TabBar und Buttons
+    private let segmentPadding: CGFloat = 3  // Vertikaler Abstand für Concentricity
+    private let segmentHorizontalPadding: CGFloat = 3  // Horizontaler Abstand (Tabs näher zusammen)
 
     @ViewBuilder
     private func LagoonTabBarView() -> some View {
@@ -69,7 +70,7 @@ struct MainTabView: View {
                 // TabBar mit Padding-Container für Concentricity
                 GeometryReader { geo in
                     let innerSize = CGSize(
-                        width: geo.size.width - (segmentPadding * 2),
+                        width: geo.size.width - (segmentHorizontalPadding * 2),
                         height: geo.size.height - (segmentPadding * 2)
                     )
                     LagoonTabBar(size: innerSize, activeTab: $activeTab) { tab in
