@@ -25,10 +25,6 @@ final class MeinPoolState {
     var filterDosieren: Bool = true
     var filterPoolpflege: Bool = true
 
-    // MARK: - Undo State
-
-    private(set) var recentlyDeletedEntry: LogbookEntry?
-    private(set) var showUndoToast: Bool = false
 
     // MARK: - SwiftData Context
 
@@ -144,30 +140,8 @@ final class MeinPoolState {
     }
 
     func deleteEntry(_ entry: LogbookEntry) {
-        recentlyDeletedEntry = entry
         entries.removeAll { $0.id == entry.id }
-        showUndoToast = true
-
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(4))
-            self.dismissUndoToast()
-        }
-    }
-
-    func undoDelete() {
-        guard let entry = recentlyDeletedEntry else { return }
-        entries.append(entry)
-        entries.sort { $0.timestamp > $1.timestamp }
-        recentlyDeletedEntry = nil
-        showUndoToast = false
-    }
-
-    func dismissUndoToast() {
-        if let entry = recentlyDeletedEntry {
-            deleteFromSwiftData(entry)
-        }
-        showUndoToast = false
-        recentlyDeletedEntry = nil
+        deleteFromSwiftData(entry)
     }
 
     private func deleteFromSwiftData(_ entry: LogbookEntry) {
@@ -201,4 +175,5 @@ final class MeinPoolState {
 
         try? context.save()
     }
+
 }

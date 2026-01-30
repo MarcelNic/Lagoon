@@ -14,37 +14,8 @@ struct LogbookSection: View {
     }
 
     var body: some View {
-        Section {
-            if state.filteredEntries.isEmpty {
-                emptyState
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
-            } else {
-                ForEach(Array(sortedEntries.enumerated()), id: \.element.id) { index, entry in
-                    Button {
-                        selectedEntry = entry
-                    } label: {
-                        LogbookEntryRow(entry: entry)
-                    }
-                    .buttonStyle(.plain)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button(role: .destructive) {
-                            state.deleteEntry(entry)
-                        } label: {
-                            Label("Löschen", systemImage: "trash")
-                        }
-                    }
-                    .listRowBackground(
-                        RoundedCornerBackground(
-                            isFirst: index == 0,
-                            isLast: index == sortedEntries.count - 1
-                        )
-                    )
-                    .listRowSeparator(.hidden)
-                }
-                .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
-            }
-        } header: {
+        VStack(spacing: 0) {
+            // Section header
             HStack {
                 Text("Logbuch")
                     .font(.system(size: 13, weight: .semibold))
@@ -80,7 +51,42 @@ struct LogbookSection: View {
                 .glassEffect(.clear.interactive(), in: .circle)
             }
             .padding(.horizontal, 4)
-            .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 8, trailing: 16))
+            .padding(.bottom, 12)
+
+            // Logbook entries
+            if state.filteredEntries.isEmpty {
+                emptyState
+            } else {
+                List {
+                    ForEach(sortedEntries) { entry in
+                        Button {
+                            selectedEntry = entry
+                        } label: {
+                            LogbookEntryRow(entry: entry)
+                        }
+                        .buttonStyle(.plain)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                withAnimation {
+                                    state.deleteEntry(entry)
+                                }
+                            } label: {
+                                Label("Löschen", systemImage: "trash")
+                            }
+                        }
+                        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.visible)
+                        .listRowSeparatorTint(Color(light: Color.black, dark: Color.white).opacity(0.1))
+                    }
+                }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .scrollDisabled(true)
+                .frame(height: CGFloat(sortedEntries.count) * 61)
+                .clipShape(.rect(cornerRadius: 20))
+                .glassEffect(.clear, in: .rect(cornerRadius: 20))
+            }
         }
     }
 
@@ -101,37 +107,7 @@ struct LogbookSection: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
-    }
-}
-
-// MARK: - Rounded Corner Background
-
-struct RoundedCornerBackground: View {
-    let isFirst: Bool
-    let isLast: Bool
-
-    private let cornerRadius: CGFloat = 16
-
-    private var shape: UnevenRoundedRectangle {
-        .rect(
-            topLeadingRadius: isFirst ? cornerRadius : 0,
-            bottomLeadingRadius: isLast ? cornerRadius : 0,
-            bottomTrailingRadius: isLast ? cornerRadius : 0,
-            topTrailingRadius: isFirst ? cornerRadius : 0
-        )
-    }
-
-    var body: some View {
-        Rectangle()
-            .fill(.clear)
-            .glassEffect(.clear.interactive(), in: shape)
-            .overlay(alignment: .bottom) {
-                if !isLast {
-                    Divider()
-                        .background(Color(light: Color.black, dark: Color.white).opacity(0.15))
-                        .padding(.leading, 42)
-                }
-            }
+        .glassEffect(.clear, in: .rect(cornerRadius: 20))
     }
 }
 
@@ -148,10 +124,9 @@ struct RoundedCornerBackground: View {
         )
         .ignoresSafeArea()
 
-        List {
+        ScrollView {
             LogbookSection(state: MeinPoolState(), selectedEntry: .constant(nil))
+                .padding(20)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
     }
 }

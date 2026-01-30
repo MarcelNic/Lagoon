@@ -8,17 +8,17 @@
 import SwiftUI
 
 enum LagoonTab: String, CaseIterable, Identifiable {
-    case home = "Home"
+    case home = "Pool"
     case care = "Care"
-    case pool = "Pool"
+    case pool = "Status"
 
     var id: String { rawValue }
 
     var symbol: String {
         switch self {
-        case .home: return "house"
+        case .home: return "figure.pool.swim"
         case .care: return "checklist"
-        case .pool: return "drop"
+        case .pool: return "list.bullet.below.rectangle"
         }
     }
 

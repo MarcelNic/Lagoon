@@ -41,54 +41,33 @@ struct MeinPoolView: View {
             .scaleEffect(1.2)
             .ignoresSafeArea()
 
-            List {
-                // Header Section
-                Section {
-                    PoolIdentityCard(
-                        poolName: poolName,
-                        isVacationModeActive: false
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Header Section
+                    VStack(spacing: 12) {
+                        PoolIdentityCard(
+                            poolName: poolName,
+                            isVacationModeActive: false
+                        )
+
+                        InfoPillsRow(state: meinPoolState)
+                    }
+
+                    // Logbook Section
+                    LogbookSection(
+                        state: meinPoolState,
+                        selectedEntry: $selectedEntry
                     )
-
-                    InfoPillsRow(state: meinPoolState)
                 }
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
-                .listRowSeparator(.hidden)
-
-                // Logbook Section
-                LogbookSection(
-                    state: meinPoolState,
-                    selectedEntry: $selectedEntry
-                )
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                .padding(.bottom, 40)
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .contentMargins(.top, 20)
-            .contentMargins(.bottom, 40)
-            .contentMargins(.horizontal, 20)
 
-            // Undo toast
-            if meinPoolState.showUndoToast {
-                VStack {
-                    Spacer()
-                    UndoToast(
-                        message: "Eintrag gelöscht",
-                        onUndo: {
-                            meinPoolState.undoDelete()
-                        },
-                        onDismiss: {
-                            meinPoolState.dismissUndoToast()
-                        }
-                    )
-                    .padding(.bottom, 100)
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-                .animation(.snappy, value: meinPoolState.showUndoToast)
-            }
         }
         .safeAreaInset(edge: .top) {
             HStack {
-                Text("Mein Pool")
+                Text("Status")
                     .font(.largeTitle.bold())
                     .foregroundStyle(Color(light: .black, dark: .white))
 
@@ -367,34 +346,6 @@ struct EditDosierenSheet: View {
             existingEntry.summary = summary
             state.updateEntry(existingEntry)
         }
-    }
-}
-
-// MARK: - Undo Toast
-
-struct UndoToast: View {
-    let message: String
-    let onUndo: () -> Void
-    let onDismiss: () -> Void
-
-    var body: some View {
-        HStack(spacing: 16) {
-            Text(message)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(Color(light: Color.black, dark: Color.white))
-
-            Button {
-                onUndo()
-            } label: {
-                Text("Rückgängig")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color(light: Color.black, dark: Color.white))
-            }
-            .buttonStyle(.glass)
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
-        .glassEffect(.regular, in: .capsule)
     }
 }
 
