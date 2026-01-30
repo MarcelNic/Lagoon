@@ -10,34 +10,22 @@ struct OperatingModeSelector: View {
     @Namespace private var modeNamespace
 
     var body: some View {
-        VStack(spacing: 12) {
-            // Mode Selector
-            GlassEffectContainer(spacing: 0) {
-                HStack(spacing: 0) {
-                    ForEach(OperatingMode.allCases, id: \.self) { mode in
-                        ModeButton(
-                            mode: mode,
-                            isSelected: state.currentMode == mode,
-                            namespace: modeNamespace
-                        ) {
-                            withAnimation(.smooth(duration: 0.3)) {
-                                state.switchMode(to: mode)
-                            }
+        GlassEffectContainer(spacing: 0) {
+            HStack(spacing: 0) {
+                ForEach(OperatingMode.allCases, id: \.self) { mode in
+                    ModeButton(
+                        mode: mode,
+                        isSelected: state.currentMode == mode,
+                        namespace: modeNamespace
+                    ) {
+                        withAnimation(.smooth(duration: 0.3)) {
+                            state.switchMode(to: mode)
                         }
                     }
                 }
-                .padding(4)
-                .glassEffect(.clear.interactive(), in: .capsule)
             }
-
-            // Vacation Phase Banner (nur im Urlaubsmodus)
-            if state.currentMode == .vacation {
-                VacationPhaseBanner(state: state)
-                    .transition(.asymmetric(
-                        insertion: .scale(scale: 0.9).combined(with: .opacity),
-                        removal: .scale(scale: 0.9).combined(with: .opacity)
-                    ))
-            }
+            .padding(4)
+            .glassEffect(.clear.interactive(), in: .capsule)
         }
     }
 }
@@ -75,77 +63,6 @@ private struct ModeButton: View {
             }
         }
         .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Vacation Phase Banner
-
-private struct VacationPhaseBanner: View {
-    @Bindable var state: PoolcareState
-
-    private var phaseText: String {
-        switch state.vacationPhase {
-        case .before: return "Vor Abreise"
-        case .during: return "Abwesend"
-        case .after: return "Nach Rückkehr"
-        case nil: return ""
-        }
-    }
-
-    private var actionButtonText: String? {
-        switch state.vacationPhase {
-        case .before: return "Abreisen"
-        case .during: return "Zurückgekehrt"
-        case .after: return "Fertig"
-        case nil: return nil
-        }
-    }
-
-    var body: some View {
-        GlassEffectContainer(spacing: 0) {
-            HStack {
-                // Phase indicator
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(phaseColor)
-                        .frame(width: 8, height: 8)
-
-                    Text(phaseText)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(Color(light: .black, dark: .white))
-                }
-
-                Spacer()
-
-                // Action button
-                if let buttonText = actionButtonText {
-                    Button {
-                        withAnimation(.smooth(duration: 0.3)) {
-                            state.advanceVacationPhase()
-                        }
-                    } label: {
-                        Text(buttonText)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(Color(light: .black, dark: .white))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                    }
-                    .glassEffect(.clear.interactive(), in: .capsule)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .glassEffect(.clear.interactive(), in: .rect(cornerRadius: 16))
-        }
-    }
-
-    private var phaseColor: Color {
-        switch state.vacationPhase {
-        case .before: return .orange
-        case .during: return .blue
-        case .after: return .green
-        case nil: return .gray
-        }
     }
 }
 
