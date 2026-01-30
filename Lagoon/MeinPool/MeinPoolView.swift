@@ -56,17 +56,6 @@ struct MeinPoolView: View {
             }
 
         }
-        .safeAreaInset(edge: .top) {
-            HStack {
-                Text("Status")
-                    .font(.largeTitle.bold())
-                    .foregroundStyle(Color(light: .black, dark: .white))
-
-                Spacer()
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-        }
         .toolbar(.hidden, for: .navigationBar)
         .onChange(of: selectedEntry) { _, entry in
             guard let entry = entry else { return }

@@ -9,10 +9,11 @@ import SwiftUI
 import UIKit
 
 struct LagoonTabBar<TabItemView: View>: UIViewRepresentable {
+    @Environment(\.colorScheme) private var colorScheme
     var size: CGSize
     var activeTint: Color = .primary
-    var inActiveTint: Color = .primary.opacity(0.45)
-    var barTint: Color = .gray.opacity(0.2)
+    var inActiveTint: Color = Color(light: .black.opacity(0.75), dark: .white.opacity(0.85))
+    var barTint: Color = Color(light: .black.opacity(0.12), dark: .white.opacity(0.18))
     @Binding var activeTab: LagoonTab
     @ViewBuilder var tabItemView: (LagoonTab) -> TabItemView
 

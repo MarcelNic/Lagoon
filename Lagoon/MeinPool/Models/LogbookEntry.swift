@@ -15,7 +15,7 @@ enum LogbookEntryType: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .messen: return "testtube.2"
-        case .dosieren: return "circle.grid.cross"
+        case .dosieren: return "aqi.medium"
         case .poolpflege: return "checklist"
         }
     }

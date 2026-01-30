@@ -18,7 +18,7 @@ struct LogbookFilterPopover: View {
             }
 
             Toggle(isOn: $state.filterDosieren) {
-                Label("Dosierungen", systemImage: "circle.grid.cross")
+                Label("Dosierungen", systemImage: "aqi.medium")
             }
 
             Toggle(isOn: $state.filterPoolpflege) {

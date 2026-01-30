@@ -117,7 +117,7 @@ struct MainTabView: View {
                     Button {
                         showDosierenSheet = true
                     } label: {
-                        Image(systemName: "circle.grid.cross")
+                        Image(systemName: "aqi.medium")
                             .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(Color(light: .black, dark: .white))
                     }
@@ -353,12 +353,6 @@ struct PoolcareTabView: View {
 
             ScrollView {
                 VStack(spacing: 28) {
-                    // Title
-                    Text("Poolcare")
-                        .font(.largeTitle.bold())
-                        .foregroundStyle(Color(light: .black, dark: .white))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
                     // Operating Mode Selector
                     OperatingModeSelector(state: state)
 
