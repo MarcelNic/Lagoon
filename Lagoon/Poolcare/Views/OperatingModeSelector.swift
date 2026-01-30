@@ -18,11 +18,15 @@ struct OperatingModeSelector: View {
             }
         )) {
             ForEach(OperatingMode.allCases, id: \.self) { mode in
-                Label(mode.rawValue, systemImage: mode.icon)
-                    .tag(mode)
+                HStack(spacing: 6) {
+                    Image(systemName: mode.icon)
+                    Text(mode.rawValue)
+                }
+                .tag(mode)
             }
         }
         .pickerStyle(.segmented)
+        .controlSize(.large)
     }
 }
 
