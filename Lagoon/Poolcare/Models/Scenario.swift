@@ -9,8 +9,8 @@ import Foundation
 
 enum OperatingMode: String, CaseIterable {
     case summer = "Sommer"
-    case winter = "Winter"
     case vacation = "Urlaub"
+    case winter = "Winter"
 
     var icon: String {
         switch self {

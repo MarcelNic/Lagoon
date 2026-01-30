@@ -330,17 +330,6 @@ struct DashboardTabView: View {
                 Spacer(minLength: 30)
             }
             .animation(.smooth(duration: 0.35), value: showDosingPill)
-            .overlay(alignment: .topTrailing) {
-                Button {
-                    NotificationCenter.default.post(name: .openQuickMeasure, object: nil)
-                } label: {
-                    Image(systemName: "bell.badge")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.orange.opacity(0.7))
-                }
-                .padding(.trailing, 20)
-                .padding(.top, 8)
-            }
         }
         .sheet(isPresented: $showQuickMeasure, onDismiss: { quickMeasurePhase = 0 }) {
             QuickMeasureSheet(externalPhase: $quickMeasurePhase)

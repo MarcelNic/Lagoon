@@ -52,7 +52,6 @@ struct VerticalTrendBar: View {
     var compact: Bool = false
 
     @State private var showPredictionPopover = false
-    @State private var isShimmering = false
     @Namespace private var namespace
 
     // Dimensionen
@@ -320,11 +319,6 @@ struct VerticalTrendBar: View {
         }
         .buttonStyle(.glass(.clear.interactive()))
         .fixedSize()
-        .background {
-            if prediction != nil {
-                shimmerBackground
-            }
-        }
         .popover(isPresented: $showPredictionPopover) {
             if let prediction = prediction {
                 PopoverHelper {
@@ -337,38 +331,6 @@ struct VerticalTrendBar: View {
                     )
                 }
                 .navigationTransition(.zoom(sourceID: "PREDICTION_\(title)", in: namespace))
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var shimmerBackground: some View {
-        let shape = Capsule()
-        let shimmerGradient = AngularGradient(
-            colors: [
-                Color(hex: "fdab27").opacity(0.5),
-                Color(hex: "ff3668").opacity(0.4),
-                Color(hex: "f57fe7").opacity(0.3),
-                Color(hex: "34c1fd").opacity(0.4),
-                Color(hex: "fdab27").opacity(0.5)
-            ],
-            center: .center,
-            angle: .init(degrees: isShimmering ? 360 : 0)
-        )
-
-        ZStack {
-            // Rotierender Schimmer
-            shape
-                .stroke(
-                    shimmerGradient,
-                    style: .init(lineWidth: 5, lineCap: .round, lineJoin: .round)
-                )
-                .blur(radius: 6)
-        }
-        .padding(-1)
-        .onAppear {
-            withAnimation(.linear(duration: 5).repeatForever(autoreverses: false)) {
-                isShimmering = true
             }
         }
     }
