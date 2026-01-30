@@ -26,13 +26,13 @@ struct InfoPill: View {
     let icon: String?
     let text: String
     var tint: Color? = nil
-    var foregroundColor: Color = .white
+    var foregroundColor: Color = .primary
     var shimmer: Bool = false
     var shimmerColor: Color = .green
 
     @State private var isShimmering: Bool = false
 
-    init(icon: String, text: String, tint: Color? = nil, foregroundColor: Color = .white) {
+    init(icon: String, text: String, tint: Color? = nil, foregroundColor: Color = .primary) {
         self.icon = icon
         self.text = text
         self.tint = tint
@@ -41,7 +41,7 @@ struct InfoPill: View {
         self.shimmerColor = .green
     }
 
-    init(text: String, tint: Color? = nil, foregroundColor: Color = .white, shimmer: Bool = false, shimmerColor: Color = .green) {
+    init(text: String, tint: Color? = nil, foregroundColor: Color = .primary, shimmer: Bool = false, shimmerColor: Color = .green) {
         self.icon = nil
         self.text = text
         self.tint = tint

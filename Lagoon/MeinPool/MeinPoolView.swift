@@ -29,17 +29,8 @@ struct MeinPoolView: View {
     var body: some View {
         ZStack {
             // Background
-            LinearGradient(
-                stops: [
-                    .init(color: Color(light: Color(hex: "0443a6"), dark: Color(hex: "0a1628")), location: 0.0),
-                    .init(color: Color(light: Color(hex: "b2e1ec"), dark: Color(hex: "1a3a5c")), location: 0.5),
-                    .init(color: Color(light: Color(hex: "2fb4a0"), dark: Color(hex: "1a3a5c")), location: 1.0)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .scaleEffect(1.2)
-            .ignoresSafeArea()
+            AdaptiveBackgroundGradient()
+                .ignoresSafeArea()
 
             ScrollView {
                 VStack(spacing: 20) {
@@ -91,8 +82,19 @@ struct MeinPoolView: View {
                 showPflegeSheet = true
             }
         }
-        .navigationDestination(isPresented: $showSettings) {
-            SettingsView()
+        .fullScreenCover(isPresented: $showSettings) {
+            NavigationStack {
+                SettingsView()
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button {
+                                showSettings = false
+                            } label: {
+                                Image(systemName: "xmark")
+                            }
+                        }
+                    }
+            }
         }
         .onChange(of: showSettings) { _, isShowing in
             if !isShowing {

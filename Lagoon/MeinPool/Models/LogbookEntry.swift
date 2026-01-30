@@ -22,8 +22,8 @@ enum LogbookEntryType: String, CaseIterable, Identifiable {
 
     var color: Color {
         switch self {
-        case .messen: return Color(hex: "42edfe")
-        case .dosieren: return Color(hex: "5df66d")
+        case .messen: return Color(light: Color(hex: "0AAAC6"), dark: Color(hex: "42edfe"))
+        case .dosieren: return Color(light: Color(hex: "1FBF4A"), dark: Color(hex: "5df66d"))
         case .poolpflege: return .orange
         }
     }

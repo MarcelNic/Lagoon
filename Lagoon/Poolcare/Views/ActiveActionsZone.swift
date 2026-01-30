@@ -28,15 +28,10 @@ struct ActiveActionsZone: View {
     @Namespace private var actionsNamespace
 
     var body: some View {
-        GlassEffectContainer(spacing: 12) {
-            if state.hasActiveActions {
+        if state.hasActiveActions {
+            GlassEffectContainer(spacing: 12) {
                 ForEach(state.activeActions) { action in
                     ActiveActionCard(action: action, state: state, namespace: actionsNamespace)
-                }
-            } else {
-                HStack(spacing: 12) {
-                    QuickActionButton(type: .robot, state: state, namespace: actionsNamespace)
-                    QuickActionButton(type: .backwash, state: state, namespace: actionsNamespace)
                 }
             }
         }

@@ -212,16 +212,8 @@ struct DashboardTabView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                stops: [
-                    .init(color: Color(light: Color(hex: "0443a6"), dark: Color(hex: "0a1628")), location: 0.0),
-                    .init(color: Color(light: Color(hex: "b2e1ec"), dark: Color(hex: "1a3a5c")), location: 0.5),
-                    .init(color: Color(light: Color(hex: "2fb4a0"), dark: Color(hex: "1a3a5c")), location: 1.0)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            AdaptiveBackgroundGradient()
+                .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 Spacer(minLength: 20)
@@ -356,17 +348,8 @@ struct PoolcareTabView: View {
     var body: some View {
         ZStack {
             // Background
-            LinearGradient(
-                stops: [
-                    .init(color: Color(light: Color(hex: "0443a6"), dark: Color(hex: "0a1628")), location: 0.0),
-                    .init(color: Color(light: Color(hex: "b2e1ec"), dark: Color(hex: "1a3a5c")), location: 0.5),
-                    .init(color: Color(light: Color(hex: "2fb4a0"), dark: Color(hex: "1a3a5c")), location: 1.0)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .scaleEffect(1.2)
-            .ignoresSafeArea()
+            AdaptiveBackgroundGradient()
+                .ignoresSafeArea()
 
             ScrollView {
                 VStack(spacing: 28) {
@@ -387,6 +370,38 @@ struct PoolcareTabView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 100)
             }
+        }
+    }
+}
+
+// MARK: - Adaptive Background Gradient
+
+struct AdaptiveBackgroundGradient: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        if colorScheme == .dark {
+            // Original Dark Mode Gradient
+            LinearGradient(
+                stops: [
+                    .init(color: Color(hex: "0a1628"), location: 0.0),
+                    .init(color: Color(hex: "1a3a5c"), location: 0.5),
+                    .init(color: Color(hex: "1a3a5c"), location: 1.0)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        } else {
+            // Light Mode: systemGray5 with cyan at bottom
+            LinearGradient(
+                stops: [
+                    .init(color: Color(.systemGray6), location: 0.0),
+                    .init(color: Color(.systemGray6), location: 0.75),
+                    .init(color: Color(.systemGray6).mix(with: Color.cyan, by: 0.50), location: 1.0)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
         }
     }
 }

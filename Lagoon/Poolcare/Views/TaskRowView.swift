@@ -10,21 +10,36 @@ struct TaskRowView: View {
     @Bindable var state: PoolcareState
     var isCompleted: Bool = false
     var isDimmed: Bool = false
+    @State private var showTimerPicker = false
 
     var body: some View {
         HStack(spacing: 14) {
-            // Checkbox
-            Button {
-                withAnimation(.snappy) {
-                    state.completeTask(task)
+            // Icon/Button je nach Task-Typ
+            if task.isTimerTask {
+                // Timer-Task: Play-Button mit Icon
+                Button {
+                    showTimerPicker = true
+                } label: {
+                    if let actionType = task.actionType {
+                        ActionIcon(type: actionType, size: 22)
+                            .foregroundStyle(Color(light: Color.black, dark: Color.white))
+                    }
                 }
-            } label: {
-                Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 22, weight: .regular))
-                    .foregroundStyle(isCompleted ? .green : Color(light: Color.black, dark: Color.white).opacity(0.4))
+                .buttonStyle(.plain)
+            } else {
+                // Normale Task: Checkbox
+                Button {
+                    withAnimation(.snappy) {
+                        state.completeTask(task)
+                    }
+                } label: {
+                    Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 22, weight: .regular))
+                        .foregroundStyle(isCompleted ? .green : Color(light: Color.black, dark: Color.white).opacity(0.4))
+                }
+                .buttonStyle(.plain)
+                .disabled(isCompleted)
             }
-            .buttonStyle(.plain)
-            .disabled(isCompleted)
 
             // Title and subtitle
             VStack(alignment: .leading, spacing: 3) {
@@ -40,8 +55,21 @@ struct TaskRowView: View {
 
             Spacer()
 
-            // Postpone actions
-            if !isCompleted && !isDimmed {
+            // Actions
+            if task.isTimerTask {
+                // Timer-Task: Play-Button
+                Button {
+                    showTimerPicker = true
+                } label: {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.6))
+                        .frame(width: 32, height: 32)
+                }
+                .buttonStyle(.plain)
+                .glassEffect(.clear.interactive(), in: .circle)
+            } else if !isCompleted && !isDimmed {
+                // Normale Task: Postpone
                 HStack(spacing: 6) {
                     PostponeButton(title: "Später") {
                         withAnimation(.snappy) {
@@ -53,10 +81,22 @@ struct TaskRowView: View {
         }
         .padding(.vertical, 12)
         .opacity(isDimmed ? 0.5 : 1.0)
+        .sheet(isPresented: $showTimerPicker) {
+            if let actionType = task.actionType {
+                TimerPickerSheet(type: actionType) { duration in
+                    withAnimation(.smooth(duration: 0.4)) {
+                        state.startTaskAsAction(task, duration: duration)
+                    }
+                }
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+            }
+        }
     }
 
     private var subtitleColor: Color {
         if isCompleted { return Color(light: Color.black, dark: Color.white).opacity(0.3) }
+        if task.isTimerTask { return Color(light: Color.black, dark: Color.white).opacity(0.5) }
 
         switch task.urgency {
         case .overdue: return .red

@@ -50,6 +50,20 @@ enum ActionType: String, CaseIterable {
         case .backwash: return ("Rückspülen beenden / Ventil zurückstellen", "Timer abgelaufen")
         }
     }
+
+    var taskTitle: String {
+        switch self {
+        case .robot: return "Roboter"
+        case .backwash: return "Rückspülen"
+        }
+    }
+
+    var taskSubtitle: String {
+        switch self {
+        case .robot: return "2h Standard"
+        case .backwash: return "3 Min Standard"
+        }
+    }
 }
 
 struct ActiveAction: Identifiable, Equatable {
