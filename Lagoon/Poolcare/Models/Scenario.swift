@@ -5,6 +5,38 @@
 
 import Foundation
 
+// MARK: - Operating Mode
+
+enum OperatingMode: String, CaseIterable {
+    case summer = "Sommer"
+    case winter = "Winter"
+    case vacation = "Urlaub"
+
+    var icon: String {
+        switch self {
+        case .summer: return "sun.max.fill"
+        case .winter: return "snowflake"
+        case .vacation: return "airplane"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .summer: return "Normaler Poolbetrieb"
+        case .winter: return "Pool winterfest"
+        case .vacation: return "Abwesend"
+        }
+    }
+}
+
+enum VacationPhase: String, CaseIterable {
+    case before = "Vor Abreise"
+    case during = "Abwesend"
+    case after = "Nach Rückkehr"
+}
+
+// MARK: - Legacy Types (kept for reference)
+
 enum ScenarioType: String, CaseIterable {
     case vacation
     case season
@@ -22,11 +54,6 @@ enum ScenarioType: String, CaseIterable {
         case .season: return "snowflake"
         }
     }
-}
-
-enum VacationPhase: String, CaseIterable {
-    case before = "Davor"
-    case after = "Danach"
 }
 
 enum SeasonMode: String, CaseIterable {

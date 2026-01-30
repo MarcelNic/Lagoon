@@ -363,8 +363,6 @@ struct DashboardTabView: View {
 
 struct PoolcareTabView: View {
     @Bindable var state: PoolcareState
-    @State private var showVacationSheet = false
-    @State private var showSeasonSheet = false
 
     var body: some View {
         ZStack {
@@ -389,28 +387,17 @@ struct PoolcareTabView: View {
                         .foregroundStyle(Color(light: .black, dark: .white))
                         .frame(maxWidth: .infinity, alignment: .leading)
 
+                    // Operating Mode Selector
+                    OperatingModeSelector(state: state)
+
                     ActiveActionsZone(state: state)
 
                     TaskListZone(state: state)
-
-                    ScenarioZone(
-                        state: state,
-                        showVacationSheet: $showVacationSheet,
-                        showSeasonSheet: $showSeasonSheet
-                    )
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 .padding(.bottom, 100)
             }
-        }
-        .sheet(isPresented: $showVacationSheet) {
-            ScenarioDetailSheet(type: .vacation, state: state)
-                .presentationDetents([.medium, .large])
-        }
-        .sheet(isPresented: $showSeasonSheet) {
-            ScenarioDetailSheet(type: .season, state: state)
-                .presentationDetents([.medium, .large])
         }
     }
 }

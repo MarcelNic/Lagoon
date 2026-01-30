@@ -5,6 +5,33 @@
 
 import Foundation
 
+// MARK: - Task Visibility
+
+enum TaskVisibility {
+    case always              // Immer sichtbar (außer Urlaub)
+    case summerOnly          // Nur im Sommerbetrieb
+    case winterOnly          // Nur im Winterbetrieb
+    case vacationBefore      // Urlaub: Vor Abreise
+    case vacationAfter       // Urlaub: Nach Rückkehr
+
+    func isVisible(in mode: OperatingMode, vacationPhase: VacationPhase?) -> Bool {
+        switch self {
+        case .always:
+            return mode != .vacation
+        case .summerOnly:
+            return mode == .summer
+        case .winterOnly:
+            return mode == .winter
+        case .vacationBefore:
+            return mode == .vacation && vacationPhase == .before
+        case .vacationAfter:
+            return mode == .vacation && vacationPhase == .after
+        }
+    }
+}
+
+// MARK: - Task Urgency
+
 enum TaskUrgency: Comparable {
     case overdue
     case dueToday
@@ -29,6 +56,9 @@ struct PoolcareTask: Identifiable, Equatable {
     var completedAt: Date?
     var dueDate: Date?
     var generatedFromActionId: UUID?
+    var actionType: ActionType?  // Timer-Tasks (Roboter, Rückspülen)
+    var visibility: TaskVisibility  // Sichtbarkeit je nach Modus
+    var isTransitionTask: Bool  // Einmalige Übergangs-Tasks
 
     init(
         id: UUID = UUID(),
@@ -37,7 +67,10 @@ struct PoolcareTask: Identifiable, Equatable {
         isCompleted: Bool = false,
         completedAt: Date? = nil,
         dueDate: Date? = nil,
-        generatedFromActionId: UUID? = nil
+        generatedFromActionId: UUID? = nil,
+        actionType: ActionType? = nil,
+        visibility: TaskVisibility = .always,
+        isTransitionTask: Bool = false
     ) {
         self.id = id
         self.title = title
@@ -46,6 +79,17 @@ struct PoolcareTask: Identifiable, Equatable {
         self.completedAt = completedAt
         self.dueDate = dueDate
         self.generatedFromActionId = generatedFromActionId
+        self.actionType = actionType
+        self.visibility = visibility
+        self.isTransitionTask = isTransitionTask
+    }
+
+    func isVisible(in mode: OperatingMode, vacationPhase: VacationPhase?) -> Bool {
+        visibility.isVisible(in: mode, vacationPhase: vacationPhase)
+    }
+
+    var isTimerTask: Bool {
+        actionType != nil
     }
 
     var urgency: TaskUrgency {
@@ -64,25 +108,63 @@ struct PoolcareTask: Identifiable, Equatable {
         let now = Date()
 
         return [
+            // MARK: - Sommerbetrieb Tasks
+
+            // Timer-Tasks (nur Sommer)
+            PoolcareTask(
+                title: "Roboter",
+                subtitle: "2h Standard",
+                dueDate: now,
+                actionType: .robot,
+                visibility: .summerOnly
+            ),
+            PoolcareTask(
+                title: "Rückspülen",
+                subtitle: "3 Min Standard",
+                dueDate: now,
+                actionType: .backwash,
+                visibility: .summerOnly
+            ),
+
+            // Normale Tasks (immer sichtbar außer Urlaub)
             PoolcareTask(
                 title: "Skimmer leeren",
                 subtitle: "Heute fällig",
-                dueDate: now
+                dueDate: now,
+                visibility: .always
             ),
             PoolcareTask(
                 title: "Wasserlinie bürsten",
                 subtitle: "Wöchentlich",
-                dueDate: calendar.date(byAdding: .day, value: 1, to: now)
+                dueDate: calendar.date(byAdding: .day, value: 1, to: now),
+                visibility: .always
             ),
             PoolcareTask(
                 title: "Filterdruck prüfen",
                 subtitle: "7 Tage seit letztem Mal",
-                dueDate: calendar.date(byAdding: .day, value: 2, to: now)
+                dueDate: calendar.date(byAdding: .day, value: 2, to: now),
+                visibility: .always
             ),
             PoolcareTask(
                 title: "Boden saugen",
                 subtitle: "Demnächst",
-                dueDate: calendar.date(byAdding: .day, value: 5, to: now)
+                dueDate: calendar.date(byAdding: .day, value: 5, to: now),
+                visibility: .summerOnly
+            ),
+
+            // MARK: - Winterbetrieb Tasks
+
+            PoolcareTask(
+                title: "Abdeckung prüfen",
+                subtitle: "Wöchentlich",
+                dueDate: calendar.date(byAdding: .day, value: 7, to: now),
+                visibility: .winterOnly
+            ),
+            PoolcareTask(
+                title: "Wasserstand prüfen",
+                subtitle: "Monatlich",
+                dueDate: calendar.date(byAdding: .month, value: 1, to: now),
+                visibility: .winterOnly
             )
         ]
     }

@@ -16,12 +16,23 @@ final class PoolcareState {
     private var timerCancellable: AnyCancellable?
     private var robotActivity: Activity<RobotActivityAttributes>?
 
+    // MARK: - Operating Mode
+
+    private(set) var currentMode: OperatingMode = .summer
+    private(set) var vacationPhase: VacationPhase? = nil
+    private(set) var previousMode: OperatingMode? = nil  // Für Rückkehr aus Urlaub
+
     // MARK: - Zone 2: Tasks
 
     private(set) var tasks: [PoolcareTask] = []
 
+    /// Gefilterte Tasks basierend auf aktuellem Modus
+    var visibleTasks: [PoolcareTask] {
+        tasks.filter { $0.isVisible(in: currentMode, vacationPhase: vacationPhase) || $0.isTransitionTask }
+    }
+
     var pendingTasks: [PoolcareTask] {
-        tasks
+        visibleTasks
             .filter { !$0.isCompleted }
             .sorted { $0.urgency.sortOrder < $1.urgency.sortOrder }
     }
@@ -35,7 +46,7 @@ final class PoolcareState {
     }
 
     var recentlyCompletedTasks: [PoolcareTask] {
-        tasks
+        visibleTasks
             .filter { $0.isCompleted }
             .filter { task in
                 guard let completedAt = task.completedAt else { return false }
@@ -44,7 +55,7 @@ final class PoolcareState {
             .sorted { ($0.completedAt ?? .distantPast) > ($1.completedAt ?? .distantPast) }
     }
 
-    // MARK: - Zone 3: Scenarios
+    // MARK: - Transition Tasks (Legacy scenario data)
 
     private(set) var vacationScenario: VacationScenario
     private(set) var seasonScenario: SeasonScenario
@@ -86,6 +97,7 @@ final class PoolcareState {
                 endRobotLiveActivity()
             }
 
+            // Follow-Up Task erstellen (z.B. "Roboter entnehmen")
             let followUp = action.type.followUpTask
             let newTask = PoolcareTask(
                 title: followUp.title,
@@ -94,6 +106,15 @@ final class PoolcareState {
                 generatedFromActionId: action.id
             )
             tasks.insert(newTask, at: 0)
+
+            // Timer-Task wieder zur Liste hinzufügen
+            let timerTask = PoolcareTask(
+                title: action.type.taskTitle,
+                subtitle: action.type.taskSubtitle,
+                dueDate: Date(),
+                actionType: action.type
+            )
+            tasks.append(timerTask)
 
             activeActions.removeAll { $0.id == action.id }
         }
@@ -118,6 +139,16 @@ final class PoolcareState {
         }
 
         activeActions.removeAll { $0.id == action.id }
+    }
+
+    func startTaskAsAction(_ task: PoolcareTask, duration: TimeInterval) {
+        guard let actionType = task.actionType else { return }
+
+        // Task aus der Liste entfernen
+        tasks.removeAll { $0.id == task.id }
+
+        // Als Active Action starten
+        startAction(actionType, duration: duration)
     }
 
     // MARK: - Live Activity Management
@@ -250,7 +281,106 @@ final class PoolcareState {
         tasks.insert(newTask, at: 0)
     }
 
-    // MARK: - Zone 3: Scenario Methods
+    // MARK: - Operating Mode Methods
+
+    func switchMode(to newMode: OperatingMode) {
+        let oldMode = currentMode
+
+        // Gleicher Modus = nichts tun
+        guard newMode != oldMode else { return }
+
+        // Alte Transition-Tasks entfernen
+        tasks.removeAll { $0.isTransitionTask }
+
+        // Bei Wechsel zu Urlaub: vorherigen Modus speichern
+        if newMode == .vacation {
+            previousMode = oldMode
+            vacationPhase = .before
+            addVacationBeforeTasks()
+        } else {
+            // Bei Wechsel aus Urlaub zurück
+            if oldMode == .vacation {
+                vacationPhase = nil
+                previousMode = nil
+            }
+
+            // Übergangs-Tasks hinzufügen
+            if oldMode == .summer && newMode == .winter {
+                addSummerToWinterTransitionTasks()
+            } else if oldMode == .winter && newMode == .summer {
+                addWinterToSummerTransitionTasks()
+            }
+        }
+
+        currentMode = newMode
+    }
+
+    func advanceVacationPhase() {
+        guard currentMode == .vacation else { return }
+
+        switch vacationPhase {
+        case .before:
+            vacationPhase = .during
+            // Vor-Abreise-Tasks entfernen
+            tasks.removeAll { $0.visibility == .vacationBefore }
+        case .during:
+            vacationPhase = .after
+            addVacationAfterTasks()
+        case .after:
+            // Zurück zum vorherigen Modus
+            let returnMode = previousMode ?? .summer
+            vacationPhase = nil
+            previousMode = nil
+            tasks.removeAll { $0.visibility == .vacationAfter }
+            currentMode = returnMode
+        case nil:
+            break
+        }
+    }
+
+    // MARK: - Transition Task Generators
+
+    private func addSummerToWinterTransitionTasks() {
+        let transitionTasks = [
+            PoolcareTask(title: "Skimmer entleeren", subtitle: "Einwinterung", dueDate: Date(), isTransitionTask: true),
+            PoolcareTask(title: "Leitungen entleeren", subtitle: "Einwinterung", dueDate: Date(), isTransitionTask: true),
+            PoolcareTask(title: "Wintermittel hinzufügen", subtitle: "Einwinterung", dueDate: Date(), isTransitionTask: true),
+            PoolcareTask(title: "Abdeckung montieren", subtitle: "Einwinterung", dueDate: Date(), isTransitionTask: true)
+        ]
+        tasks.insert(contentsOf: transitionTasks, at: 0)
+    }
+
+    private func addWinterToSummerTransitionTasks() {
+        let transitionTasks = [
+            PoolcareTask(title: "Abdeckung entfernen", subtitle: "Saisonstart", dueDate: Date(), isTransitionTask: true),
+            PoolcareTask(title: "Pool gründlich reinigen", subtitle: "Saisonstart", dueDate: Date(), isTransitionTask: true),
+            PoolcareTask(title: "Filteranlage starten", subtitle: "Saisonstart", dueDate: Date(), isTransitionTask: true),
+            PoolcareTask(title: "Stoßchlorung durchführen", subtitle: "Saisonstart", dueDate: Date(), isTransitionTask: true)
+        ]
+        tasks.insert(contentsOf: transitionTasks, at: 0)
+    }
+
+    private func addVacationBeforeTasks() {
+        let vacationTasks = [
+            PoolcareTask(title: "Chlorwert erhöhen", subtitle: "Vor Abreise", dueDate: Date(), visibility: .vacationBefore),
+            PoolcareTask(title: "pH-Wert prüfen", subtitle: "Vor Abreise", dueDate: Date(), visibility: .vacationBefore),
+            PoolcareTask(title: "Abdeckung sichern", subtitle: "Vor Abreise", dueDate: Date(), visibility: .vacationBefore),
+            PoolcareTask(title: "Pumpen-Timer einstellen", subtitle: "Vor Abreise", dueDate: Date(), visibility: .vacationBefore)
+        ]
+        tasks.insert(contentsOf: vacationTasks, at: 0)
+    }
+
+    private func addVacationAfterTasks() {
+        let returnTasks = [
+            PoolcareTask(title: "Wasserwerte messen", subtitle: "Nach Rückkehr", dueDate: Date(), visibility: .vacationAfter),
+            PoolcareTask(title: "Skimmer leeren", subtitle: "Nach Rückkehr", dueDate: Date(), visibility: .vacationAfter),
+            PoolcareTask(title: "Pool bürsten", subtitle: "Nach Rückkehr", dueDate: Date(), visibility: .vacationAfter),
+            PoolcareTask(title: "Filter rückspülen", subtitle: "Nach Rückkehr", dueDate: Date(), visibility: .vacationAfter)
+        ]
+        tasks.insert(contentsOf: returnTasks, at: 0)
+    }
+
+    // MARK: - Legacy Scenario Methods (kept for compatibility)
 
     func toggleVacationMode() {
         vacationScenario.isActive.toggle()
@@ -262,6 +392,8 @@ final class PoolcareState {
             if let index = vacationScenario.beforeChecklist.firstIndex(where: { $0.id == item.id }) {
                 vacationScenario.beforeChecklist[index].isCompleted.toggle()
             }
+        case .during:
+            break
         case .after:
             if let index = vacationScenario.afterChecklist.firstIndex(where: { $0.id == item.id }) {
                 vacationScenario.afterChecklist[index].isCompleted.toggle()
