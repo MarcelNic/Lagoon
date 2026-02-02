@@ -12,6 +12,7 @@ import BackgroundTasks
 @main
 struct LagoonApp: App {
     @AppStorage("appearanceMode") private var appearanceMode: String = AppearanceMode.system.rawValue
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     init() {
         // Register background task for Live Activity updates
@@ -48,13 +49,20 @@ struct LagoonApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainTabView()
+            if hasCompletedOnboarding {
+                MainTabView()
+                    .preferredColorScheme(colorScheme)
+                    .environment(poolWaterState)
+                    .environment(notificationManager)
+                    .task {
+                        await notificationManager.requestPermission()
+                    }
+            } else {
+                OnboardingStartView(onComplete: {
+                    hasCompletedOnboarding = true
+                })
                 .preferredColorScheme(colorScheme)
-                .environment(poolWaterState)
-                .environment(notificationManager)
-                .task {
-                    await notificationManager.requestPermission()
-                }
+            }
         }
         .modelContainer(sharedModelContainer)
     }

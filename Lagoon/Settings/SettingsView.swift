@@ -7,6 +7,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @AppStorage("appearanceMode") private var appearanceMode: String = "system"
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @State private var showOnboarding = false
 
     var body: some View {
         Form {
@@ -45,8 +47,21 @@ struct SettingsView: View {
                     Text("Dunkel").tag("dark")
                 }
             }
+
+            Section {
+                Button {
+                    showOnboarding = true
+                } label: {
+                    Label("Onboarding anzeigen", systemImage: "hand.wave")
+                }
+            }
         }
         .navigationTitle("Einstellungen")
+        .fullScreenCover(isPresented: $showOnboarding) {
+            OnboardingStartView(onComplete: {
+                showOnboarding = false
+            })
+        }
     }
 }
 
