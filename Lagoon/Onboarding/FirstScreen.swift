@@ -4,36 +4,47 @@ struct FirstScreen: View {
     var action: () -> Void
 
     var body: some View {
-        VStack {
-            Spacer()
+        ZStack {
+            // Black background
+            Color.black
+                .ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                Image(systemName: "water.waves")
-                    .font(.system(size: 80))
-                    .foregroundStyle(.blue)
-                    .microAnimation(delay: 0.2)
+            // Glowing waves
+            GlowingWavesView()
+                .frame(height: 250)
+                .offset(y: -80)
+                .microAnimation(delay: 0.2)
 
-                Text("Willkommen bei Lagoon")
-                    .font(.system(size: 32, weight: .bold))
-                    .multilineTextAlignment(.center)
-                    .microAnimation(delay: 0.4)
+            VStack {
+                Spacer()
 
-                Text("Kristallklares Wasser, weniger Chemie und perfekte Dosierung.")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .microAnimation(delay: 0.6)
-            }
-            .padding(.horizontal, 30)
+                // Text at bottom
+                VStack(spacing: 16) {
+                    Text("Willkommen bei Lagoon")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .microAnimation(delay: 0.4)
 
-            Spacer()
-            Spacer()
-
-            PrimaryButton(title: "Hallo", action: { action() })
+                    Text("Kristallklares Wasser, weniger Chemie und perfekte Dosierung.")
+                        .font(.body)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                        .microAnimation(delay: 0.6)
+                }
                 .padding(.horizontal, 30)
-                .microAnimation(delay: 0.8)
 
-            Spacer()
+                Spacer()
+                    .frame(height: 30)
+
+                // Button at very bottom
+                PrimaryButton(title: "Hallo", action: { action() })
+                    .padding(.horizontal, 30)
+                    .microAnimation(delay: 0.8)
+
+                Spacer()
+                    .frame(height: 50)
+            }
         }
     }
 }
