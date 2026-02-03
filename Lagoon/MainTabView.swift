@@ -96,7 +96,7 @@ struct MainTabView: View {
                     .frame(width: innerSize.width, height: innerSize.height)
                     .position(x: geo.size.width / 2, y: geo.size.height / 2)
                 }
-                .glassEffect(.clear.interactive(), in: .capsule)
+                .glassEffect(.regular.interactive(), in: .capsule)
 
                 // Action Button 1 (wechselt Icon je nach Tab mit blurFade)
                 Button {
@@ -118,7 +118,7 @@ struct MainTabView: View {
                     .foregroundStyle(Color(light: .black, dark: .white))
                 }
                 .frame(width: tabBarHeight, height: tabBarHeight)
-                .glassEffect(.clear.interactive(), in: .capsule)
+                .glassEffect(.regular.interactive(), in: .capsule)
 
                 // Action Button 2 (nur bei Home sichtbar)
                 if activeTab == .home {
@@ -130,7 +130,7 @@ struct MainTabView: View {
                             .foregroundStyle(Color(light: .black, dark: .white))
                     }
                     .frame(width: tabBarHeight, height: tabBarHeight)
-                    .glassEffect(.clear.interactive(), in: .capsule)
+                    .glassEffect(.regular.interactive(), in: .capsule)
                     .transition(.blurReplace)
                 }
             }
@@ -394,7 +394,7 @@ struct AdaptiveBackgroundGradient: View {
         } else {
             // Light Mode: Soft blue gradient
             LinearGradient(
-                colors: [Color(hex: "ceeaf6"), Color(hex: "fefefe")],
+                colors: [Color(hex: "b8e2f4"), Color(hex: "fefefe")],
                 startPoint: .top,
                 endPoint: .bottom
             )

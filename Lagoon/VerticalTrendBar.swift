@@ -259,7 +259,7 @@ struct VerticalTrendBar: View {
                         if isMajor {
                             Text(formatValue(scaleValue))
                                 .font(.system(size: 10, weight: .medium, design: .rounded))
-                                .foregroundStyle(Color(light: Color.black, dark: Color.white.opacity(0.6)))
+                                .foregroundStyle(Color(light: Color(white: 0.35), dark: Color.white.opacity(0.6)))
                                 .frame(width: 28, alignment: .trailing)
                                 .opacity(labelVisible ? 1 : 0)
                         } else {
@@ -268,14 +268,14 @@ struct VerticalTrendBar: View {
                         }
 
                         Rectangle()
-                            .fill(Color(light: isMajor ? Color.black.opacity(0.8) : Color.black.opacity(0.4), dark: Color.white.opacity(isMajor ? 0.4 : 0.25)))
+                            .fill(Color(light: isMajor ? Color(white: 0.35) : Color(white: 0.5), dark: Color.white.opacity(isMajor ? 0.4 : 0.25)))
                             .frame(
                                 width: isMajor ? 10 : 6,
                                 height: isMajor ? 2 : 1
                             )
                     } else {
                         Rectangle()
-                            .fill(Color(light: isMajor ? Color.black.opacity(0.8) : Color.black.opacity(0.4), dark: Color.white.opacity(isMajor ? 0.4 : 0.25)))
+                            .fill(Color(light: isMajor ? Color(white: 0.35) : Color(white: 0.5), dark: Color.white.opacity(isMajor ? 0.4 : 0.25)))
                             .frame(
                                 width: isMajor ? 10 : 6,
                                 height: isMajor ? 2 : 1
@@ -285,7 +285,7 @@ struct VerticalTrendBar: View {
                         if isMajor {
                             Text(formatValue(scaleValue))
                                 .font(.system(size: 10, weight: .medium, design: .rounded))
-                                .foregroundStyle(Color(light: Color.black, dark: Color.white.opacity(0.6)))
+                                .foregroundStyle(Color(light: Color(white: 0.35), dark: Color.white.opacity(0.6)))
                                 .frame(width: 28, alignment: .leading)
                                 .opacity(labelVisible ? 1 : 0)
                         } else {
