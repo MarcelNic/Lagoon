@@ -62,6 +62,7 @@ struct LagoonApp: App {
                     hasCompletedOnboarding = true
                 })
                 .preferredColorScheme(colorScheme)
+                .environment(notificationManager)
             }
         }
         .modelContainer(sharedModelContainer)

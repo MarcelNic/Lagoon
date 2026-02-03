@@ -2,32 +2,55 @@ import SwiftUI
 
 struct FirstScreen: View {
     let features = [
-        OnboardingFeature(icon: "magnifyingglass", title: "Find new activities", subtitle: "Discover fresh ideas that spark your interest", color: .blue),
-        OnboardingFeature(icon: "figure.mind.and.body", title: "Stay calm and mindful", subtitle: "Find new activities that spark your interest", color: .green),
-        OnboardingFeature(icon: "lightbulb.fill", title: "Boost your creativity", subtitle: "Stay calm and mindful while exploring habits", color: .orange),
-        OnboardingFeature(icon: "trophy.fill", title: "Build lasting routines", subtitle: "Boost your creativity with daily inspiration", color: .purple),
+        OnboardingFeature(icon: "drop.fill", title: "Wasserchemie verstehen", subtitle: "pH und Chlor immer im Blick behalten", color: .blue),
+        OnboardingFeature(icon: "aqi.medium", title: "Perfekte Dosierung", subtitle: "Nie mehr raten, wie viel Chemie nötig ist", color: .cyan),
+        OnboardingFeature(icon: "checklist", title: "Pflege im Griff", subtitle: "Alle Aufgaben an einem Ort verwalten", color: .green),
+        OnboardingFeature(icon: "cloud.sun.fill", title: "Wetter einbeziehen", subtitle: "Vorhersagen basierend auf Sonnenstunden & Regen", color: .orange),
     ]
     var action: () -> Void
+
     var body: some View {
         VStack {
             Spacer()
             Spacer()
-            Image(systemName: "water.waves")
-                .font(.system(size: 80))
-                .foregroundStyle(.blue)
-                .microAnimation(delay: 0.2)
+
+            VStack(spacing: 12) {
+                Image(systemName: "water.waves")
+                    .font(.system(size: 80))
+                    .foregroundStyle(.blue)
+                    .microAnimation(delay: 0.2)
+
+                Text("Dein Pool-Profi für die Hosentasche.")
+                    .font(.system(size: 28, weight: .bold))
+                    .multilineTextAlignment(.center)
+                    .microAnimation(delay: 0.4)
+
+                Text("Kristallklares Wasser, weniger Chemie, mehr Zeit zum Genießen.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .microAnimation(delay: 0.6)
+            }
+            .padding(.horizontal, 30)
+
             Spacer()
-            VStack(spacing: 36) {
+
+            VStack(spacing: 24) {
                 ForEach(features.indices, id: \.self) { index in
                     FeatureView(feature: features[index])
-                        .microAnimation(delay: 0.4 + Double(index) * 0.3)
+                        .microAnimation(delay: 0.8 + Double(index) * 0.2)
                 }
             }
+            .padding(.horizontal, 30)
+
             Spacer()
-            PrimaryButton(title: "Continue", action: { action() })
-                .microAnimation(delay: 1.5)
+
+            PrimaryButton(title: "Loslegen", action: { action() })
+                .padding(.horizontal, 30)
+                .microAnimation(delay: 1.8)
+
             Spacer()
-        }.padding(.horizontal, 30)
+        }
     }
 }
 

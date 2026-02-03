@@ -1,5 +1,6 @@
 import SwiftUI
 import SpriteKit
+import CoreMotion
 
 // MARK: - Model
 struct Chip: Identifiable, Equatable {
@@ -11,40 +12,75 @@ struct Chip: Identifiable, Equatable {
 
 // MARK: - SwiftUI Wrapper
 struct SelectionView: View {
+    var chips: [Chip]
+    var title: String
+    var subtitle: String
+    var buttonTitle: String
+    var preselectedTitles: Set<String>
     var action: () -> Void
+    var onSelectionChange: (([String]) -> Void)?
+
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.displayScale) private var displayScale
     @State private var selectedTitles: [String] = []
     @State private var scene: FocusScene?
 
-    let chips: [Chip] = [
-        Chip(title: "Write",    icon: "pencil.and.outline", color: .teal),
-        Chip(title: "Cook",     icon: "fork.knife",         color: .green),
-        Chip(title: "Work",     icon: "laptopcomputer",     color: .indigo),
-        Chip(title: "Exercise", icon: "figure.run",         color: .blue),
-        Chip(title: "Podcast",  icon: "mic.fill",           color: .mint),
-        Chip(title: "Explore",  icon: "safari.fill",        color: .cyan),
-        Chip(title: "Learn",    icon: "book.fill",          color: .orange),
-        Chip(title: "Code",     icon: "curlybraces.square", color: .pink),
-        Chip(title: "Design",   icon: "paintpalette.fill",  color: .yellow),
-        Chip(title: "Research", icon: "magnifyingglass",    color: .purple),
-        Chip(title: "Meditate", icon: "brain.head.profile", color: .indigo),
-        Chip(title: "Travel",   icon: "airplane",           color: .brown),
-        Chip(title: "Finance",  icon: "banknote",           color: .magenta),
-        Chip(title: "Garden",   icon: "leaf",               color: .lime),
-        Chip(title: "Music",    icon: "music.quarternote.3",color: .orangeRed),
-        Chip(title: "Photo",    icon: "camera",             color: .gray),
-        Chip(title: "Shop",     icon: "cart",               color: .brown2)
-    ]
+    // Default initializer for backwards compatibility
+    init(action: @escaping () -> Void) {
+        self.chips = [
+            Chip(title: "Write",    icon: "pencil.and.outline", color: .teal),
+            Chip(title: "Cook",     icon: "fork.knife",         color: .green),
+            Chip(title: "Work",     icon: "laptopcomputer",     color: .indigo),
+            Chip(title: "Exercise", icon: "figure.run",         color: .blue),
+            Chip(title: "Podcast",  icon: "mic.fill",           color: .mint),
+            Chip(title: "Explore",  icon: "safari.fill",        color: .cyan),
+            Chip(title: "Learn",    icon: "book.fill",          color: .orange),
+            Chip(title: "Code",     icon: "curlybraces.square", color: .pink),
+            Chip(title: "Design",   icon: "paintpalette.fill",  color: .yellow),
+            Chip(title: "Research", icon: "magnifyingglass",    color: .purple),
+            Chip(title: "Meditate", icon: "brain.head.profile", color: .indigo),
+            Chip(title: "Travel",   icon: "airplane",           color: .brown),
+            Chip(title: "Finance",  icon: "banknote",           color: .magenta),
+            Chip(title: "Garden",   icon: "leaf",               color: .lime),
+            Chip(title: "Music",    icon: "music.quarternote.3",color: .orangeRed),
+            Chip(title: "Photo",    icon: "camera",             color: .gray),
+            Chip(title: "Shop",     icon: "cart",               color: .brown2)
+        ]
+        self.title = "Build Around What You Love"
+        self.subtitle = "Choosing activities helps you track progress and stay motivated every day"
+        self.buttonTitle = "Continue"
+        self.preselectedTitles = []
+        self.action = action
+        self.onSelectionChange = nil
+    }
+
+    // Parameterized initializer for reuse
+    init(
+        chips: [Chip],
+        title: String,
+        subtitle: String,
+        buttonTitle: String,
+        preselectedTitles: Set<String> = [],
+        action: @escaping () -> Void,
+        onSelectionChange: (([String]) -> Void)? = nil
+    ) {
+        self.chips = chips
+        self.title = title
+        self.subtitle = subtitle
+        self.buttonTitle = buttonTitle
+        self.preselectedTitles = preselectedTitles
+        self.action = action
+        self.onSelectionChange = onSelectionChange
+    }
 
     var body: some View {
         ZStack {
             // Title
             VStack(spacing: 10) {
-                Text("Build Around What You Love")
+                Text(title)
                     .microAnimation(delay: 0.5)
-                    .font(.system(size: 40).bold())
-                Text("Choosing activities helps you track progress and stay motivated every day")
+                    .font(.system(size: 32).bold())
+                Text(subtitle)
                     .foregroundStyle(.secondary)
                     .microAnimation(delay: 0.8)
             }
@@ -66,8 +102,10 @@ struct SelectionView: View {
                                     bounceFactor: 0.8,
                                     startDelay: 1.0,
                                     isDarkMode: (colorScheme == .dark),
+                                    preselectedTitles: preselectedTitles,
                                     onSelectionChange: { selected in
                                         selectedTitles = selected
+                                        onSelectionChange?(selected)
                                     }
                                 )
                             } else {
@@ -81,7 +119,7 @@ struct SelectionView: View {
                     }
                 }
 
-                PrimaryButton(title: "Continue", action: { action() })
+                PrimaryButton(title: buttonTitle, action: { action() })
                     .padding(.top, 30)
                     .padding(.bottom, 34)
                     .microAnimation(delay: 1.2)
@@ -104,10 +142,16 @@ final class FocusScene: SKScene {
     private let gravityY: CGFloat
     private let startDelay: TimeInterval
     private let onSelectionChange: ([String]) -> Void
+    private let preselectedTitles: Set<String>
 
     private var chipNodes: [(node: SKSpriteNode, chip: Chip)] = []
     private var selectedChips: Set<UUID> = []
     private var isDarkMode: Bool
+    private let motionManager = CMMotionManager()
+    private let tiltDeadZone: Double = 0.15
+    private var smoothedGravity = CGVector(dx: 0, dy: -8)
+    private let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+    private var lastCollisionTime: TimeInterval = 0
 
     init(size: CGSize,
          chips: [Chip],
@@ -117,6 +161,7 @@ final class FocusScene: SKScene {
          bounceFactor: CGFloat,
          startDelay: TimeInterval,
          isDarkMode: Bool,
+         preselectedTitles: Set<String> = [],
          onSelectionChange: @escaping ([String]) -> Void) {
         self.chips = chips
         self.displayScale = displayScale
@@ -125,6 +170,7 @@ final class FocusScene: SKScene {
         self.restitution = bounceFactor
         self.startDelay = startDelay
         self.isDarkMode = isDarkMode
+        self.preselectedTitles = preselectedTitles
         self.onSelectionChange = onSelectionChange
         super.init(size: size)
         scaleMode = .resizeFill
@@ -151,6 +197,49 @@ final class FocusScene: SKScene {
         DispatchQueue.main.asyncAfter(deadline: .now() + startDelay) {
             self.spawn(y: self.frame.height + 200)
         }
+
+        impactFeedback.prepare()
+        physicsWorld.contactDelegate = self
+
+        // Preselect chips after spawn
+        DispatchQueue.main.asyncAfter(deadline: .now() + startDelay + 0.1) {
+            self.preselectChips()
+        }
+
+        if motionManager.isDeviceMotionAvailable {
+            motionManager.deviceMotionUpdateInterval = 1.0 / 60.0
+            motionManager.startDeviceMotionUpdates(using: .xArbitraryZVertical)
+        }
+    }
+
+    private func preselectChips() {
+        for (_, chip) in chipNodes where preselectedTitles.contains(chip.title) {
+            selectedChips.insert(chip.id)
+        }
+        refreshAllChipTextures()
+        notifySelectionChange()
+    }
+
+    private func notifySelectionChange() {
+        let selectedTitles = chipNodes
+            .filter { selectedChips.contains($0.chip.id) }
+            .map { $0.chip.title }
+        onSelectionChange(selectedTitles)
+    }
+
+    override func update(_ currentTime: TimeInterval) {
+        guard let motion = motionManager.deviceMotion else { return }
+        let gx = motion.gravity.x
+        let gy = motion.gravity.y
+        let targetDx = abs(gx) > tiltDeadZone ? gx * 15 : 0
+        let targetDy = abs(gy) > tiltDeadZone ? gy * 15 : 0
+        smoothedGravity.dx += (targetDx - smoothedGravity.dx) * 0.1
+        smoothedGravity.dy += (targetDy - smoothedGravity.dy) * 0.1
+        physicsWorld.gravity = smoothedGravity
+    }
+
+    override func willMove(from view: SKView) {
+        motionManager.stopDeviceMotionUpdates()
     }
 
     func setAppearance(isDark: Bool) {
@@ -161,7 +250,8 @@ final class FocusScene: SKScene {
 
     private func spawn(y: CGFloat) {
         for (i, chip) in chips.enumerated() {
-            let view = renderedChipView(chip, selected: false)
+            let isPreselected = preselectedTitles.contains(chip.title)
+            let view = renderedChipView(chip, selected: isPreselected)
             let image = render(view: view)
             let texture = SKTexture(image: image)
 
@@ -176,6 +266,8 @@ final class FocusScene: SKScene {
             node.physicsBody = SKPhysicsBody(polygonFrom: path)
             node.physicsBody?.restitution = restitution
             node.physicsBody?.usesPreciseCollisionDetection = true
+            node.physicsBody?.categoryBitMask = 0x1
+            node.physicsBody?.contactTestBitMask = 0x1
             node.name = chip.id.uuidString
 
             let w = node.frame.width
@@ -213,15 +305,13 @@ final class FocusScene: SKScene {
 
             if selectedChips.contains(id) { selectedChips.remove(id) }
             else { selectedChips.insert(id) }
+            impactFeedback.impactOccurred()
 
             let newView = renderedChipView(chip, selected: selectedChips.contains(id))
             let newImage = render(view: newView)
             touched.texture = SKTexture(image: newImage)
 
-            let selectedTitles = chipNodes
-                .filter { selectedChips.contains($0.chip.id) }
-                .map { $0.chip.title }
-            onSelectionChange(selectedTitles)
+            notifySelectionChange()
         }
     }
 
@@ -250,6 +340,20 @@ final class FocusScene: SKScene {
         renderer.scale = displayScale
         renderer.isOpaque = false
         return renderer.uiImage ?? UIImage()
+    }
+}
+
+// MARK: - Collision Haptics
+extension FocusScene: SKPhysicsContactDelegate {
+    func didBegin(_ contact: SKPhysicsContact) {
+        let impulse = abs(contact.collisionImpulse)
+        let now = CACurrentMediaTime()
+        guard impulse > 0.5, now - lastCollisionTime > 0.08 else { return }
+        lastCollisionTime = now
+
+        let intensity = min(Float(impulse / 40.0), 1.0)
+        let generator = UIImpactFeedbackGenerator(style: intensity > 0.6 ? .medium : .soft)
+        generator.impactOccurred(intensity: CGFloat(intensity))
     }
 }
 

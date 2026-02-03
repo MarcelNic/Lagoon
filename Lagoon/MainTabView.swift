@@ -14,6 +14,7 @@ struct MainTabView: View {
     @State private var showAddTaskSheet = false
     @State private var showSettings = false
     @State private var poolcareState = PoolcareState()
+    @AppStorage("hasSeenDashboardOverlay") private var hasSeenDashboardOverlay = false
     @Namespace private var tabBarNamespace
 
     var body: some View {
@@ -54,6 +55,13 @@ struct MainTabView: View {
         .sheet(isPresented: $showAddTaskSheet) {
             AddItemSheet(state: poolcareState)
                 .presentationDetents([.medium, .large])
+        }
+        .overlay {
+            if !hasSeenDashboardOverlay {
+                DashboardWelcomeOverlay(onDismiss: {
+                    withAnimation { hasSeenDashboardOverlay = true }
+                })
+            }
         }
     }
 
@@ -409,6 +417,43 @@ extension View {
             .blur(radius: isActive ? 0 : 10)
             .opacity(isActive ? 1 : 0)
             .animation(.smooth(duration: 0.35), value: isActive)
+    }
+}
+
+// MARK: - Dashboard Welcome Overlay
+
+struct DashboardWelcomeOverlay: View {
+    var onDismiss: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.6)
+                .ignoresSafeArea()
+                .onTapGesture { onDismiss() }
+
+            VStack(spacing: 20) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.green)
+
+                Text("Alles bereit!")
+                    .font(.system(size: 28, weight: .bold))
+
+                Text("Dein Dashboard zeigt dir pH und Chlor auf einen Blick. Tippe auf die Balken für Details oder nutze die Buttons unten zum Messen und Dosieren.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+
+                Text("Tippe irgendwo, um fortzufahren")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .padding(.top, 10)
+            }
+            .padding(30)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24))
+            .padding(.horizontal, 40)
+        }
+        .transition(.opacity)
     }
 }
 
