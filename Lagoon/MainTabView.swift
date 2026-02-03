@@ -261,7 +261,7 @@ struct DashboardTabView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .scaleEffect(barScale, anchor: .top)
-                .offset(y: anySheetPresented ? -80 : (showDosingPill ? -12 : 0))
+                .offset(y: anySheetPresented ? -80 : (showDosingPill ? -44 : -40))
                 .animation(.smooth, value: anySheetPresented)
                 .animation(.smooth, value: quickMeasurePhase)
                 .animation(.smooth(duration: 0.35), value: showDosingPill)
@@ -279,7 +279,8 @@ struct DashboardTabView: View {
                     .transition(.blurReplace.combined(with: .scale(0.8)).combined(with: .opacity))
                     .opacity(anySheetPresented ? 0 : 1)
                     .animation(.smooth, value: anySheetPresented)
-                    .padding(.top, 20)
+                    .padding(.top, 8)
+                    .offset(y: -24)
                 } else if poolWaterState.dosingNeeded {
                     Button { showQuickMeasure = true } label: {
                         InfoPill(
@@ -292,7 +293,8 @@ struct DashboardTabView: View {
                     .transition(.blurReplace.combined(with: .scale(0.8)).combined(with: .opacity))
                     .opacity(anySheetPresented ? 0 : 1)
                     .animation(.smooth, value: anySheetPresented)
-                    .padding(.top, 20)
+                    .padding(.top, 8)
+                    .offset(y: -24)
                 }
 
                 // Time simulation picker
@@ -318,7 +320,7 @@ struct DashboardTabView: View {
                     .frame(height: 16)
                 }
                 .padding(.horizontal, 40)
-                .padding(.top, showDosingPill ? 28 : 20)
+                .padding(.top, showDosingPill ? 16 : 24)
                 .opacity(anySheetPresented ? 0 : 1)
                 .animation(.smooth, value: anySheetPresented)
                 .animation(.smooth(duration: 0.35), value: showDosingPill)
