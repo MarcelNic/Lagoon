@@ -66,7 +66,7 @@ struct MainTabView: View {
     }
 
     // TabBar Dimensionen
-    private let tabBarHeight: CGFloat = 66
+    private let tabBarHeight: CGFloat = 62
     private let tabBarSpacing: CGFloat = 8  // Abstand zwischen TabBar und Buttons
     private let segmentPadding: CGFloat = 3  // Vertikaler Abstand für Concentricity
     private let segmentHorizontalPadding: CGFloat = 3  // Horizontaler Abstand (Tabs näher zusammen)
