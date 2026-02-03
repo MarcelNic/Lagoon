@@ -26,12 +26,12 @@ struct LocationWeatherScreen: View {
                     .foregroundStyle(.orange, .yellow)
                     .microAnimation(delay: 0.2)
 
-                Text("Sonne, Regen oder Sturm?")
+                Text("Sonne oder Regen?")
                     .font(.system(size: 32, weight: .bold))
                     .multilineTextAlignment(.center)
                     .microAnimation(delay: 0.3)
 
-                Text("Mit deinem Standort kann Lagoon Wetterdaten abrufen und die Wasserchemie genauer vorhersagen.")
+                Text("Das Wetter beeinflusst die Wasserqualität. Wir nutzen lokale Daten, um den Chlorverbrauch vorherzusagen.")
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)

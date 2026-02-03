@@ -13,7 +13,7 @@ struct PoolProfileScreen: View {
         VStack {
             Spacer()
 
-            Text("Dein Pool.")
+            Text("Pool-Daten.")
                 .font(.system(size: 32, weight: .bold))
                 .multilineTextAlignment(.center)
                 .microAnimation(delay: 0.2)
@@ -22,50 +22,51 @@ struct PoolProfileScreen: View {
             Spacer()
 
             VStack(spacing: 24) {
-                // Volume Section
+                // Volume Section with Slider
                 VStack(alignment: .leading, spacing: 8) {
-                    Button {
-                        showVolumeCalculator = true
-                    } label: {
+                    VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Label("Volumen", systemImage: "cube.fill")
                             Spacer()
                             Text(String(format: "%.0f m³", poolVolume))
                                 .foregroundStyle(.secondary)
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
+                                .monospacedDigit()
                         }
-                        .padding()
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        Slider(value: $poolVolume, in: 5...150, step: 5)
                     }
-                    .tint(.primary)
-                    Text("Tippe, um das Volumen zu berechnen")
-                        .font(.caption)
+                    .padding()
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+
+                    Button {
+                        showVolumeCalculator = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "function")
+                                .font(.caption)
+                            Text("Volumen berechnen")
+                                .font(.caption)
+                        }
                         .foregroundStyle(.secondary)
-                        .padding(.horizontal, 4)
+                    }
+                    .padding(.horizontal, 4)
                 }
 
                 // Cover Section
                 VStack(alignment: .leading, spacing: 8) {
                     Toggle(isOn: $hasCover) {
-                        Label("Abdeckung vorhanden", systemImage: "shield.fill")
+                        Label("Abdeckung", systemImage: "shield.fill")
                     }
                     .padding()
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                    Text("Eine Abdeckung reduziert Verdunstung und Verschmutzung")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 4)
                 }
 
                 // Pump Runtime Section
                 VStack(alignment: .leading, spacing: 8) {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Label("Pumplaufzeit", systemImage: "arrow.trianglehead.2.clockwise.rotate.90")
+                            Label("Pumpe", systemImage: "arrow.trianglehead.2.clockwise.rotate.90")
                             Spacer()
-                            Text(String(format: "%.0f Std.", pumpRuntime))
+                            Text(String(format: "%.0f Std./Tag", pumpRuntime))
                                 .foregroundStyle(.secondary)
                                 .monospacedDigit()
                         }
@@ -73,7 +74,7 @@ struct PoolProfileScreen: View {
                     }
                     .padding()
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                    Text("Wie lange läuft deine Pumpe täglich?")
+                    Text("Laufzeit pro Tag")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 4)

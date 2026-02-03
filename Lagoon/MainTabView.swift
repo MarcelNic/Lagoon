@@ -383,24 +383,16 @@ struct AdaptiveBackgroundGradient: View {
 
     var body: some View {
         if colorScheme == .dark {
-            // Original Dark Mode Gradient
+            // Dark Mode: Dark teal to black gradient
             LinearGradient(
-                stops: [
-                    .init(color: Color(hex: "0a1628"), location: 0.0),
-                    .init(color: Color(hex: "1a3a5c"), location: 0.5),
-                    .init(color: Color(hex: "1a3a5c"), location: 1.0)
-                ],
+                colors: [Color(hex: "1a3a4a"), .black],
                 startPoint: .top,
                 endPoint: .bottom
             )
         } else {
-            // Light Mode: systemGray5 with cyan at bottom
+            // Light Mode: Soft blue gradient
             LinearGradient(
-                stops: [
-                    .init(color: Color(.systemGray6), location: 0.0),
-                    .init(color: Color(.systemGray6), location: 0.75),
-                    .init(color: Color(.systemGray6).mix(with: Color.cyan, by: 0.50), location: 1.0)
-                ],
+                colors: [Color(hex: "ceeaf6"), Color(hex: "fefefe")],
                 startPoint: .top,
                 endPoint: .bottom
             )

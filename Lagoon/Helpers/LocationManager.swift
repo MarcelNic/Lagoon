@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+import MapKit
 
 @Observable
 final class LocationManager: NSObject, CLLocationManagerDelegate {
@@ -53,15 +54,20 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
     // MARK: - Reverse Geocoding
 
     private func reverseGeocode(_ location: CLLocation) {
-        let geocoder = CLGeocoder()
-        geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
-            guard let self else { return }
-            self.isLoading = false
-            if let placemark = placemarks?.first {
-                self.locationName = [placemark.locality, placemark.administrativeArea]
-                    .compactMap { $0 }
-                    .joined(separator: ", ")
+        Task { @MainActor in
+            if let request = MKReverseGeocodingRequest(location: location) {
+                do {
+                    let mapItems = try await request.mapItems
+                    if let mapItem = mapItems.first,
+                       let address = mapItem.address {
+                        // Use shortAddress for a compact display (e.g., "Berlin, Germany")
+                        self.locationName = address.shortAddress ?? address.fullAddress
+                    }
+                } catch {
+                    // Geocoding failed, location name stays nil
+                }
             }
+            self.isLoading = false
         }
     }
 }

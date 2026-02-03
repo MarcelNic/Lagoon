@@ -26,7 +26,7 @@ struct CareTaskSelectionScreen: View {
         SelectionView(
             chips: careTasks,
             title: "Deine Aufgaben.",
-            subtitle: "Später kannst du noch eigene hinzufügen.",
+            subtitle: "Weitere Aufgaben können später hinzugefügt werden.",
             buttonTitle: "Fertigstellen",
             preselectedTitles: [],
             action: {

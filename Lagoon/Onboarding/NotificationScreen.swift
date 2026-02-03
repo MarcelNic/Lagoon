@@ -5,7 +5,7 @@ struct NotificationScreen: View {
 
     @Environment(NotificationManager.self) private var notificationManager
 
-    @AppStorage("reminderHour") private var reminderHour: Int = 10
+    @AppStorage("reminderHour") private var reminderHour: Int = 9
     @AppStorage("reminderMinute") private var reminderMinute: Int = 0
 
     @State private var reminderTime = Date()
@@ -21,12 +21,12 @@ struct NotificationScreen: View {
                     .foregroundStyle(.yellow, .orange)
                     .microAnimation(delay: 0.2)
 
-                Text("Nie wieder vergessen.")
+                Text("Erinnerungen")
                     .font(.system(size: 32, weight: .bold))
                     .multilineTextAlignment(.center)
                     .microAnimation(delay: 0.3)
 
-                Text("Weil \"Ich mach das morgen\" meistens \"Nie\" bedeutet.")
+                Text("Wann möchtest du erinnert werden?")
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -36,45 +36,32 @@ struct NotificationScreen: View {
 
             Spacer()
 
-            VStack(spacing: 24) {
-                // Time Picker
-                VStack(spacing: 8) {
-                    Text("Tägliche Erinnerung um:")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+            // Time Picker
+            DatePicker(
+                "",
+                selection: $reminderTime,
+                displayedComponents: .hourAndMinute
+            )
+            .datePickerStyle(.wheel)
+            .labelsHidden()
+            .frame(height: 150)
+            .microAnimation(delay: 0.6)
 
-                    DatePicker(
-                        "",
-                        selection: $reminderTime,
-                        displayedComponents: .hourAndMinute
-                    )
-                    .datePickerStyle(.wheel)
-                    .labelsHidden()
-                    .frame(height: 120)
-                }
-                .microAnimation(delay: 0.6)
+            Spacer()
 
-                // Permission status
-                if permissionRequested {
-                    if notificationManager.isAuthorized {
-                        HStack(spacing: 8) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                            Text("Benachrichtigungen aktiviert")
-                                .fontWeight(.medium)
-                        }
-                        .padding()
-                        .background(.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
-                        .transition(.scale.combined(with: .opacity))
-                    } else {
-                        Text("Du kannst dies später in den Einstellungen ändern.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
+            // Permission status
+            if permissionRequested && notificationManager.isAuthorized {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                    Text("Benachrichtigungen aktiviert")
+                        .fontWeight(.medium)
                 }
+                .padding()
+                .background(.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                .transition(.scale.combined(with: .opacity))
+                .padding(.horizontal, 30)
             }
-            .padding(.horizontal, 30)
 
             Spacer()
 
@@ -89,8 +76,7 @@ struct NotificationScreen: View {
                     }
                     .microAnimation(delay: 0.9)
 
-                    Button("Später") {
-                        saveReminderTime()
+                    Button("Überspringen") {
                         action()
                     }
                     .font(.subheadline)
@@ -98,6 +84,7 @@ struct NotificationScreen: View {
                     .microAnimation(delay: 1.0)
                 } else {
                     PrimaryButton(title: "Weiter") {
+                        saveReminderTime()
                         action()
                     }
                 }
@@ -119,7 +106,7 @@ struct NotificationScreen: View {
 
     private func saveReminderTime() {
         let components = Calendar.current.dateComponents([.hour, .minute], from: reminderTime)
-        reminderHour = components.hour ?? 10
+        reminderHour = components.hour ?? 9
         reminderMinute = components.minute ?? 0
         notificationManager.scheduleDailyReminder(hour: reminderHour, minute: reminderMinute)
     }
