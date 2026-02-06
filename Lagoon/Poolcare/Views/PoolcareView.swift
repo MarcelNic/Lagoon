@@ -97,26 +97,23 @@ struct PoolcareView: View {
 private struct ScenarioPill: View {
     @Bindable var state: PoolcareState
     @Binding var showNewScenarioSheet: Bool
+    @Query(sort: \CareScenario.sortOrder) private var scenarios: [CareScenario]
+
+    private var currentScenario: CareScenario? {
+        scenarios.first { $0.id == state.currentScenarioId }
+    }
 
     var body: some View {
         Menu {
-            let scenarios = state.fetchScenarios()
-            ForEach(scenarios, id: \.id) { scenario in
-                Button {
-                    withAnimation {
-                        state.currentScenarioId = scenario.id
-                    }
-                } label: {
-                    Label {
-                        Text(scenario.name)
-                    } icon: {
-                        Image(systemName: scenario.icon)
-                    }
-                    if state.currentScenarioId == scenario.id {
-                        Image(systemName: "checkmark")
-                    }
+            Picker(selection: $state.currentScenarioId) {
+                ForEach(scenarios) { scenario in
+                    Label(scenario.name, systemImage: scenario.icon)
+                        .tag(scenario.id as UUID?)
                 }
+            } label: {
+                EmptyView()
             }
+            .pickerStyle(.inline)
 
             Divider()
 
@@ -126,21 +123,14 @@ private struct ScenarioPill: View {
                 Label("Neues Szenario...", systemImage: "plus")
             }
         } label: {
-            HStack(spacing: 6) {
-                if let scenario = state.currentScenario() {
-                    Image(systemName: scenario.icon)
-                    Text(scenario.name)
-                } else {
-                    Text("Szenario")
-                }
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.caption2)
-            }
+            Label(
+                currentScenario?.name ?? "Szenario",
+                systemImage: currentScenario?.icon ?? "list.bullet"
+            )
             .font(.subheadline.weight(.medium))
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .glassEffect(in: .capsule)
         }
+        .menuStyle(.button)
+        .buttonStyle(.glass)
     }
 }
 
