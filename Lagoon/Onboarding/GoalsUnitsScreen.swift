@@ -16,116 +16,102 @@ struct GoalsUnitsScreen: View {
     @AppStorage("cupGrams") private var cupGrams: Double = 50.0
 
     var body: some View {
-        VStack {
-            Spacer()
-
+        VStack(spacing: 0) {
             Text("Deine Einstellungen.")
                 .font(.system(size: 32, weight: .bold))
                 .multilineTextAlignment(.center)
                 .microAnimation(delay: 0.2)
-                .padding(.horizontal, 30)
+                .padding(.top, 60)
+                .padding(.bottom, 10)
 
-            Spacer()
-
-            VStack(spacing: 24) {
-                // Ideal Values Section
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Idealwerte")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 4)
-
-                    VStack(spacing: 0) {
-                        // pH Range Row
-                        HStack {
-                            Label("pH", systemImage: "drop.fill")
-                                .foregroundStyle(.purple)
-                            Spacer()
-                            HStack(spacing: 4) {
-                                TextField("", value: $idealPHMin, format: .number.precision(.fractionLength(1)))
-                                    .keyboardType(.decimalPad)
-                                    .multilineTextAlignment(.trailing)
-                                    .frame(width: 40)
-                                Text("-")
-                                    .foregroundStyle(.secondary)
-                                TextField("", value: $idealPHMax, format: .number.precision(.fractionLength(1)))
-                                    .keyboardType(.decimalPad)
-                                    .multilineTextAlignment(.trailing)
-                                    .frame(width: 40)
-                            }
+            Form {
+                Section("Idealbereich pH") {
+                    HStack {
+                        Text("Minimum")
+                        Spacer()
+                        Text(String(format: "%.1f", idealPHMin))
                             .monospacedDigit()
-                        }
-                        .padding()
-
-                        Divider().padding(.leading)
-
-                        // Chlorine Range Row
-                        HStack {
-                            Label("Chlor", systemImage: "bubbles.and.sparkles.fill")
-                                .foregroundStyle(.cyan)
-                            Spacer()
-                            HStack(spacing: 4) {
-                                TextField("", value: $idealChlorineMin, format: .number.precision(.fractionLength(1)))
-                                    .keyboardType(.decimalPad)
-                                    .multilineTextAlignment(.trailing)
-                                    .frame(width: 40)
-                                Text("-")
-                                    .foregroundStyle(.secondary)
-                                TextField("", value: $idealChlorineMax, format: .number.precision(.fractionLength(1)))
-                                    .keyboardType(.decimalPad)
-                                    .multilineTextAlignment(.trailing)
-                                    .frame(width: 40)
-                                Text("mg/l")
-                                    .foregroundStyle(.secondary)
-                                    .font(.caption)
-                            }
-                            .monospacedDigit()
-                        }
-                        .padding()
+                            .foregroundStyle(.secondary)
+                            .contentTransition(.numericText())
+                            .animation(.snappy, value: idealPHMin)
+                        Stepper("", value: $idealPHMin, in: 6.8...8.2, step: 0.1)
+                            .labelsHidden()
                     }
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    .listRowBackground(Color(.systemGray6))
+
+                    HStack {
+                        Text("Maximum")
+                        Spacer()
+                        Text(String(format: "%.1f", idealPHMax))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .contentTransition(.numericText())
+                            .animation(.snappy, value: idealPHMax)
+                        Stepper("", value: $idealPHMax, in: 6.8...8.2, step: 0.1)
+                            .labelsHidden()
+                    }
+                    .listRowBackground(Color(.systemGray6))
                 }
 
-                // Dosing Unit Section
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Deine Dosiereinheit")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 4)
-
-                    VStack(spacing: 12) {
-                        Picker("Einheit", selection: $dosingUnit) {
-                            Text("Gramm").tag("gramm")
-                            Text("Messbecher/Tabs").tag("messbecher")
-                        }
-                        .pickerStyle(.segmented)
-
-                        if dosingUnit == "messbecher" {
-                            HStack {
-                                Text("Inhalt pro Becher")
-                                Spacer()
-                                TextField("", value: $cupGrams, format: .number.precision(.fractionLength(0)))
-                                    .keyboardType(.numberPad)
-                                    .multilineTextAlignment(.trailing)
-                                    .frame(width: 60)
-                                Text("g")
-                                    .foregroundStyle(.secondary)
-                            }
-                            .transition(.opacity.combined(with: .move(edge: .top)))
-                        }
+                Section("Idealbereich Chlor (mg/l)") {
+                    HStack {
+                        Text("Minimum")
+                        Spacer()
+                        Text(String(format: "%.1f", idealChlorineMin))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .contentTransition(.numericText())
+                            .animation(.snappy, value: idealChlorineMin)
+                        Stepper("", value: $idealChlorineMin, in: 0.0...5.0, step: 0.1)
+                            .labelsHidden()
                     }
-                    .padding()
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                    .animation(.easeInOut(duration: 0.2), value: dosingUnit)
+                    .listRowBackground(Color(.systemGray6))
+
+                    HStack {
+                        Text("Maximum")
+                        Spacer()
+                        Text(String(format: "%.1f", idealChlorineMax))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .contentTransition(.numericText())
+                            .animation(.snappy, value: idealChlorineMax)
+                        Stepper("", value: $idealChlorineMax, in: 0.0...5.0, step: 0.1)
+                            .labelsHidden()
+                    }
+                    .listRowBackground(Color(.systemGray6))
                 }
+
+                Section("Dosiereinheit") {
+                    Picker("Einheit", selection: $dosingUnit) {
+                        Text("Gramm").tag("gramm")
+                        Text("Messbecher/Tabs").tag("messbecher")
+                    }
+                    .listRowBackground(Color(.systemGray6))
+
+                    if dosingUnit == "messbecher" {
+                        HStack {
+                            Text("Gramm pro Becher")
+                            Spacer()
+                            Text(String(format: "%.0f g", cupGrams))
+                                .monospacedDigit()
+                                .foregroundStyle(.secondary)
+                                .contentTransition(.numericText())
+                                .animation(.snappy, value: cupGrams)
+                            Stepper("", value: $cupGrams, in: 10...500, step: 5)
+                                .labelsHidden()
+                        }
+                        .listRowBackground(Color(.systemGray6))
+                    }
+                }
+                .animation(.easeInOut(duration: 0.2), value: dosingUnit)
             }
-            .padding(.horizontal, 30)
+            .scrollContentBackground(.hidden)
+            .scrollDisabled(true)
             .microAnimation(delay: 0.5)
-
-            Spacer()
 
             PrimaryButton(title: "Speichern", action: action)
                 .microAnimation(delay: 0.8)
+                .padding(.bottom, 10)
         }
     }
 }

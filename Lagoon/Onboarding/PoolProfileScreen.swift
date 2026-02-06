@@ -5,88 +5,78 @@ struct PoolProfileScreen: View {
 
     @AppStorage("poolVolume") private var poolVolume: Double = 40.0
     @AppStorage("hasCover") private var hasCover: Bool = false
+    @AppStorage("hasHeating") private var hasHeating: Bool = false
     @AppStorage("pumpRuntime") private var pumpRuntime: Double = 8.0
 
     @State private var showVolumeCalculator = false
 
     var body: some View {
-        VStack {
-            Spacer()
-
+        VStack(spacing: 0) {
             Text("Pool-Daten.")
                 .font(.system(size: 32, weight: .bold))
                 .multilineTextAlignment(.center)
                 .microAnimation(delay: 0.2)
-                .padding(.horizontal, 30)
+                .padding(.top, 60)
+                .padding(.bottom, 10)
 
-            Spacer()
-
-            VStack(spacing: 24) {
-                // Volume Section with Slider
-                VStack(alignment: .leading, spacing: 8) {
-                    VStack(alignment: .leading, spacing: 12) {
+            Form {
+                Section("Wasser") {
+                    VStack(alignment: .leading) {
                         HStack {
-                            Label("Volumen", systemImage: "cube.fill")
+                            Text("Volumen")
                             Spacer()
-                            Text(String(format: "%.0f m³", poolVolume))
+                            Text("\(poolVolume, specifier: "%.0f") m³")
                                 .foregroundStyle(.secondary)
                                 .monospacedDigit()
+                                .contentTransition(.numericText())
+                                .animation(.snappy, value: poolVolume)
                         }
                         Slider(value: $poolVolume, in: 5...150, step: 5)
                     }
-                    .padding()
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    .listRowBackground(Color(.systemGray6))
 
                     Button {
                         showVolumeCalculator = true
                     } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "function")
-                                .font(.caption)
-                            Text("Volumen berechnen")
-                                .font(.caption)
-                        }
-                        .foregroundStyle(.secondary)
+                        Label("Volumen berechnen", systemImage: "ruler")
                     }
-                    .padding(.horizontal, 4)
+                    .listRowBackground(Color(.systemGray6))
                 }
 
-                // Cover Section
-                VStack(alignment: .leading, spacing: 8) {
+                Section("Ausstattung") {
                     Toggle(isOn: $hasCover) {
-                        Label("Abdeckung", systemImage: "shield.fill")
+                        Label("Abdeckung vorhanden", systemImage: "square.topthird.inset.filled")
                     }
-                    .padding()
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    .listRowBackground(Color(.systemGray6))
+                    Toggle(isOn: $hasHeating) {
+                        Label("Heizung vorhanden", systemImage: "thermometer.sun.fill")
+                    }
+                    .listRowBackground(Color(.systemGray6))
                 }
 
-                // Pump Runtime Section
-                VStack(alignment: .leading, spacing: 8) {
-                    VStack(alignment: .leading, spacing: 12) {
+                Section("Pumpe") {
+                    VStack(alignment: .leading) {
                         HStack {
-                            Label("Pumpe", systemImage: "arrow.trianglehead.2.clockwise.rotate.90")
+                            Text("Laufzeit pro Tag")
                             Spacer()
-                            Text(String(format: "%.0f Std./Tag", pumpRuntime))
+                            Text("\(pumpRuntime, specifier: "%.0f") h")
                                 .foregroundStyle(.secondary)
                                 .monospacedDigit()
+                                .contentTransition(.numericText())
+                                .animation(.snappy, value: pumpRuntime)
                         }
                         Slider(value: $pumpRuntime, in: 0...24, step: 1)
                     }
-                    .padding()
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                    Text("Laufzeit pro Tag")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 4)
+                    .listRowBackground(Color(.systemGray6))
                 }
             }
-            .padding(.horizontal, 30)
+            .scrollContentBackground(.hidden)
+            .scrollDisabled(true)
             .microAnimation(delay: 0.5)
-
-            Spacer()
 
             PrimaryButton(title: "Weiter", action: action)
                 .microAnimation(delay: 0.8)
+                .padding(.bottom, 10)
         }
         .sheet(isPresented: $showVolumeCalculator) {
             PoolVolumeCalculatorView(poolVolume: $poolVolume)

@@ -111,21 +111,12 @@ struct ExplanationRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             if useAppIcon {
-                // App icon representation with Lagoon-style water drop
-                ZStack {
-                    RoundedRectangle(cornerRadius: 7)
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.blue.opacity(0.8), Color.cyan.opacity(0.6)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 32, height: 32)
-                    Image(systemName: "drop.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
-                }
+                // Lagoon app icon
+                Image("LagoonAppIcon")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 32, height: 32)
+                    .clipShape(RoundedRectangle(cornerRadius: 7))
             } else {
                 // Centered label in a colored circle
                 ZStack {
