@@ -4,79 +4,191 @@
 //
 
 import SwiftUI
+import SwiftData
 import Combine
 import ActivityKit
 
 @Observable
 final class PoolcareState {
 
-    // MARK: - Zone 1: Active Actions
+    // MARK: - Scenario Selection
+
+    var currentScenarioId: UUID?
+
+    // MARK: - Active Timers (in-memory)
 
     private(set) var activeActions: [ActiveAction] = []
+    private(set) var timerTick: Date = Date()
+
+    // MARK: - Private
+
+    private var modelContext: ModelContext?
     private var timerCancellable: AnyCancellable?
     private var robotActivity: Activity<RobotActivityAttributes>?
-
-    // MARK: - Operating Mode
-
-    private(set) var currentMode: OperatingMode = .summer
-    private(set) var vacationPhase: VacationPhase? = nil
-    private(set) var previousMode: OperatingMode? = nil  // Für Rückkehr aus Urlaub
-
-    // MARK: - Zone 2: Tasks
-
-    private(set) var tasks: [PoolcareTask] = []
-
-    /// Gefilterte Tasks basierend auf aktuellem Modus
-    var visibleTasks: [PoolcareTask] {
-        tasks.filter { $0.isVisible(in: currentMode, vacationPhase: vacationPhase) || $0.isTransitionTask }
-    }
-
-    var pendingTasks: [PoolcareTask] {
-        visibleTasks
-            .filter { !$0.isCompleted }
-            .sorted { $0.urgency.sortOrder < $1.urgency.sortOrder }
-    }
-
-    var upcomingTasks: [PoolcareTask] {
-        pendingTasks.filter { $0.urgency == .upcoming || $0.urgency == .future }
-    }
-
-    var dueTasks: [PoolcareTask] {
-        pendingTasks.filter { $0.urgency == .overdue || $0.urgency == .dueToday }
-    }
-
-    var recentlyCompletedTasks: [PoolcareTask] {
-        visibleTasks
-            .filter { $0.isCompleted }
-            .filter { task in
-                guard let completedAt = task.completedAt else { return false }
-                return Date().timeIntervalSince(completedAt) < 5
-            }
-            .sorted { ($0.completedAt ?? .distantPast) > ($1.completedAt ?? .distantPast) }
-    }
-
-    // MARK: - Transition Tasks (Legacy scenario data)
-
-    private(set) var vacationScenario: VacationScenario
-    private(set) var seasonScenario: SeasonScenario
-
-    // MARK: - Timer State
-
-    private(set) var timerTick: Date = Date()
+    private var lastLiveActivityUpdate: Date = .distantPast
 
     // MARK: - Initialization
 
     init() {
-        self.tasks = PoolcareTask.sampleTasks()
-        self.vacationScenario = VacationScenario.defaultChecklist()
-        self.seasonScenario = SeasonScenario.defaultChecklist()
-
         startTimerUpdates()
+    }
+
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
+
+        // Seed default data if needed
+        let descriptor = FetchDescriptor<CareScenario>()
+        let count = (try? context.fetchCount(descriptor)) ?? 0
+        if count == 0 {
+            seedDefaultData()
+        }
+
+        // Select first scenario if none selected
+        if currentScenarioId == nil {
+            currentScenarioId = fetchScenarios().first?.id
+        }
+    }
+
+    // MARK: - Scenario Management
+
+    func fetchScenarios() -> [CareScenario] {
+        guard let context = modelContext else { return [] }
+        let descriptor = FetchDescriptor<CareScenario>(sortBy: [SortDescriptor(\.sortOrder)])
+        return (try? context.fetch(descriptor)) ?? []
+    }
+
+    func currentScenario() -> CareScenario? {
+        guard let context = modelContext, let id = currentScenarioId else { return nil }
+        let descriptor = FetchDescriptor<CareScenario>(predicate: #Predicate { $0.id == id })
+        return try? context.fetch(descriptor).first
+    }
+
+    func createScenario(name: String, icon: String) -> CareScenario {
+        let scenarios = fetchScenarios()
+        let maxOrder = scenarios.map(\.sortOrder).max() ?? 0
+        let scenario = CareScenario(name: name, icon: icon, sortOrder: maxOrder + 1, isBuiltIn: false)
+        modelContext?.insert(scenario)
+        try? modelContext?.save()
+        return scenario
+    }
+
+    func deleteScenario(_ scenario: CareScenario) {
+        guard !scenario.isBuiltIn else { return }
+        modelContext?.delete(scenario)
+        try? modelContext?.save()
+
+        // If deleted scenario was active, switch to first
+        if currentScenarioId == scenario.id {
+            currentScenarioId = fetchScenarios().first?.id
+        }
+    }
+
+    // MARK: - Task Management
+
+    func completeTask(_ task: CareTask) {
+        task.completedAt = Date()
+        try? modelContext?.save()
+
+        let taskId = task.persistentModelID
+        let intervalDays = task.intervalDays
+
+        // After delay: reschedule or delete
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.8))
+            guard let context = self.modelContext else { return }
+
+            // Re-fetch task
+            guard let task = context.model(for: taskId) as? CareTask else { return }
+
+            if intervalDays > 0 {
+                // Reschedule: move to next due date
+                task.dueDate = Calendar.current.date(byAdding: .day, value: intervalDays, to: Date())
+                task.completedAt = nil
+            } else {
+                // One-time task: delete
+                context.delete(task)
+            }
+            try? context.save()
+        }
+    }
+
+    func addTask(
+        to scenario: CareScenario,
+        title: String,
+        dueDate: Date,
+        intervalDays: Int,
+        isAction: Bool = false,
+        actionDurationSeconds: Double = 0,
+        iconName: String? = nil,
+        isCustomIcon: Bool = false
+    ) {
+        let task = CareTask(
+            title: title,
+            dueDate: dueDate,
+            intervalDays: intervalDays,
+            isAction: isAction,
+            actionDurationSeconds: actionDurationSeconds,
+            iconName: iconName,
+            isCustomIcon: isCustomIcon
+        )
+        task.scenario = scenario
+        modelContext?.insert(task)
+        try? modelContext?.save()
+    }
+
+    func updateTask(
+        _ task: CareTask,
+        title: String? = nil,
+        dueDate: Date? = nil,
+        intervalDays: Int? = nil,
+        actionDurationSeconds: Double? = nil,
+        iconName: String? = nil,
+        isCustomIcon: Bool? = nil
+    ) {
+        if let title { task.title = title }
+        if let dueDate { task.dueDate = dueDate }
+        if let intervalDays { task.intervalDays = intervalDays }
+        if let actionDurationSeconds { task.actionDurationSeconds = actionDurationSeconds }
+        if let iconName { task.iconName = iconName }
+        if let isCustomIcon { task.isCustomIcon = isCustomIcon }
+        try? modelContext?.save()
+    }
+
+    func deleteTask(_ task: CareTask) {
+        modelContext?.delete(task)
+        try? modelContext?.save()
     }
 
     // MARK: - Timer Management
 
-    private var lastLiveActivityUpdate: Date = .distantPast
+    var hasActiveActions: Bool {
+        !activeActions.isEmpty
+    }
+
+    func startAction(_ task: CareTask, duration: TimeInterval) {
+        let action = ActiveAction(
+            taskId: task.id,
+            title: task.title,
+            iconName: task.iconName,
+            isCustomIcon: task.isCustomIcon,
+            duration: duration
+        )
+        activeActions.append(action)
+
+        // Start Live Activity for robot-like tasks
+        if task.iconName == "Robi" || task.title.lowercased().contains("roboter") {
+            startRobotLiveActivity(action: action)
+        }
+    }
+
+    func cancelAction(_ action: ActiveAction) {
+        if action.iconName == "Robi" || action.title.lowercased().contains("roboter") {
+            endRobotLiveActivity()
+        }
+        activeActions.removeAll { $0.id == action.id }
+    }
+
+    // MARK: - Timer Updates
 
     private func startTimerUpdates() {
         timerCancellable = Timer.publish(every: 1.0, on: .main, in: .common)
@@ -89,83 +201,27 @@ final class PoolcareState {
     }
 
     private func checkExpiredActions() {
-        let expiredActions = activeActions.filter { $0.isExpired }
+        let expired = activeActions.filter { $0.isExpired }
 
-        for action in expiredActions {
-            // End Live Activity for robot when timer expires
-            if action.type == .robot {
+        for action in expired {
+            if action.iconName == "Robi" || action.title.lowercased().contains("roboter") {
                 endRobotLiveActivity()
             }
-
-            // Follow-Up Task erstellen (z.B. "Roboter entnehmen")
-            let followUp = action.type.followUpTask
-            let newTask = PoolcareTask(
-                title: followUp.title,
-                subtitle: followUp.subtitle,
-                dueDate: Date(),
-                generatedFromActionId: action.id
-            )
-            tasks.insert(newTask, at: 0)
-
-            // Timer-Task wieder zur Liste hinzufügen
-            let timerTask = PoolcareTask(
-                title: action.type.taskTitle,
-                subtitle: action.type.taskSubtitle,
-                dueDate: Date(),
-                actionType: action.type
-            )
-            tasks.append(timerTask)
-
             activeActions.removeAll { $0.id == action.id }
         }
-    }
-
-    // MARK: - Zone 1: Action Methods
-
-    func startAction(_ type: ActionType, duration: TimeInterval? = nil) {
-        let action = ActiveAction(type: type, duration: duration)
-        activeActions.append(action)
-
-        // Start Live Activity for robot
-        if type == .robot {
-            startRobotLiveActivity(action: action)
-        }
-    }
-
-    func cancelAction(_ action: ActiveAction) {
-        // End Live Activity if it's the robot
-        if action.type == .robot {
-            endRobotLiveActivity()
-        }
-
-        activeActions.removeAll { $0.id == action.id }
-    }
-
-    func startTaskAsAction(_ task: PoolcareTask, duration: TimeInterval) {
-        guard let actionType = task.actionType else { return }
-
-        // Task aus der Liste entfernen
-        tasks.removeAll { $0.id == task.id }
-
-        // Als Active Action starten
-        startAction(actionType, duration: duration)
     }
 
     // MARK: - Live Activity Management
 
     private func startRobotLiveActivity(action: ActiveAction) {
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
-            print("Live Activities are not enabled")
-            return
-        }
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
 
-        // Reset für erstes Update
         lastLiveActivityUpdate = .distantPast
 
         let attributes = RobotActivityAttributes(
             startTime: action.startTime,
             duration: action.duration,
-            actionTitle: action.type.activeLabel
+            actionTitle: action.activeLabel
         )
 
         let initialState = RobotActivityAttributes.ContentState(
@@ -178,9 +234,6 @@ final class PoolcareState {
                 attributes: attributes,
                 content: .init(state: initialState, staleDate: action.endTime)
             )
-            print("Started robot Live Activity")
-
-            // Schedule background refresh for Live Activity updates
             LiveActivityBackgroundManager.shared.scheduleBackgroundRefresh()
         } catch {
             print("Failed to start Live Activity: \(error)")
@@ -189,12 +242,12 @@ final class PoolcareState {
 
     private func updateRobotLiveActivityIfNeeded() {
         guard let activity = robotActivity,
-              let robotAction = activeActions.first(where: { $0.type == .robot }) else { return }
+              let robotAction = activeActions.first(where: {
+                  $0.iconName == "Robi" || $0.title.lowercased().contains("roboter")
+              }) else { return }
 
-        // Nur alle 30 Sekunden aktualisieren (iOS drosselt zu häufige Updates)
         let now = Date()
         guard now.timeIntervalSince(lastLiveActivityUpdate) >= 30 else { return }
-
         lastLiveActivityUpdate = now
 
         let updatedState = RobotActivityAttributes.ContentState(
@@ -210,7 +263,6 @@ final class PoolcareState {
     private func endRobotLiveActivity() {
         guard let activity = robotActivity else { return }
 
-        // Cancel background refresh since Live Activity is ending
         LiveActivityBackgroundManager.shared.cancelBackgroundRefresh()
 
         let finalState = RobotActivityAttributes.ContentState(
@@ -223,198 +275,84 @@ final class PoolcareState {
                 .init(state: finalState, staleDate: nil),
                 dismissalPolicy: .immediate
             )
-            print("Ended robot Live Activity")
         }
 
         robotActivity = nil
     }
 
-    var hasActiveActions: Bool {
-        !activeActions.isEmpty
-    }
+    // MARK: - Seed Default Data
 
-    // MARK: - Zone 2: Task Methods
+    func seedDefaultData() {
+        guard let context = modelContext else { return }
 
-    func completeTask(_ task: PoolcareTask) {
-        guard let index = tasks.firstIndex(where: { $0.id == task.id }) else { return }
-        tasks[index].isCompleted = true
-        tasks[index].completedAt = Date()
+        let now = Date()
+        let calendar = Calendar.current
 
-        let taskId = task.id
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(5))
-            self.removeCompletedTask(taskId)
-        }
-    }
+        // Sommer
+        let sommer = CareScenario(name: "Sommer", icon: "sun.max.fill", sortOrder: 0, isBuiltIn: true)
+        context.insert(sommer)
 
-    private func removeCompletedTask(_ id: UUID) {
-        tasks.removeAll { $0.id == id && $0.isCompleted }
-    }
-
-    func postponeTask(_ task: PoolcareTask, days: Int) {
-        guard let index = tasks.firstIndex(where: { $0.id == task.id }) else { return }
-        let newDue = Calendar.current.date(byAdding: .day, value: days, to: Date()) ?? Date()
-        tasks[index].dueDate = newDue
-        tasks[index].subtitle = days == 0 ? "Verschoben auf heute" : "Verschoben auf morgen"
-    }
-
-    func addTask(title: String, subtitle: String) {
-        let dueDate: Date?
-        switch subtitle {
-        case "Heute fällig":
-            dueDate = Date()
-        case "Morgen fällig":
-            dueDate = Calendar.current.date(byAdding: .day, value: 1, to: Date())
-        case "Wöchentlich":
-            dueDate = Calendar.current.date(byAdding: .day, value: 7, to: Date())
-        case "Monatlich":
-            dueDate = Calendar.current.date(byAdding: .month, value: 1, to: Date())
-        default:
-            dueDate = Date()
-        }
-
-        let newTask = PoolcareTask(
-            title: title,
-            subtitle: subtitle,
-            dueDate: dueDate
-        )
-        tasks.insert(newTask, at: 0)
-    }
-
-    // MARK: - Operating Mode Methods
-
-    func switchMode(to newMode: OperatingMode) {
-        let oldMode = currentMode
-
-        // Gleicher Modus = nichts tun
-        guard newMode != oldMode else { return }
-
-        // Alte Transition-Tasks entfernen
-        tasks.removeAll { $0.isTransitionTask }
-
-        // Bei Wechsel zu Urlaub: vorherigen Modus speichern
-        if newMode == .vacation {
-            previousMode = oldMode
-            vacationPhase = .before
-            addVacationBeforeTasks()
-        } else {
-            // Bei Wechsel aus Urlaub zurück
-            if oldMode == .vacation {
-                vacationPhase = nil
-                previousMode = nil
-            }
-
-            // Übergangs-Tasks hinzufügen
-            if oldMode == .summer && newMode == .winter {
-                addSummerToWinterTransitionTasks()
-            } else if oldMode == .winter && newMode == .summer {
-                addWinterToSummerTransitionTasks()
-            }
-        }
-
-        currentMode = newMode
-    }
-
-    func advanceVacationPhase() {
-        guard currentMode == .vacation else { return }
-
-        switch vacationPhase {
-        case .before:
-            vacationPhase = .during
-            // Vor-Abreise-Tasks entfernen
-            tasks.removeAll { $0.visibility == .vacationBefore }
-        case .during:
-            vacationPhase = .after
-            addVacationAfterTasks()
-        case .after:
-            // Zurück zum vorherigen Modus
-            let returnMode = previousMode ?? .summer
-            vacationPhase = nil
-            previousMode = nil
-            tasks.removeAll { $0.visibility == .vacationAfter }
-            currentMode = returnMode
-        case nil:
-            break
-        }
-    }
-
-    // MARK: - Transition Task Generators
-
-    private func addSummerToWinterTransitionTasks() {
-        let transitionTasks = [
-            PoolcareTask(title: "Skimmer entleeren", subtitle: "Einwinterung", dueDate: Date(), isTransitionTask: true),
-            PoolcareTask(title: "Leitungen entleeren", subtitle: "Einwinterung", dueDate: Date(), isTransitionTask: true),
-            PoolcareTask(title: "Wintermittel hinzufügen", subtitle: "Einwinterung", dueDate: Date(), isTransitionTask: true),
-            PoolcareTask(title: "Abdeckung montieren", subtitle: "Einwinterung", dueDate: Date(), isTransitionTask: true)
+        let sommerTasks: [(String, Int, Bool, Double, String?, Bool)] = [
+            ("Roboter", 2, true, 2 * 60 * 60, "Robi", true),
+            ("Rückspülen", 7, true, 3 * 60, "arrow.circlepath", false),
+            ("Skimmer leeren", 1, false, 0, nil, false),
+            ("Wasserlinie bürsten", 7, false, 0, nil, false),
+            ("Filterdruck prüfen", 7, false, 0, nil, false),
+            ("Boden saugen", 14, false, 0, nil, false),
         ]
-        tasks.insert(contentsOf: transitionTasks, at: 0)
-    }
 
-    private func addWinterToSummerTransitionTasks() {
-        let transitionTasks = [
-            PoolcareTask(title: "Abdeckung entfernen", subtitle: "Saisonstart", dueDate: Date(), isTransitionTask: true),
-            PoolcareTask(title: "Pool gründlich reinigen", subtitle: "Saisonstart", dueDate: Date(), isTransitionTask: true),
-            PoolcareTask(title: "Filteranlage starten", subtitle: "Saisonstart", dueDate: Date(), isTransitionTask: true),
-            PoolcareTask(title: "Stoßchlorung durchführen", subtitle: "Saisonstart", dueDate: Date(), isTransitionTask: true)
-        ]
-        tasks.insert(contentsOf: transitionTasks, at: 0)
-    }
-
-    private func addVacationBeforeTasks() {
-        let vacationTasks = [
-            PoolcareTask(title: "Chlorwert erhöhen", subtitle: "Vor Abreise", dueDate: Date(), visibility: .vacationBefore),
-            PoolcareTask(title: "pH-Wert prüfen", subtitle: "Vor Abreise", dueDate: Date(), visibility: .vacationBefore),
-            PoolcareTask(title: "Abdeckung sichern", subtitle: "Vor Abreise", dueDate: Date(), visibility: .vacationBefore),
-            PoolcareTask(title: "Pumpen-Timer einstellen", subtitle: "Vor Abreise", dueDate: Date(), visibility: .vacationBefore)
-        ]
-        tasks.insert(contentsOf: vacationTasks, at: 0)
-    }
-
-    private func addVacationAfterTasks() {
-        let returnTasks = [
-            PoolcareTask(title: "Wasserwerte messen", subtitle: "Nach Rückkehr", dueDate: Date(), visibility: .vacationAfter),
-            PoolcareTask(title: "Skimmer leeren", subtitle: "Nach Rückkehr", dueDate: Date(), visibility: .vacationAfter),
-            PoolcareTask(title: "Pool bürsten", subtitle: "Nach Rückkehr", dueDate: Date(), visibility: .vacationAfter),
-            PoolcareTask(title: "Filter rückspülen", subtitle: "Nach Rückkehr", dueDate: Date(), visibility: .vacationAfter)
-        ]
-        tasks.insert(contentsOf: returnTasks, at: 0)
-    }
-
-    // MARK: - Legacy Scenario Methods (kept for compatibility)
-
-    func toggleVacationMode() {
-        vacationScenario.isActive.toggle()
-    }
-
-    func toggleVacationItem(_ item: ScenarioChecklistItem, in phase: VacationPhase) {
-        switch phase {
-        case .before:
-            if let index = vacationScenario.beforeChecklist.firstIndex(where: { $0.id == item.id }) {
-                vacationScenario.beforeChecklist[index].isCompleted.toggle()
-            }
-        case .during:
-            break
-        case .after:
-            if let index = vacationScenario.afterChecklist.firstIndex(where: { $0.id == item.id }) {
-                vacationScenario.afterChecklist[index].isCompleted.toggle()
-            }
+        for (i, (title, interval, isAction, duration, icon, isCustom)) in sommerTasks.enumerated() {
+            let task = CareTask(
+                title: title,
+                dueDate: calendar.date(byAdding: .day, value: i == 0 ? 0 : i, to: now),
+                intervalDays: interval,
+                isAction: isAction,
+                actionDurationSeconds: duration,
+                iconName: icon,
+                isCustomIcon: isCustom
+            )
+            task.scenario = sommer
+            context.insert(task)
         }
-    }
 
-    func toggleSeasonMode() {
-        seasonScenario.currentMode = seasonScenario.currentMode == .summer ? .winter : .summer
-    }
+        // Winter
+        let winter = CareScenario(name: "Winter", icon: "snowflake", sortOrder: 1, isBuiltIn: true)
+        context.insert(winter)
 
-    func toggleSeasonItem(_ item: ScenarioChecklistItem, in phase: SeasonPhase) {
-        switch phase {
-        case .opening:
-            if let index = seasonScenario.openingChecklist.firstIndex(where: { $0.id == item.id }) {
-                seasonScenario.openingChecklist[index].isCompleted.toggle()
-            }
-        case .closing:
-            if let index = seasonScenario.closingChecklist.firstIndex(where: { $0.id == item.id }) {
-                seasonScenario.closingChecklist[index].isCompleted.toggle()
-            }
+        let winterTasks: [(String, Int)] = [
+            ("Abdeckung prüfen", 7),
+            ("Wasserstand prüfen", 30),
+        ]
+
+        for (i, (title, interval)) in winterTasks.enumerated() {
+            let task = CareTask(
+                title: title,
+                dueDate: calendar.date(byAdding: .day, value: i * 7, to: now),
+                intervalDays: interval
+            )
+            task.scenario = winter
+            context.insert(task)
         }
+
+        // Urlaub
+        let urlaub = CareScenario(name: "Urlaub", icon: "airplane", sortOrder: 2, isBuiltIn: true)
+        context.insert(urlaub)
+
+        let urlaubTasks = ["Chlorwert erhöhen", "pH-Wert prüfen", "Abdeckung sichern", "Pumpen-Timer einstellen"]
+
+        for title in urlaubTasks {
+            let task = CareTask(
+                title: title,
+                dueDate: now,
+                intervalDays: 0
+            )
+            task.scenario = urlaub
+            context.insert(task)
+        }
+
+        try? context.save()
+
+        // Select Sommer as default
+        currentScenarioId = sommer.id
     }
 }

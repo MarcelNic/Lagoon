@@ -11,11 +11,12 @@ struct MainTabView: View {
     @State private var activeTab: LagoonTab = .home
     @State private var showMessenSheet = false
     @State private var showDosierenSheet = false
-    @State private var showAddTaskSheet = false
     @State private var showSettings = false
+    @State private var showAddTaskSheet = false
     @State private var poolcareState = PoolcareState()
     @AppStorage("hasSeenDashboardOverlay") private var hasSeenDashboardOverlay = false
     @Namespace private var tabBarNamespace
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         TabView(selection: $activeTab) {
@@ -28,7 +29,7 @@ struct MainTabView: View {
             }
 
             Tab(value: .care) {
-                PoolcareTabView(state: poolcareState)
+                PoolcareView(state: poolcareState, showAddSheet: $showAddTaskSheet)
                     .toolbarVisibility(.hidden, for: .tabBar)
             }
 
@@ -52,16 +53,15 @@ struct MainTabView: View {
             DosierenSheet()
                 .presentationDetents([.medium])
         }
-        .sheet(isPresented: $showAddTaskSheet) {
-            AddItemSheet(state: poolcareState)
-                .presentationDetents([.medium, .large])
-        }
         .overlay {
             if !hasSeenDashboardOverlay {
                 DashboardWelcomeOverlay(onDismiss: {
                     withAnimation { hasSeenDashboardOverlay = true }
                 })
             }
+        }
+        .onAppear {
+            poolcareState.setModelContext(modelContext)
         }
     }
 
@@ -345,34 +345,6 @@ struct DashboardTabView: View {
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 poolWaterState.reloadSettings()
-            }
-        }
-    }
-}
-
-// MARK: - Poolcare Tab View
-
-struct PoolcareTabView: View {
-    @Bindable var state: PoolcareState
-
-    var body: some View {
-        ZStack {
-            // Background
-            AdaptiveBackgroundGradient()
-                .ignoresSafeArea()
-
-            ScrollView {
-                VStack(spacing: 28) {
-                    // Operating Mode Selector
-                    OperatingModeSelector(state: state)
-
-                    ActiveActionsZone(state: state)
-
-                    TaskListZone(state: state)
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 100)
             }
         }
     }

@@ -25,7 +25,9 @@ struct LagoonApp: App {
             Measurement.self,
             DosingEventModel.self,
             WeatherInputModel.self,
-            CareTaskModel.self
+            CareTaskModel.self,
+            CareScenario.self,
+            CareTask.self,
         ])
 
         let modelConfiguration = ModelConfiguration(
