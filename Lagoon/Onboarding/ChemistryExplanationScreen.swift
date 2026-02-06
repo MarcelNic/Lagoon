@@ -26,24 +26,25 @@ struct ChemistryExplanationScreen: View {
             // Explanation Text
             VStack(alignment: .leading, spacing: 20) {
                 ExplanationRow(
-                    icon: "drop.fill",
-                    iconColor: .purple,
-                    title: "Der pH-Wert: Das Fundament.",
-                    text: "Steigt er über 7.8, verliert dein Chlor 60% seiner Wirkung."
+                    label: "pH",
+                    labelColor: Color.phIdealColor,
+                    boldText: "Bestimmt, wie gut Chlor wirken kann.",
+                    text: "Bei zu hohem pH sinkt die Wirksamkeit um bis zu ~60 %."
                 )
 
                 ExplanationRow(
-                    icon: "bubbles.and.sparkles.fill",
-                    iconColor: .cyan,
-                    title: "Das Chlor: Der Wächter.",
-                    text: "Schützt vor Bakterien – aber nur, wenn der pH-Wert stimmt."
+                    label: "Cl",
+                    labelColor: Color.chlorineIdealColor,
+                    boldText: "Desinfiziert das Wasser.",
+                    text: "Wirkt es effizient, braucht man weniger davon, was Geruch und Reizungen reduziert."
                 )
 
                 ExplanationRow(
-                    icon: "waveform.path.ecg",
-                    iconColor: .blue,
-                    title: "Die App:",
-                    text: "Analysiert deine Werte und berechnet exakt die nötige Dosierung."
+                    label: "",
+                    labelColor: .blue,
+                    boldText: "Verknüpft pH und Chlor.",
+                    text: "Erkennt Trends und berechnet eine konkrete Dosierempfehlung für deinen Zielbereich.",
+                    useAppIcon: true
                 )
             }
             .padding(.horizontal, 30)
@@ -52,10 +53,7 @@ struct ChemistryExplanationScreen: View {
             Spacer()
 
             PrimaryButton(title: "Verstanden", action: action)
-                .padding(.horizontal, 30)
                 .microAnimation(delay: 1.0)
-
-            Spacer()
         }
     }
 }
@@ -63,71 +61,40 @@ struct ChemistryExplanationScreen: View {
 // MARK: - Balance Visual
 
 struct BalanceVisualView: View {
-    @State private var animate = false
+    @State private var tilt: Double = -4
 
     var body: some View {
-        GeometryReader { geo in
-            let width = geo.size.width
-            let height = geo.size.height
-
+        VStack(spacing: 0) {
+            // Beam with labels
             ZStack {
-                // Fulcrum (triangle base)
-                Path { path in
-                    let triangleHeight: CGFloat = 20
-                    let triangleWidth: CGFloat = 30
-                    let centerX = width / 2
-                    let bottomY = height - 10
+                // Beam
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(.secondary.opacity(0.2))
+                    .frame(width: 240, height: 6)
 
-                    path.move(to: CGPoint(x: centerX, y: bottomY - triangleHeight))
-                    path.addLine(to: CGPoint(x: centerX - triangleWidth / 2, y: bottomY))
-                    path.addLine(to: CGPoint(x: centerX + triangleWidth / 2, y: bottomY))
-                    path.closeSubpath()
-                }
-                .fill(.secondary.opacity(0.3))
+                // pH (left)
+                Text("pH")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(Color.phIdealColor)
+                    .offset(x: -80, y: -20)
 
-                // Seesaw beam
-                let beamY = height - 35
-                let tilt: Double = animate ? 0 : 3
-
-                ZStack {
-                    // Beam
-                    Capsule()
-                        .fill(.secondary.opacity(0.2))
-                        .frame(width: width * 0.85, height: 8)
-
-                    // pH side (left)
-                    VStack(spacing: 4) {
-                        ZStack {
-                            Circle()
-                                .fill(.purple.opacity(0.15))
-                                .frame(width: 50, height: 50)
-                            Text("pH")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundStyle(.purple)
-                        }
-                    }
-                    .offset(x: -width * 0.3)
-
-                    // Chlor side (right)
-                    VStack(spacing: 4) {
-                        ZStack {
-                            Circle()
-                                .fill(.cyan.opacity(0.15))
-                                .frame(width: 50, height: 50)
-                            Text("Cl")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundStyle(.cyan)
-                        }
-                    }
-                    .offset(x: width * 0.3)
-                }
-                .rotationEffect(.degrees(tilt), anchor: .center)
-                .position(x: width / 2, y: beamY)
-                .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: animate)
+                // Cl (right)
+                Text("Cl")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(Color.chlorineIdealColor)
+                    .offset(x: 80, y: -20)
             }
+            .rotationEffect(.degrees(tilt))
+            .animation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true), value: tilt)
+
+            // Fulcrum circle
+            Circle()
+                .fill(.secondary.opacity(0.25))
+                .frame(width: 20, height: 20)
+                .offset(y: -3)
         }
         .onAppear {
-            animate = true
+            tilt = 4
         }
     }
 }
@@ -135,20 +102,44 @@ struct BalanceVisualView: View {
 // MARK: - Explanation Row
 
 struct ExplanationRow: View {
-    let icon: String
-    let iconColor: Color
-    let title: String
+    let label: String
+    let labelColor: Color
+    let boldText: String
     let text: String
+    var useAppIcon: Bool = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundStyle(iconColor)
-                .frame(width: 28)
+            if useAppIcon {
+                // App icon representation with Lagoon-style water drop
+                ZStack {
+                    RoundedRectangle(cornerRadius: 7)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.blue.opacity(0.8), Color.cyan.opacity(0.6)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 32, height: 32)
+                    Image(systemName: "drop.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+            } else {
+                // Centered label in a colored circle
+                ZStack {
+                    Circle()
+                        .fill(labelColor.opacity(0.15))
+                        .frame(width: 32, height: 32)
+                    Text(label)
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                        .foregroundStyle(labelColor)
+                }
+            }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(title)
+                Text(boldText)
                     .font(.subheadline.bold())
                 Text(text)
                     .font(.subheadline)

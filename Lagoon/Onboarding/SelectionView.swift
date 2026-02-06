@@ -121,9 +121,7 @@ struct SelectionView: View {
 
                 PrimaryButton(title: buttonTitle, action: { action() })
                     .padding(.top, 30)
-                    .padding(.bottom, 34)
                     .microAnimation(delay: 1.2)
-                Spacer()
             }
         }
         .padding(.horizontal, 30)

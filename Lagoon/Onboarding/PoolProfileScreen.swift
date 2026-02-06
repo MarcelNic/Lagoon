@@ -86,10 +86,7 @@ struct PoolProfileScreen: View {
             Spacer()
 
             PrimaryButton(title: "Weiter", action: action)
-                .padding(.horizontal, 30)
                 .microAnimation(delay: 0.8)
-
-            Spacer()
         }
         .sheet(isPresented: $showVolumeCalculator) {
             PoolVolumeCalculatorView(poolVolume: $poolVolume)

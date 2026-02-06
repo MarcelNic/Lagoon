@@ -33,17 +33,20 @@ struct FirstScreen: View {
                         .microAnimation(delay: 0.6)
                 }
                 .padding(.horizontal, 30)
-
-                Spacer()
-                    .frame(height: 30)
+                .padding(.bottom, 40)
 
                 // Button at very bottom
-                PrimaryButton(title: "Hallo", action: { action() })
-                    .padding(.horizontal, 30)
-                    .microAnimation(delay: 0.8)
-
-                Spacer()
-                    .frame(height: 50)
+                Button(action: action) {
+                    Text("Hallo")
+                        .bold()
+                        .foregroundStyle(.black)
+                        .frame(height: 60)
+                        .frame(maxWidth: .infinity)
+                }
+                .glassEffect(.regular.tint(.white).interactive(), in: .capsule)
+                .padding(.horizontal, 40)
+                .padding(.bottom, 20)
+                .microAnimation(delay: 0.8)
             }
         }
     }
@@ -52,15 +55,20 @@ struct FirstScreen: View {
 struct PrimaryButton: View {
     var title: String
     var action: () -> Void
+    var isFooter: Bool = true
+    @Environment(\.colorScheme) private var colorScheme
+    
     var body: some View {
         Button(action: action) {
             Text(title)
                 .bold()
-                .frame(height: 55)
+                .foregroundStyle(colorScheme == .dark ? .black : .white)
+                .frame(height: 60)
                 .frame(maxWidth: .infinity)
-                .background(.DL, in: Capsule())
-                .tint(.LD)
         }
+        .glassEffect(.regular.tint(colorScheme == .dark ? .white : .black).interactive(), in: .capsule)
+        .padding(.horizontal, 40)
+        .padding(.bottom, isFooter ? 20 : 0)
     }
 }
 

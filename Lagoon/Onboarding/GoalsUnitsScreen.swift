@@ -125,10 +125,7 @@ struct GoalsUnitsScreen: View {
             Spacer()
 
             PrimaryButton(title: "Speichern", action: action)
-                .padding(.horizontal, 30)
                 .microAnimation(delay: 0.8)
-
-            Spacer()
         }
     }
 }

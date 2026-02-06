@@ -81,6 +81,7 @@ struct NotificationScreen: View {
                     }
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .padding(.bottom, 20)
                     .microAnimation(delay: 1.0)
                 } else {
                     PrimaryButton(title: "Weiter") {
@@ -89,9 +90,6 @@ struct NotificationScreen: View {
                     }
                 }
             }
-            .padding(.horizontal, 30)
-
-            Spacer()
         }
         .onAppear {
             // Initialize time picker from stored values

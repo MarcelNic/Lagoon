@@ -72,7 +72,7 @@ struct LocationWeatherScreen: View {
 
                 // Primary button - GPS
                 if !hasLocation && locationManager.locationName == nil {
-                    PrimaryButton(title: "Standort automatisch ermitteln") {
+                    PrimaryButton(title: "Standort automatisch ermitteln", isFooter: false) {
                         locationManager.requestLocation()
                     }
                     .microAnimation(delay: 0.7)
@@ -126,10 +126,7 @@ struct LocationWeatherScreen: View {
                 }
                 action()
             }
-            .padding(.horizontal, 30)
             .microAnimation(delay: 1.0)
-
-            Spacer()
         }
     }
 }
