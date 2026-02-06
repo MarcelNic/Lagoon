@@ -61,11 +61,10 @@ struct PoolcareView: View {
             }
             .sheet(isPresented: $showAddSheet) {
                 AddItemSheet(state: state)
-                    .presentationDetents([.medium, .large])
             }
             .sheet(item: $editingTask) { task in
                 EditTaskSheet(task: task, state: state)
-                    .presentationDetents([.medium])
+                    .presentationDetents([.large])
             }
             .sheet(isPresented: $showNewScenarioSheet) {
                 NewScenarioSheet(state: state)
@@ -105,15 +104,18 @@ private struct ScenarioPill: View {
 
     var body: some View {
         Menu {
-            Picker(selection: $state.currentScenarioId) {
-                ForEach(scenarios) { scenario in
-                    Label(scenario.name, systemImage: scenario.icon)
-                        .tag(scenario.id as UUID?)
+            ForEach(scenarios) { scenario in
+                Button {
+                    state.currentScenarioId = scenario.id
+                } label: {
+                    Label(
+                        scenario.id == state.currentScenarioId
+                            ? "\(scenario.name)  ✓"
+                            : scenario.name,
+                        systemImage: scenario.icon
+                    )
                 }
-            } label: {
-                EmptyView()
             }
-            .pickerStyle(.inline)
 
             Divider()
 
@@ -395,9 +397,19 @@ private struct AddItemSheet: View {
 
     @State private var itemType: ItemType = .task
     @State private var title = ""
+    @State private var selectedIcon = "checkmark.circle"
     @State private var dueDate = Date()
     @State private var intervalDays = 0
-    @State private var actionDuration: Double = 3600
+    @State private var reminderEnabled = true
+    @State private var reminderTime: Date = {
+        var components = DateComponents()
+        components.hour = 9
+        components.minute = 0
+        return Calendar.current.date(from: components) ?? Date()
+    }()
+    @State private var remindAfterTimer = true
+    @State private var showSymbolPicker = false
+    @State private var currentDetent: PresentationDetent = .large
     @State private var actionHours = 1
     @State private var actionMinutes = 0
 
@@ -419,19 +431,19 @@ private struct AddItemSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    Picker("Typ", selection: $itemType) {
-                        ForEach(ItemType.allCases, id: \.self) { type in
-                            Text(type.rawValue).tag(type)
+                    HStack(spacing: 12) {
+                        Button {
+                            showSymbolPicker = true
+                        } label: {
+                            Image(systemName: selectedIcon)
+                                .font(.title2)
+                                .foregroundStyle(.tint)
+                                .frame(width: 32, height: 32)
                         }
-                    }
-                    .pickerStyle(.segmented)
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets())
-                    .padding(.horizontal)
-                }
+                        .buttonStyle(.plain)
 
-                Section {
-                    TextField("Titel", text: $title)
+                        TextField("Name", text: $title)
+                    }
                 }
 
                 Section("Fälligkeit") {
@@ -463,21 +475,58 @@ private struct AddItemSheet: View {
                         .frame(maxWidth: .infinity)
                     }
                 }
+
+                Section("Erinnerung") {
+                    Toggle("Erinnern", isOn: $reminderEnabled)
+                    if reminderEnabled {
+                        DatePicker("Uhrzeit", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                    }
+                    if itemType == .action {
+                        Toggle("Nach Timer-Ablauf", isOn: $remindAfterTimer)
+                    }
+                }
             }
-            .navigationTitle(itemType == .task ? "Neue Aufgabe" : "Neue Aktion")
             .navigationBarTitleDisplayMode(.inline)
+            .presentationDetents([.medium, .large], selection: $currentDetent)
+            .onChange(of: itemType) { _, newValue in
+                withAnimation {
+                    currentDetent = newValue == .action ? .large : .medium
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                    }
+                }
+
+                ToolbarItem(placement: .principal) {
+                    Picker("Typ", selection: $itemType) {
+                        ForEach(ItemType.allCases, id: \.self) { type in
+                            Text(type.rawValue).tag(type)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 200)
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Hinzufügen") {
+                    Button {
                         addItem()
                         dismiss()
+                    } label: {
+                        Image(systemName: "checkmark")
+                            .foregroundStyle(.white)
                     }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.blue)
+                    .clipShape(Circle())
                     .disabled(title.isEmpty)
                 }
+            }
+            .sheet(isPresented: $showSymbolPicker) {
+                SymbolPickerSheet(selectedIcon: $selectedIcon)
+                    .presentationDetents([.medium])
             }
         }
     }
@@ -492,8 +541,66 @@ private struct AddItemSheet: View {
             dueDate: dueDate,
             intervalDays: intervalDays,
             isAction: itemType == .action,
-            actionDurationSeconds: itemType == .action ? duration : 0
+            actionDurationSeconds: itemType == .action ? duration : 0,
+            iconName: selectedIcon,
+            reminderTime: reminderEnabled ? reminderTime : nil,
+            remindAfterTimer: itemType == .action ? remindAfterTimer : false
         )
+    }
+}
+
+// MARK: - Symbol Picker Sheet
+
+private struct SymbolPickerSheet: View {
+    @Binding var selectedIcon: String
+    @Environment(\.dismiss) private var dismiss
+
+    private let symbols = [
+        "checkmark.circle", "drop.fill", "water.waves",
+        "thermometer.medium", "sun.max.fill", "snowflake",
+        "wind", "cloud.fill", "leaf.fill", "flame.fill",
+        "wrench.fill", "gearshape.fill", "paintbrush.fill",
+        "sparkles", "arrow.circlepath", "testtube.2",
+        "clock.fill", "bell.fill", "star.fill", "bolt.fill",
+        "eye", "gauge.with.dots.needle.bottom.50percent",
+        "figure.pool.swim", "slider.horizontal.3",
+    ]
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 16) {
+                    ForEach(symbols, id: \.self) { symbol in
+                        Button {
+                            selectedIcon = symbol
+                            dismiss()
+                        } label: {
+                            Image(systemName: symbol)
+                                .font(.title2)
+                                .frame(width: 48, height: 48)
+                                .foregroundStyle(selectedIcon == symbol ? .white : .primary)
+                                .background {
+                                    if selectedIcon == symbol {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(.tint)
+                                    }
+                                }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Symbol")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -505,10 +612,15 @@ private struct EditTaskSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var title: String
+    @State private var selectedIcon: String
     @State private var dueDate: Date
     @State private var intervalDays: Int
+    @State private var reminderEnabled: Bool
+    @State private var reminderTime: Date
+    @State private var remindAfterTimer: Bool
     @State private var actionHours: Int
     @State private var actionMinutes: Int
+    @State private var showSymbolPicker = false
 
     private let intervalOptions: [(String, Int)] = [
         ("Einmalig", 0),
@@ -523,8 +635,16 @@ private struct EditTaskSheet: View {
         self.task = task
         self.state = state
         _title = State(initialValue: task.title)
+        _selectedIcon = State(initialValue: task.iconName ?? "checkmark.circle")
         _dueDate = State(initialValue: task.dueDate ?? Date())
         _intervalDays = State(initialValue: task.intervalDays)
+        _reminderEnabled = State(initialValue: task.reminderTime != nil)
+        _reminderTime = State(initialValue: task.reminderTime ?? {
+            var c = DateComponents()
+            c.hour = 9; c.minute = 0
+            return Calendar.current.date(from: c) ?? Date()
+        }())
+        _remindAfterTimer = State(initialValue: task.remindAfterTimer)
         let secs = Int(task.actionDurationSeconds)
         _actionHours = State(initialValue: secs / 3600)
         _actionMinutes = State(initialValue: (secs % 3600) / 60)
@@ -534,7 +654,19 @@ private struct EditTaskSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Titel", text: $title)
+                    HStack(spacing: 12) {
+                        Button {
+                            showSymbolPicker = true
+                        } label: {
+                            Image(systemName: selectedIcon)
+                                .font(.title2)
+                                .foregroundStyle(.tint)
+                                .frame(width: 32, height: 32)
+                        }
+                        .buttonStyle(.plain)
+
+                        TextField("Name", text: $title)
+                    }
                 }
 
                 Section("Fälligkeit") {
@@ -567,6 +699,16 @@ private struct EditTaskSheet: View {
                     }
                 }
 
+                Section("Erinnerung") {
+                    Toggle("Erinnern", isOn: $reminderEnabled)
+                    if reminderEnabled {
+                        DatePicker("Uhrzeit", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                    }
+                    if task.isAction {
+                        Toggle("Nach Timer-Ablauf", isOn: $remindAfterTimer)
+                    }
+                }
+
                 Section {
                     Button(role: .destructive) {
                         state.deleteTask(task)
@@ -584,22 +726,38 @@ private struct EditTaskSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                    }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Fertig") {
+                    Button {
                         saveChanges()
                         dismiss()
+                    } label: {
+                        Image(systemName: "checkmark")
+                            .foregroundStyle(.white)
                     }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.blue)
+                    .clipShape(Circle())
                     .disabled(title.isEmpty)
                 }
+            }
+            .sheet(isPresented: $showSymbolPicker) {
+                SymbolPickerSheet(selectedIcon: $selectedIcon)
+                    .presentationDetents([.medium])
             }
         }
     }
 
     private func saveChanges() {
         let duration = Double(actionHours * 3600 + actionMinutes * 60)
+        task.iconName = selectedIcon
+        task.isCustomIcon = false
+        task.reminderTime = reminderEnabled ? reminderTime : nil
+        task.remindAfterTimer = task.isAction ? remindAfterTimer : false
         state.updateTask(
             task,
             title: title,

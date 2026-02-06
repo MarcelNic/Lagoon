@@ -51,21 +51,26 @@ struct LagoonApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if hasCompletedOnboarding {
-                MainTabView()
+            Group {
+                if hasCompletedOnboarding {
+                    MainTabView()
+                        .preferredColorScheme(colorScheme)
+                        .environment(poolWaterState)
+                        .environment(notificationManager)
+                        .task {
+                            await notificationManager.requestPermission()
+                        }
+                        .transition(.opacity)
+                } else {
+                    OnboardingStartView(onComplete: {
+                        hasCompletedOnboarding = true
+                    })
                     .preferredColorScheme(colorScheme)
-                    .environment(poolWaterState)
                     .environment(notificationManager)
-                    .task {
-                        await notificationManager.requestPermission()
-                    }
-            } else {
-                OnboardingStartView(onComplete: {
-                    hasCompletedOnboarding = true
-                })
-                .preferredColorScheme(colorScheme)
-                .environment(notificationManager)
+                    .transition(.opacity)
+                }
             }
+            .animation(.smooth(duration: 0.8), value: hasCompletedOnboarding)
         }
         .modelContainer(sharedModelContainer)
     }

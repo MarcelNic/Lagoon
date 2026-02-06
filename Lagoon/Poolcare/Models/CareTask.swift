@@ -17,6 +17,8 @@ final class CareTask {
     var iconName: String?       // Icon Name (z.B. "Robi" oder SF Symbol)
     var isCustomIcon: Bool      // true = Asset, false = SF Symbol
     var completedAt: Date?      // nil = noch offen
+    var reminderTime: Date?     // Uhrzeit der Erinnerung (nil = keine)
+    var remindAfterTimer: Bool = false  // Bei Aktionen: nach Timer-Ablauf erinnern
     var scenario: CareScenario?
 
     init(
@@ -28,7 +30,9 @@ final class CareTask {
         actionDurationSeconds: Double = 0,
         iconName: String? = nil,
         isCustomIcon: Bool = false,
-        completedAt: Date? = nil
+        completedAt: Date? = nil,
+        reminderTime: Date? = nil,
+        remindAfterTimer: Bool = false
     ) {
         self.id = id
         self.title = title
@@ -39,6 +43,8 @@ final class CareTask {
         self.iconName = iconName
         self.isCustomIcon = isCustomIcon
         self.completedAt = completedAt
+        self.reminderTime = reminderTime
+        self.remindAfterTimer = remindAfterTimer
     }
 
     // MARK: - Computed Properties

@@ -23,6 +23,7 @@
     {
       "layers" : [
         {
+          "glass" : true,
           "image-name" : "2_Cove Drop.svg",
           "name" : "2_Cove Drop"
         }

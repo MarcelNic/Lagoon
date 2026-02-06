@@ -22,7 +22,16 @@ final class LocationManager: NSObject, CLLocationManagerDelegate {
     func requestLocation() {
         isLoading = true
         error = nil
-        manager.requestWhenInUseAuthorization()
+
+        switch manager.authorizationStatus {
+        case .authorizedWhenInUse, .authorizedAlways:
+            manager.requestLocation()
+        case .notDetermined:
+            manager.requestWhenInUseAuthorization()
+        default:
+            isLoading = false
+            self.error = "Standortzugriff verweigert. Bitte in den Einstellungen aktivieren."
+        }
     }
 
     // MARK: - CLLocationManagerDelegate

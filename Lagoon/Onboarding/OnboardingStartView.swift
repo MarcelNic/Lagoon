@@ -3,11 +3,9 @@ import SwiftUI
 struct OnboardingStartView: View {
     @State var currentIndex = 0
     @State private var previousIndex = 0
-    @State var navigateToHome = false
-    @State var showDashboardOverlay = false
     @Environment(NotificationManager.self) private var notificationManager
     var onComplete: () -> Void
-    let totalViews = 8
+    let totalViews = 7
 
     private var isMovingForward: Bool {
         currentIndex >= previousIndex
@@ -36,16 +34,16 @@ struct OnboardingStartView: View {
                     case 3: LocationWeatherScreen(action: goToNext)
                     case 4: NotificationScreen(action: goToNext)
                     case 5: GoalsUnitsScreen(action: goToNext)
-                    case 6: CareTaskSelectionScreen(action: { showDashboardOverlay = true })
+                    case 6: CareTaskSelectionScreen(action: { onComplete() })
                     default: EmptyView()
                     }
                 }
                 .transition(.asymmetric(
-                    insertion: .move(edge: isMovingForward ? .trailing : .leading).combined(with: .opacity),
-                    removal: .move(edge: isMovingForward ? .leading : .trailing).combined(with: .opacity)
+                    insertion: .offset(x: isMovingForward ? 60 : -60).combined(with: .opacity),
+                    removal: .offset(x: isMovingForward ? -60 : 60).combined(with: .opacity)
                 ))
             }
-            .animation(.linear(duration: 0.3), value: currentIndex)
+            .animation(.spring(duration: 0.5, bounce: 0.0, blendDuration: 0.3), value: currentIndex)
             .contentShape(Rectangle())
             .simultaneousGesture(
                 DragGesture(minimumDistance: 20)
@@ -73,15 +71,7 @@ struct OnboardingStartView: View {
                 }
             }
 
-            // Dashboard Overlay (Screen 8)
-            if showDashboardOverlay {
-                DashboardOverlayScreen(onComplete: {
-                    onComplete()
-                })
-                .transition(.opacity)
-            }
         }
-        .animation(.easeInOut(duration: 0.3), value: showDashboardOverlay)
     }
 }
 

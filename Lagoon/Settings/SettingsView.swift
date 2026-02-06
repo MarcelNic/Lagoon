@@ -8,6 +8,8 @@ import SwiftUI
 struct SettingsView: View {
     @AppStorage("appearanceMode") private var appearanceMode: String = "system"
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @AppStorage("hasSeenDashboardOverlay") private var hasSeenDashboardOverlay = false
+    @Environment(\.dismiss) private var dismiss
     @State private var showOnboarding = false
 
     var body: some View {
@@ -60,6 +62,10 @@ struct SettingsView: View {
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingStartView(onComplete: {
                 showOnboarding = false
+                hasSeenDashboardOverlay = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    dismiss()
+                }
             })
         }
     }

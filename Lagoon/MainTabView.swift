@@ -55,8 +55,10 @@ struct MainTabView: View {
         }
         .overlay {
             if !hasSeenDashboardOverlay {
-                DashboardWelcomeOverlay(onDismiss: {
-                    withAnimation { hasSeenDashboardOverlay = true }
+                DashboardTutorialOverlay(onDismiss: {
+                    withAnimation(.smooth(duration: 0.4)) {
+                        hasSeenDashboardOverlay = true
+                    }
                 })
             }
         }
@@ -386,38 +388,105 @@ extension View {
     }
 }
 
-// MARK: - Dashboard Welcome Overlay
+// MARK: - Dashboard Tutorial Overlay
 
-struct DashboardWelcomeOverlay: View {
+struct DashboardTutorialOverlay: View {
     var onDismiss: () -> Void
+    @State private var currentStep = 0
+    private let totalSteps = 4
+
+    private var stepIcon: String {
+        switch currentStep {
+        case 0: "chart.bar.fill"
+        case 1: "hand.tap.fill"
+        case 2: "slider.horizontal.3"
+        default: "checkmark.circle.fill"
+        }
+    }
+
+    private var stepTitle: String {
+        switch currentStep {
+        case 0: "Die Balken"
+        case 1: "Werte antippen"
+        case 2: "Zeitleiste"
+        default: "Alles bereit!"
+        }
+    }
+
+    private var stepDescription: String {
+        switch currentStep {
+        case 0: "Die Balken zeigen pH und Chlor. Der farbige Bereich markiert den Idealbereich."
+        case 1: "Tippe auf den aktuellen Wert für Details und Dosierempfehlungen."
+        case 2: "Schiebe die Zeitleiste, um die Wasserwerte in der Zukunft zu simulieren."
+        default: "Dein Dashboard ist bereit. Viel Spaß mit Lagoon!"
+        }
+    }
+
+    private var isLastStep: Bool {
+        currentStep == totalSteps - 1
+    }
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.6)
+            Color.black.opacity(0.5)
                 .ignoresSafeArea()
-                .onTapGesture { onDismiss() }
+                .onTapGesture {
+                    if isLastStep {
+                        onDismiss()
+                    } else {
+                        withAnimation(.smooth(duration: 0.4)) {
+                            currentStep += 1
+                        }
+                    }
+                }
 
             VStack(spacing: 20) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 60))
-                    .foregroundStyle(.green)
+                Image(systemName: stepIcon)
+                    .font(.system(size: 48))
+                    .foregroundStyle(isLastStep ? .green : .white.opacity(0.9))
+                    .contentTransition(.symbolEffect(.replace))
 
-                Text("Alles bereit!")
-                    .font(.system(size: 28, weight: .bold))
+                Text(stepTitle)
+                    .font(.system(size: 26, weight: .bold))
 
-                Text("Dein Dashboard zeigt dir pH und Chlor auf einen Blick. Tippe auf die Balken für Details oder nutze die Buttons unten zum Messen und Dosieren.")
+                Text(stepDescription)
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.8))
                     .multilineTextAlignment(.center)
+                    .frame(minHeight: 50)
 
-                Text("Tippe irgendwo, um fortzufahren")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .padding(.top, 10)
+                if isLastStep {
+                    Button {
+                        onDismiss()
+                    } label: {
+                        Text("Los geht's")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.white.opacity(0.2))
+                    .padding(.top, 8)
+                } else {
+                    // Step indicator dots
+                    HStack(spacing: 8) {
+                        ForEach(0..<totalSteps - 1, id: \.self) { index in
+                            Circle()
+                                .fill(index == currentStep ? .white : .white.opacity(0.3))
+                                .frame(width: 8, height: 8)
+                        }
+                    }
+                    .padding(.top, 8)
+
+                    Text("Tippe, um fortzufahren")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.4))
+                }
             }
             .padding(30)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24))
             .padding(.horizontal, 40)
+            .foregroundStyle(.white)
         }
         .transition(.opacity)
     }

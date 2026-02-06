@@ -120,7 +120,9 @@ final class PoolcareState {
         isAction: Bool = false,
         actionDurationSeconds: Double = 0,
         iconName: String? = nil,
-        isCustomIcon: Bool = false
+        isCustomIcon: Bool = false,
+        reminderTime: Date? = nil,
+        remindAfterTimer: Bool = false
     ) {
         let task = CareTask(
             title: title,
@@ -129,7 +131,9 @@ final class PoolcareState {
             isAction: isAction,
             actionDurationSeconds: actionDurationSeconds,
             iconName: iconName,
-            isCustomIcon: isCustomIcon
+            isCustomIcon: isCustomIcon,
+            reminderTime: reminderTime,
+            remindAfterTimer: remindAfterTimer
         )
         task.scenario = scenario
         modelContext?.insert(task)

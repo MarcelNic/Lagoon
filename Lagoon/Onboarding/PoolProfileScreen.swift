@@ -7,6 +7,7 @@ struct PoolProfileScreen: View {
     @AppStorage("hasCover") private var hasCover: Bool = false
     @AppStorage("hasHeating") private var hasHeating: Bool = false
     @AppStorage("pumpRuntime") private var pumpRuntime: Double = 8.0
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var showVolumeCalculator = false
 
@@ -78,6 +79,7 @@ struct PoolProfileScreen: View {
                 .microAnimation(delay: 0.8)
                 .padding(.bottom, 10)
         }
+        .tint(colorScheme == .dark ? .white : .black)
         .sheet(isPresented: $showVolumeCalculator) {
             PoolVolumeCalculatorView(poolVolume: $poolVolume)
         }

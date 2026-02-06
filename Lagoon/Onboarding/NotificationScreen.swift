@@ -66,29 +66,23 @@ struct NotificationScreen: View {
             Spacer()
 
             VStack(spacing: 12) {
-                if !permissionRequested {
-                    PrimaryButton(title: "Erlauben") {
-                        saveReminderTime()
-                        Task {
-                            await notificationManager.requestPermission()
-                            permissionRequested = true
-                        }
-                    }
-                    .microAnimation(delay: 0.9)
+                Button("Überspringen") {
+                    action()
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .microAnimation(delay: 0.9)
 
-                    Button("Überspringen") {
-                        action()
-                    }
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.bottom, 20)
-                    .microAnimation(delay: 1.0)
-                } else {
-                    PrimaryButton(title: "Weiter") {
-                        saveReminderTime()
+                PrimaryButton(title: "Erlauben") {
+                    saveReminderTime()
+                    Task {
+                        await notificationManager.requestPermission()
+                        permissionRequested = true
                         action()
                     }
                 }
+                .microAnimation(delay: 1.0)
+                .padding(.bottom, 20)
             }
         }
         .onAppear {

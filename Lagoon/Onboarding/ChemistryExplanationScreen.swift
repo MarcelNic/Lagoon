@@ -111,8 +111,7 @@ struct ExplanationRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             if useAppIcon {
-                // Lagoon app icon
-                Image("LagoonAppIcon")
+                Image("CoveIcon")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 32, height: 32)
