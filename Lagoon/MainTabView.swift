@@ -9,11 +9,9 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var activeTab: LagoonTab = .home
-    @State private var showMessenSheet = false
-    @State private var showDosierenSheet = false
+    @State private var showQuickMeasure = false
     @State private var showSettings = false
     @State private var showAddTaskSheet = false
-    @State private var showWasserPopover = false
     @State private var poolcareState = PoolcareState()
     @AppStorage("hasSeenDashboardOverlay") private var hasSeenDashboardOverlay = false
     @Environment(\.modelContext) private var modelContext
@@ -21,12 +19,9 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $activeTab) {
             Tab(value: .home) {
-                DashboardTabView(
-                    showMessenSheet: $showMessenSheet,
-                    showDosierenSheet: $showDosierenSheet
-                )
-                .lagoonTabBarSafeAreaPadding()
-                .toolbarVisibility(.hidden, for: .tabBar)
+                DashboardTabView(showQuickMeasure: $showQuickMeasure)
+                    .lagoonTabBarSafeAreaPadding()
+                    .toolbarVisibility(.hidden, for: .tabBar)
             }
 
             Tab(value: .care) {
@@ -46,49 +41,18 @@ struct MainTabView: View {
         .lagoonTabBar(
             selection: $activeTab,
             tabs: [
-                LagoonTabBarTab(value: .home, title: "Wasser", systemImage: "figure.pool.swim"),
+                LagoonTabBarTab(value: .home, title: "Wasser", systemImage: "water.waves"),
                 LagoonTabBarTab(value: .care, title: "Care", systemImage: "checklist"),
-                LagoonTabBarTab(value: .pool, title: "Logbuch", systemImage: "list.bullet.below.rectangle"),
+                LagoonTabBarTab(value: .pool, title: "Logbuch", systemImage: "chart.line.text.clipboard"),
             ],
-            action: LagoonTabBarAction(systemImage: "plus", accessibilityLabel: "Aktion") {
+            action: LagoonTabBarAction(systemImage: activeTab == .pool ? "gearshape.fill" : "plus", accessibilityLabel: "Aktion") {
                 switch activeTab {
-                case .home: showWasserPopover = true
+                case .home: showQuickMeasure = true
                 case .care: showAddTaskSheet = true
                 case .pool: showSettings = true
                 }
             }
         )
-        .overlay(alignment: .bottomTrailing) {
-            Color.clear
-                .frame(width: 1, height: 1)
-                .padding(.trailing, 40)
-                .padding(.bottom, 40)
-                .popover(isPresented: $showWasserPopover, arrowEdge: .bottom) {
-                    VStack(spacing: 0) {
-                        Button { showMessenSheet = true; showWasserPopover = false } label: {
-                            Label("Messen", systemImage: "testtube.2")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding()
-                        }
-                        Divider()
-                        Button { showDosierenSheet = true; showWasserPopover = false } label: {
-                            Label("Dosieren", systemImage: "aqi.medium")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding()
-                        }
-                    }
-                    .frame(width: 200)
-                    .presentationCompactAdaptation(.popover)
-                }
-        }
-        .sheet(isPresented: $showMessenSheet) {
-            MessenSheet()
-                .presentationDetents([.medium, .large])
-        }
-        .sheet(isPresented: $showDosierenSheet) {
-            DosierenSheet()
-                .presentationDetents([.medium])
-        }
         .overlay {
             if !hasSeenDashboardOverlay {
                 DashboardTutorialOverlay(onDismiss: {
@@ -114,16 +78,12 @@ struct DashboardTabView: View {
     @AppStorage("dosingUnit") private var dosingUnit: String = "gramm"
     @AppStorage("cupGrams") private var cupGrams: Double = 50.0
 
-    // Sheet Bindings from MainTabView
-    @Binding var showMessenSheet: Bool
-    @Binding var showDosierenSheet: Bool
-
-    @State private var showQuickMeasure = false
+    @Binding var showQuickMeasure: Bool
     @State private var quickMeasurePhase: Int = 0
     @State private var timeOffsetSelection: Int = 0
 
     private var anySheetPresented: Bool {
-        showMessenSheet || showDosierenSheet || showQuickMeasure
+        showQuickMeasure
     }
 
     private var showDosingPill: Bool {

@@ -1,11 +1,11 @@
 import Foundation
 
-/// A tab configuration for FabBar.
+/// A tab configuration for LagoonTabBar.
 ///
 /// Each tab represents an item in the tab bar with an icon and title.
 /// The tab is identified by a generic `Value` type that must conform to `Hashable`.
 @available(iOS 26.0, *)
-struct FabBarTab<Value: Hashable>: Identifiable {
+struct LagoonTabBarTab<Value: Hashable>: Identifiable {
     var id: Value { value }
 
     /// The tab identifier.

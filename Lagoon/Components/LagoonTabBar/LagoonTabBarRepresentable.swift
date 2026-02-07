@@ -5,9 +5,9 @@ import UIKit
 /// The segmented control's labels are hidden and replaced with custom UIKit label views,
 /// preserving UIKit's touch handling and glass effects while allowing full control over rendering.
 @available(iOS 26.0, *)
-struct FabBarRepresentable<Value: Hashable>: UIViewRepresentable {
-    var tabs: [FabBarTab<Value>]
-    var action: FabBarAction
+struct LagoonTabBarRepresentable<Value: Hashable>: UIViewRepresentable {
+    var tabs: [LagoonTabBarTab<Value>]
+    var action: LagoonTabBarAction
 
     @Binding var activeTab: Value
 
@@ -72,13 +72,16 @@ struct FabBarRepresentable<Value: Hashable>: UIViewRepresentable {
 
         // Use .label for active tab color (black in light, white in dark)
         uiView.labelsOverlay.activeTintColor = .label
+
+        // Update FAB icon if it changed
+        uiView.updateFabIcon(systemImage: action.systemImage)
     }
 
     @MainActor
     class Coordinator: NSObject {
-        var parent: FabBarRepresentable<Value>
+        var parent: LagoonTabBarRepresentable<Value>
 
-        init(parent: FabBarRepresentable<Value>) {
+        init(parent: LagoonTabBarRepresentable<Value>) {
             self.parent = parent
         }
 

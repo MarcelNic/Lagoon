@@ -1,7 +1,7 @@
 import os
 import UIKit
 
-/// Centralized constants for FabBar components.
+/// Centralized constants for LagoonTabBar components.
 ///
 /// All magic numbers are documented here with rationale for their values.
 @available(iOS 26.0, *)
@@ -17,10 +17,10 @@ enum Constants {
 
     // MARK: - Layout Padding
 
-    /// Horizontal padding for FabBar positioning.
+    /// Horizontal padding for LagoonTabBar positioning.
     static let horizontalPadding: CGFloat = 21
 
-    /// Bottom padding for FabBar positioning.
+    /// Bottom padding for LagoonTabBar positioning.
     /// Provides clearance above the home indicator.
     static let bottomPadding: CGFloat = 21
 
@@ -53,5 +53,5 @@ enum Constants {
     static let colorTransitionDuration: TimeInterval = 0.15
 }
 
-/// Logger for FabBar warnings and diagnostics.
-let fabBarLogger = Logger(subsystem: "com.ryanashcraft.FabBar", category: "FabBar")
+/// Logger for LagoonTabBar warnings and diagnostics.
+let lagoonTabBarLogger = Logger(subsystem: "com.ryanashcraft.LagoonTabBar", category: "LagoonTabBar")

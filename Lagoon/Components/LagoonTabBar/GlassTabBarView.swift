@@ -10,17 +10,19 @@ final class GlassTabBarView<Value: Hashable>: UIView {
     let labelsOverlay: TabItemsOverlay<Value>
     let fabGlassView: UIVisualEffectView
     let fabButton: UIButton
+    private(set) var currentFabSystemImage: String
 
     private let spacing: CGFloat = Constants.fabSpacing
     private let contentPadding: CGFloat = Constants.contentPadding
 
     init(
         segmentedControl: TabBarSegmentedControl,
-        tabs: [FabBarTab<Value>],
+        tabs: [LagoonTabBarTab<Value>],
         selectedIndex: Int,
-        action: FabBarAction
+        action: LagoonTabBarAction
     ) {
         self.segmentedControl = segmentedControl
+        self.currentFabSystemImage = action.systemImage
         labelsOverlay = TabItemsOverlay(tabs: tabs, selectedIndex: selectedIndex)
 
         // Create glass container effect for morphing
@@ -58,7 +60,7 @@ final class GlassTabBarView<Value: Hashable>: UIView {
         setupHighlightCallbacks()
     }
 
-    private func setupViews(action: FabBarAction) {
+    private func setupViews(action: LagoonTabBarAction) {
         // Add container effect view
         addSubview(containerEffectView)
         containerEffectView.translatesAutoresizingMaskIntoConstraints = false
@@ -134,6 +136,18 @@ final class GlassTabBarView<Value: Hashable>: UIView {
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    func updateFabIcon(systemImage: String) {
+        guard systemImage != currentFabSystemImage else { return }
+        currentFabSystemImage = systemImage
+
+        let config = UIImage.SymbolConfiguration(pointSize: Constants.fabIconPointSize, weight: .medium)
+        guard let newImage = UIImage(systemName: systemImage, withConfiguration: config) else { return }
+
+        UIView.transition(with: fabButton, duration: 0.25, options: .transitionCrossDissolve) {
+            self.fabButton.setImage(newImage, for: .normal)
+        }
     }
 
     override func layoutSubviews() {

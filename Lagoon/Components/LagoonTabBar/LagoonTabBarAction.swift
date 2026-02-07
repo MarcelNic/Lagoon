@@ -1,11 +1,11 @@
 import Foundation
 
-/// Configuration for the floating action button (FAB) in FabBar.
+/// Configuration for the floating action button (FAB) in LagoonTabBar.
 ///
 /// The FAB appears as a circular glass button next to the tab items,
 /// morphing with the iOS 26 glass effect.
 @available(iOS 26.0, *)
-struct FabBarAction {
+struct LagoonTabBarAction {
     /// The SF Symbol name for the button icon.
     let systemImage: String
 

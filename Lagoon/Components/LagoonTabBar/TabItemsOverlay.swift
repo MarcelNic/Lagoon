@@ -22,7 +22,7 @@ final class TabItemsOverlay<Value: Hashable>: UIView {
         }
     }
 
-    init(tabs: [FabBarTab<Value>], selectedIndex: Int) {
+    init(tabs: [LagoonTabBarTab<Value>], selectedIndex: Int) {
         self.selectedIndex = selectedIndex
         super.init(frame: .zero)
 
@@ -37,7 +37,7 @@ final class TabItemsOverlay<Value: Hashable>: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func setupTabViews(tabs: [FabBarTab<Value>]) {
+    private func setupTabViews(tabs: [LagoonTabBarTab<Value>]) {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.distribution = .fillEqually

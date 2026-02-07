@@ -20,7 +20,7 @@ final class TabItemView<Value: Hashable>: UIView {
 
     var isHighlighted: Bool = false
 
-    init(tab: FabBarTab<Value>) {
+    init(tab: LagoonTabBarTab<Value>) {
         super.init(frame: .zero)
 
         isOpaque = false
@@ -36,12 +36,12 @@ final class TabItemView<Value: Hashable>: UIView {
             let bundle = tab.imageBundle ?? .main
             image = UIImage(named: imageName, in: bundle, with: config)
             if image == nil {
-                fabBarLogger.warning("Failed to load image '\(imageName)' from bundle for tab '\(tab.title)'")
+                lagoonTabBarLogger.warning("Failed to load image '\(imageName)' from bundle for tab '\(tab.title)'")
             }
         } else if let systemImageName = tab.systemImage {
             image = UIImage(systemName: systemImageName, withConfiguration: config)
             if image == nil {
-                fabBarLogger.warning("Failed to load SF Symbol '\(systemImageName)' for tab '\(tab.title)'")
+                lagoonTabBarLogger.warning("Failed to load SF Symbol '\(systemImageName)' for tab '\(tab.title)'")
             }
         }
 

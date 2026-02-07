@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// View modifier that positions a FabBar at the bottom of the view.
+/// View modifier that positions a LagoonTabBar at the bottom of the view.
 ///
 /// This modifier handles all the layout details:
 /// - Wraps in `.safeAreaBar(edge: .bottom)`
@@ -9,22 +9,22 @@ import SwiftUI
 /// - Hides automatically on regular horizontal size class (iPad)
 /// - Injects calculated safe area padding into the environment
 @available(iOS 26.0, *)
-struct FabBarModifier<Value: Hashable>: ViewModifier {
+struct LagoonTabBarModifier<Value: Hashable>: ViewModifier {
     @Binding var selection: Value
-    let tabs: [FabBarTab<Value>]
-    let action: FabBarAction
+    let tabs: [LagoonTabBarTab<Value>]
+    let action: LagoonTabBarAction
     let isVisible: Bool
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var bottomSafeAreaInset: CGFloat = 0
 
-    /// Whether the FabBar should be displayed.
+    /// Whether the LagoonTabBar should be displayed.
     /// Only shows on compact horizontal size class (iPhone) when visible.
-    private var showsFabBar: Bool {
+    private var showsLagoonTabBar: Bool {
         horizontalSizeClass == .compact && isVisible
     }
 
-    /// Total content margin needed to clear the FabBar.
+    /// Total content margin needed to clear the LagoonTabBar.
     private var bottomContentMargin: CGFloat {
         Constants.barHeight + Constants.bottomPadding
     }
@@ -32,60 +32,60 @@ struct FabBarModifier<Value: Hashable>: ViewModifier {
     /// The padding to inject into the environment.
     /// This is the total content margin minus the device's safe area inset,
     /// because `safeAreaPadding` adds to the existing safe area.
-    /// Returns 0 when the FabBar is not showing.
+    /// Returns 0 when the LagoonTabBar is not showing.
     private var calculatedPadding: CGFloat {
-        showsFabBar ? bottomContentMargin - bottomSafeAreaInset : 0
+        showsLagoonTabBar ? bottomContentMargin - bottomSafeAreaInset : 0
     }
 
     func body(content: Content) -> some View {
         content
             .safeAreaBar(edge: .bottom) {
-                if showsFabBar {
-                    FabBar(selection: $selection, tabs: tabs, action: action)
+                if showsLagoonTabBar {
+                    LagoonTabBar(selection: $selection, tabs: tabs, action: action)
                         .padding(.horizontal, Constants.horizontalPadding)
                         .padding(.bottom, Constants.bottomPadding)
                 }
             }
-            .ignoresSafeArea(.all, edges: showsFabBar ? [.bottom] : [])
+            .ignoresSafeArea(.all, edges: showsLagoonTabBar ? [.bottom] : [])
             .onGeometryChange(for: CGFloat.self) { proxy in
                 proxy.safeAreaInsets.bottom
             } action: { newValue in
                 bottomSafeAreaInset = newValue
             }
-            .environment(\.fabBarBottomSafeAreaPadding, calculatedPadding)
+            .environment(\.lagoonTabBarBottomSafeAreaPadding, calculatedPadding)
     }
 }
 
 @available(iOS 26.0, *)
 extension View {
-    /// Adds a FabBar to the bottom of the view.
+    /// Adds a LagoonTabBar to the bottom of the view.
     ///
-    /// This is the recommended way to use FabBar. It handles positioning,
+    /// This is the recommended way to use LagoonTabBar. It handles positioning,
     /// safe area management, and automatically hides on iPad.
     ///
     /// ```swift
     /// TabView(selection: $selectedTab) {
     ///     Tab(value: .home) {
     ///         HomeView()
-    ///             .fabBarSafeAreaPadding()
+    ///             .lagoonTabBarSafeAreaPadding()
     ///             .toolbarVisibility(.hidden, for: .tabBar)
     ///     }
     ///     // more tabs...
     /// }
-    /// .fabBar(selection: $selectedTab, tabs: tabs, action: action)
+    /// .lagoonTabBar(selection: $selectedTab, tabs: tabs, action: action)
     /// ```
     ///
     /// - Parameters:
     ///   - selection: A binding to the currently selected tab.
     ///   - tabs: The tabs to display.
     ///   - action: The floating action button configuration.
-    ///   - isVisible: Whether the FabBar is visible. Defaults to `true`.
-    func fabBar<Value: Hashable>(
+    ///   - isVisible: Whether the LagoonTabBar is visible. Defaults to `true`.
+    func lagoonTabBar<Value: Hashable>(
         selection: Binding<Value>,
-        tabs: [FabBarTab<Value>],
-        action: FabBarAction,
+        tabs: [LagoonTabBarTab<Value>],
+        action: LagoonTabBarAction,
         isVisible: Bool = true
     ) -> some View {
-        modifier(FabBarModifier(selection: selection, tabs: tabs, action: action, isVisible: isVisible))
+        modifier(LagoonTabBarModifier(selection: selection, tabs: tabs, action: action, isVisible: isVisible))
     }
 }
