@@ -1,5 +1,5 @@
 import SwiftUI
-import UIKit
+import CoreHaptics
 
 /// Slide to action button with liquid glass effect
 struct SlideToConfirm: View {
@@ -8,18 +8,15 @@ struct SlideToConfirm: View {
     let action: () -> Void
 
     @State private var offset: CGFloat = 0
-    @State private var hasReachedThreshold: Bool = false
     @State private var isDragging: Bool = false
-    @State private var hapticTimer: Timer?
+    @State private var hapticEngine: CHHapticEngine?
+    @State private var hapticPlayer: CHHapticAdvancedPatternPlayer?
 
     private let knobSize: CGFloat = 72
     private let trackHeight: CGFloat = 88
     private let padding: CGFloat = 8
     private let commitThreshold: CGFloat = 0.85
 
-    // Haptic feedback generators
-    private let lightImpact = UIImpactFeedbackGenerator(style: .light)
-    private let rigidImpact = UIImpactFeedbackGenerator(style: .rigid)
     private let notificationGenerator = UINotificationFeedbackGenerator()
 
     var body: some View {
@@ -72,21 +69,19 @@ struct SlideToConfirm: View {
 
                                 if currentProgress > 0.05 && !isDragging {
                                     isDragging = true
-                                    startHapticLoop()
+                                    startContinuousHaptic()
                                 } else if currentProgress <= 0.05 && isDragging {
                                     isDragging = false
-                                    stopHapticLoop()
+                                    stopContinuousHaptic()
                                 }
 
-                                if currentProgress >= commitThreshold && !hasReachedThreshold {
-                                    rigidImpact.impactOccurred(intensity: 1.0)
-                                    hasReachedThreshold = true
-                                } else if currentProgress < commitThreshold {
-                                    hasReachedThreshold = false
+                                // Update intensity based on progress
+                                if isDragging {
+                                    updateHapticIntensity(progress: currentProgress)
                                 }
                             }
                             .onEnded { _ in
-                                stopHapticLoop()
+                                stopContinuousHaptic()
                                 isDragging = false
                                 let currentProgress = offset / maxOffset
 
@@ -97,12 +92,10 @@ struct SlideToConfirm: View {
                                     }
                                     action()
                                 } else {
-                                    rigidImpact.impactOccurred(intensity: 0.6)
                                     withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                                         offset = 0
                                     }
                                 }
-                                hasReachedThreshold = false
                             }
                     )
             }
@@ -110,21 +103,70 @@ struct SlideToConfirm: View {
         .frame(height: trackHeight)
         .containerShape(.capsule)
         .onAppear {
-            lightImpact.prepare()
-            rigidImpact.prepare()
             notificationGenerator.prepare()
+            prepareHapticEngine()
+        }
+        .onDisappear {
+            stopContinuousHaptic()
+            hapticEngine?.stop()
         }
     }
 
-    private func startHapticLoop() {
-        hapticTimer?.invalidate()
-        hapticTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { _ in
-            lightImpact.impactOccurred()
-        }
+    // MARK: - Core Haptics
+
+    private func prepareHapticEngine() {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+        do {
+            let engine = try CHHapticEngine()
+            engine.resetHandler = { [self] in
+                try? hapticEngine?.start()
+            }
+            engine.stoppedHandler = { _ in }
+            try engine.start()
+            hapticEngine = engine
+        } catch {}
     }
 
-    private func stopHapticLoop() {
-        hapticTimer?.invalidate()
-        hapticTimer = nil
+    private func startContinuousHaptic() {
+        guard let engine = hapticEngine else { return }
+
+        let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.4)
+        let sharpness = CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.3)
+
+        let event = CHHapticEvent(
+            eventType: .hapticContinuous,
+            parameters: [intensity, sharpness],
+            relativeTime: 0,
+            duration: 30
+        )
+
+        do {
+            let pattern = try CHHapticPattern(events: [event], parameters: [])
+            hapticPlayer = try engine.makeAdvancedPlayer(with: pattern)
+            try hapticPlayer?.start(atTime: CHHapticTimeImmediate)
+        } catch {}
+    }
+
+    private func updateHapticIntensity(progress: CGFloat) {
+        let intensity = Float(0.4 + progress * 0.6)
+        let sharpness = Float(0.3 + progress * 0.7)
+
+        let intensityParam = CHHapticDynamicParameter(
+            parameterID: .hapticIntensityControl,
+            value: intensity,
+            relativeTime: 0
+        )
+        let sharpnessParam = CHHapticDynamicParameter(
+            parameterID: .hapticSharpnessControl,
+            value: sharpness,
+            relativeTime: 0
+        )
+
+        try? hapticPlayer?.sendParameters([intensityParam, sharpnessParam], atTime: CHHapticTimeImmediate)
+    }
+
+    private func stopContinuousHaptic() {
+        try? hapticPlayer?.stop(atTime: CHHapticTimeImmediate)
+        hapticPlayer = nil
     }
 }

@@ -63,6 +63,25 @@ struct ParticleTextView: View {
         }
     }
 
+    /// Builds a view for a single text, rendering any trailing fraction (e.g. "1/2") smaller.
+    @ViewBuilder
+    private func styledText(_ text: String) -> some View {
+        if let spaceIndex = text.lastIndex(of: " "),
+           text[text.index(after: spaceIndex)...].contains("/") {
+            let whole = String(text[..<spaceIndex])
+            let fraction = String(text[text.index(after: spaceIndex)...])
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(whole)
+                    .font(.system(size: fontSize, weight: .bold, design: .rounded))
+                Text(fraction)
+                    .font(.system(size: fontSize * 0.5, weight: .bold, design: .rounded))
+            }
+        } else {
+            Text(text)
+                .font(.system(size: fontSize, weight: .bold, design: .rounded))
+        }
+    }
+
     private func createParticles() {
         stopDisplayLink()
 
@@ -71,8 +90,7 @@ struct ParticleTextView: View {
         let content: AnyView
         if texts.count == 1 {
             content = AnyView(
-                Text(texts[0])
-                    .font(.system(size: fontSize, weight: .bold, design: .rounded))
+                styledText(texts[0])
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                     .frame(width: renderWidth)
@@ -81,8 +99,7 @@ struct ParticleTextView: View {
             content = AnyView(
                 HStack(spacing: 0) {
                     ForEach(Array(texts.enumerated()), id: \.offset) { _, text in
-                        Text(text)
-                            .font(.system(size: fontSize, weight: .bold, design: .rounded))
+                        styledText(text)
                             .lineLimit(1)
                             .minimumScaleFactor(0.5)
                             .frame(maxWidth: .infinity)
