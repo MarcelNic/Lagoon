@@ -8,9 +8,9 @@ struct SlideToConfirm: View {
     let action: () -> Void
 
     @State private var offset: CGFloat = 0
-    @State private var lastHapticStep: Int = 0
     @State private var hasReachedThreshold: Bool = false
     @State private var isDragging: Bool = false
+    @State private var hapticTimer: Timer?
 
     private let knobSize: CGFloat = 72
     private let trackHeight: CGFloat = 88
@@ -20,7 +20,6 @@ struct SlideToConfirm: View {
     // Haptic feedback generators
     private let lightImpact = UIImpactFeedbackGenerator(style: .light)
     private let rigidImpact = UIImpactFeedbackGenerator(style: .rigid)
-    private let selectionGenerator = UISelectionFeedbackGenerator()
     private let notificationGenerator = UINotificationFeedbackGenerator()
 
     var body: some View {
@@ -66,33 +65,29 @@ struct SlideToConfirm: View {
                     .gesture(
                         DragGesture()
                             .onChanged { value in
-                                if !isDragging {
-                                    lightImpact.impactOccurred(intensity: 0.5)
-                                    isDragging = true
-                                }
-
                                 let newOffset = min(maxOffset, max(0, value.translation.width))
                                 offset = newOffset
 
                                 let currentProgress = newOffset / maxOffset
-                                let currentStep = Int(currentProgress * 10)
 
-                                if currentStep != lastHapticStep {
-                                    selectionGenerator.selectionChanged()
-                                    if currentStep >= 3 && currentStep <= 7 {
-                                        lightImpact.impactOccurred(intensity: 0.7)
-                                    }
-                                    lastHapticStep = currentStep
+                                if currentProgress > 0.05 && !isDragging {
+                                    isDragging = true
+                                    startHapticLoop()
+                                } else if currentProgress <= 0.05 && isDragging {
+                                    isDragging = false
+                                    stopHapticLoop()
                                 }
 
                                 if currentProgress >= commitThreshold && !hasReachedThreshold {
-                                    selectionGenerator.selectionChanged()
+                                    rigidImpact.impactOccurred(intensity: 1.0)
                                     hasReachedThreshold = true
                                 } else if currentProgress < commitThreshold {
                                     hasReachedThreshold = false
                                 }
                             }
                             .onEnded { _ in
+                                stopHapticLoop()
+                                isDragging = false
                                 let currentProgress = offset / maxOffset
 
                                 if currentProgress >= commitThreshold {
@@ -105,9 +100,7 @@ struct SlideToConfirm: View {
                                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                                     offset = 0
                                 }
-                                lastHapticStep = 0
                                 hasReachedThreshold = false
-                                isDragging = false
                             }
                     )
             }
@@ -117,8 +110,19 @@ struct SlideToConfirm: View {
         .onAppear {
             lightImpact.prepare()
             rigidImpact.prepare()
-            selectionGenerator.prepare()
             notificationGenerator.prepare()
         }
+    }
+
+    private func startHapticLoop() {
+        hapticTimer?.invalidate()
+        hapticTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { _ in
+            lightImpact.impactOccurred()
+        }
+    }
+
+    private func stopHapticLoop() {
+        hapticTimer?.invalidate()
+        hapticTimer = nil
     }
 }
