@@ -72,18 +72,7 @@ struct MeinPoolView: View {
             }
         }
         .fullScreenCover(isPresented: $showSettings) {
-            NavigationStack {
-                SettingsView()
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button {
-                                showSettings = false
-                            } label: {
-                                Image(systemName: "xmark")
-                            }
-                        }
-                    }
-            }
+            SettingsFullScreenCover(showSettings: $showSettings)
         }
         .onChange(of: showSettings) { _, isShowing in
             if !isShowing {
@@ -337,6 +326,33 @@ struct EditDosierenSheet: View {
             existingEntry.summary = summary
             state.updateEntry(existingEntry)
         }
+    }
+}
+
+// MARK: - Settings Full Screen Cover
+
+private struct SettingsFullScreenCover: View {
+    @Binding var showSettings: Bool
+    @AppStorage("appearanceMode") private var appearanceMode: String = AppearanceMode.system.rawValue
+
+    private var colorScheme: ColorScheme? {
+        (AppearanceMode(rawValue: appearanceMode) ?? .system).colorScheme
+    }
+
+    var body: some View {
+        NavigationStack {
+            SettingsView()
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button {
+                            showSettings = false
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                    }
+                }
+        }
+        .preferredColorScheme(colorScheme)
     }
 }
 

@@ -178,10 +178,11 @@ struct QuickMeasureSheet: View {
             }
         }
         .onAppear {
-            phValue = poolWaterState.lastPH
-            // Find closest index for chlorine value
-            let lastCl = poolWaterState.lastChlorine
-            if let idx = chlorineSteps.enumerated().min(by: { abs($0.element - lastCl) < abs($1.element - lastCl) })?.offset {
+            phValue = poolWaterState.estimatedPH
+            waterTemperature = poolWaterState.lastWaterTemperature
+            // Find closest index for estimated chlorine value
+            let estCl = poolWaterState.estimatedChlorine
+            if let idx = chlorineSteps.enumerated().min(by: { abs($0.element - estCl) < abs($1.element - estCl) })?.offset {
                 chlorineIndex = Double(idx)
             }
         }
@@ -242,13 +243,13 @@ struct QuickMeasureSheet: View {
                         .foregroundStyle(.primary)
                     Spacer()
                     Text(String(format: "%.0f °C", waterTemperature))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(temperatureColor(for: waterTemperature))
                         .monospacedDigit()
                         .contentTransition(.numericText())
                         .animation(.snappy, value: waterTemperature)
                 }
                 Slider(value: $waterTemperature, in: 10.0...40.0, step: 1.0)
-                    .tint(temperatureColor(for: waterTemperature))
+                    .tint(Color(light: .black, dark: .white))
             }
         }
 
@@ -262,6 +263,7 @@ struct QuickMeasureSheet: View {
             } label: {
                 Text("Messen")
                     .font(.headline)
+                    .foregroundStyle(Color(light: .white, dark: .black))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
             }
@@ -291,26 +293,55 @@ struct QuickMeasureSheet: View {
                 Spacer()
                 let showPH = !phInRange && recommendedPHAmount > 0
                 let showCl = !chlorineInRange && recommendedChlorineAmount > 0
+                let phAmount = DosingFormatter.formatAmount(grams: recommendedPHAmount, unit: dosingUnit, cupGrams: cupGrams)
+                let clAmount = DosingFormatter.formatAmount(grams: recommendedChlorineAmount, unit: dosingUnit, cupGrams: cupGrams)
+                let unitLabel = DosingFormatter.formatUnit(unit: dosingUnit)
+
+                // Labels row
                 HStack(spacing: 0) {
                     if showPH {
-                        let phIcon = phProductId == "ph_plus" ? "plus.circle" : "minus.circle"
-                        dosingColumn(
-                            name: "pH",
-                            icon: phIcon,
-                            amount: DosingFormatter.formatAmount(grams: recommendedPHAmount, unit: dosingUnit, cupGrams: cupGrams),
-                            unit: DosingFormatter.formatUnit(unit: dosingUnit),
-                            color: .phIdealColor
-                        )
+                        HStack(spacing: 4) {
+                            Text("pH")
+                            Image(systemName: phProductId == "ph_plus" ? "plus.circle" : "minus.circle")
+                        }
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(Color.phIdealColor)
+                        .frame(maxWidth: .infinity)
                     }
                     if showCl {
-                        dosingColumn(
-                            name: "Chlor",
-                            amount: DosingFormatter.formatAmount(grams: recommendedChlorineAmount, unit: dosingUnit, cupGrams: cupGrams),
-                            unit: DosingFormatter.formatUnit(unit: dosingUnit),
-                            color: .chlorineIdealColor
-                        )
+                        Text("Chlor")
+                            .font(.title2.weight(.semibold))
+                            .foregroundStyle(Color.chlorineIdealColor)
+                            .frame(maxWidth: .infinity)
                     }
                 }
+
+                // Combined particle text
+                Color.clear
+                    .frame(height: 120)
+                    .overlay {
+                        let particleTexts = [showPH ? phAmount : nil, showCl ? clAmount : nil].compactMap { $0 }
+                        ParticleTextView(texts: particleTexts, fontSize: particleFontSize, dissolving: $particlesDissolving)
+                            .frame(height: 500)
+                            .allowsHitTesting(false)
+                    }
+
+                // Unit labels row
+                HStack(spacing: 0) {
+                    if showPH {
+                        Text(unitLabel)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                    }
+                    if showCl {
+                        Text(unitLabel)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+
                 Spacer()
             }
 
@@ -328,32 +359,6 @@ struct QuickMeasureSheet: View {
 
     private var particleFontSize: CGFloat {
         dosingUnit == "becher" ? 96 : 72
-    }
-
-    private func dosingColumn(name: String, icon: String? = nil, amount: String, unit: String, color: Color) -> some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 4) {
-                Text(name)
-                if let icon {
-                    Image(systemName: icon)
-                }
-            }
-            .font(.title2.weight(.semibold))
-            .foregroundStyle(color)
-
-            Color.clear
-                .frame(height: 120)
-                .overlay {
-                    ParticleTextView(text: amount, fontSize: particleFontSize, dissolving: $particlesDissolving)
-                        .frame(height: 500)
-                        .allowsHitTesting(false)
-                }
-
-            Text(unit)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Bearbeiten (Expanded)

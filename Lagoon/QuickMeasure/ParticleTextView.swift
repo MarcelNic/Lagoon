@@ -1,31 +1,44 @@
 import SwiftUI
 
 struct ParticleTextView: View {
-    let text: String
+    let texts: [String]
     var fontSize: CGFloat = 72
     var particlesPerCharacter: Int = 600
     @Binding var dissolving: Bool
 
     @State private var particles: [Particle] = []
     @State private var size: CGSize = .zero
-    @State private var timer: Timer?
+    @State private var displayLink: CADisplayLink?
 
     init(text: String, fontSize: CGFloat = 72, particlesPerCharacter: Int = 600, dissolving: Binding<Bool> = .constant(false)) {
-        self.text = text
+        self.texts = [text]
         self.fontSize = fontSize
         self.particlesPerCharacter = particlesPerCharacter
         self._dissolving = dissolving
     }
 
+    init(texts: [String], fontSize: CGFloat = 72, particlesPerCharacter: Int = 600, dissolving: Binding<Bool> = .constant(false)) {
+        self.texts = texts
+        self.fontSize = fontSize
+        self.particlesPerCharacter = particlesPerCharacter
+        self._dissolving = dissolving
+    }
+
+    private var totalCharCount: Int {
+        texts.reduce(0) { $0 + max(1, $1.count) }
+    }
+
     private var particleCount: Int {
-        max(1, text.count) * particlesPerCharacter
+        totalCharCount * particlesPerCharacter
     }
 
     var body: some View {
         Canvas { context, canvasSize in
+            let shading = GraphicsContext.Shading.color(.primary.opacity(0.7))
+            let particleSize = CGSize(width: 1.0, height: 1.0)
             for particle in particles {
-                let path = Path(ellipseIn: CGRect(x: particle.x, y: particle.y, width: 1.2, height: 1.2))
-                context.fill(path, with: .color(.primary.opacity(0.7)))
+                let rect = CGRect(origin: CGPoint(x: particle.x, y: particle.y), size: particleSize)
+                context.fill(Path(ellipseIn: rect), with: shading)
             }
         }
         .overlay(
@@ -37,7 +50,7 @@ struct ParticleTextView: View {
                     }
             }
         )
-        .onChange(of: text) {
+        .onChange(of: texts) {
             createParticles()
         }
         .onChange(of: dissolving) {
@@ -46,17 +59,40 @@ struct ParticleTextView: View {
             }
         }
         .onDisappear {
-            timer?.invalidate()
-            timer = nil
+            stopDisplayLink()
         }
     }
 
     private func createParticles() {
-        timer?.invalidate()
-        timer = nil
+        stopDisplayLink()
 
-        let renderer = ImageRenderer(content: Text(text)
-            .font(.system(size: fontSize, weight: .bold, design: .rounded)))
+        let renderWidth = max(size.width, 200)
+
+        let content: AnyView
+        if texts.count == 1 {
+            content = AnyView(
+                Text(texts[0])
+                    .font(.system(size: fontSize, weight: .bold, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .frame(width: renderWidth)
+            )
+        } else {
+            content = AnyView(
+                HStack(spacing: 0) {
+                    ForEach(Array(texts.enumerated()), id: \.offset) { _, text in
+                        Text(text)
+                            .font(.system(size: fontSize, weight: .bold, design: .rounded))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .frame(width: renderWidth)
+            )
+        }
+
+        let renderer = ImageRenderer(content: content)
         renderer.scale = 1.0
 
         guard let image = renderer.uiImage,
@@ -88,37 +124,59 @@ struct ParticleTextView: View {
             )
         }
 
-        startTimer()
+        startDisplayLink(dissolve: false)
     }
 
-    private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 120.0, repeats: true) { _ in
-            var allSettled = true
-            for i in particles.indices {
-                particles[i].update()
-                if !particles[i].settled {
-                    allSettled = false
+    private func startDisplayLink(dissolve: Bool) {
+        stopDisplayLink()
+        let link = CADisplayLink(target: DisplayLinkTarget { [self] in
+            if dissolve {
+                for i in particles.indices {
+                    particles[i].updateDissolve()
+                }
+            } else {
+                var allSettled = true
+                for i in particles.indices {
+                    particles[i].update()
+                    if !particles[i].settled {
+                        allSettled = false
+                    }
+                }
+                if allSettled {
+                    stopDisplayLink()
                 }
             }
-            if allSettled {
-                timer?.invalidate()
-                timer = nil
-            }
-        }
+        }, selector: #selector(DisplayLinkTarget.tick))
+        link.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 60, preferred: 60)
+        link.add(to: .main, forMode: .common)
+        displayLink = link
+    }
+
+    private func stopDisplayLink() {
+        displayLink?.invalidate()
+        displayLink = nil
     }
 
     private func startDissolving() {
-        timer?.invalidate()
+        stopDisplayLink()
         for i in particles.indices {
             let angle = Double.random(in: 0...(2 * .pi))
             let speed = Double.random(in: 3...12)
             particles[i].velocityX = cos(angle) * speed
             particles[i].velocityY = sin(angle) * speed
         }
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 120.0, repeats: true) { _ in
-            for i in particles.indices {
-                particles[i].updateDissolve()
-            }
-        }
+        startDisplayLink(dissolve: true)
+    }
+}
+
+// MARK: - CADisplayLink Target
+
+private class DisplayLinkTarget {
+    let callback: () -> Void
+    init(_ callback: @escaping () -> Void) {
+        self.callback = callback
+    }
+    @objc func tick() {
+        callback()
     }
 }

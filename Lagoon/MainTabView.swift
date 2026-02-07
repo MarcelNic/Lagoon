@@ -195,8 +195,7 @@ struct DashboardTabView: View {
                     Button { showQuickMeasure = true } label: {
                         InfoPill(
                             icon: "checkmark.circle.fill",
-                            text: recentDosingLabel,
-                            foregroundColor: .black
+                            text: recentDosingLabel
                         )
                     }
                     .buttonStyle(.plain)
@@ -242,6 +241,15 @@ struct DashboardTabView: View {
                         selection: $timeOffsetSelection
                     )
                     .frame(height: 16)
+                    .mask(
+                        HStack(spacing: 0) {
+                            LinearGradient(colors: [.clear, .black], startPoint: .leading, endPoint: .trailing)
+                                .frame(width: 40)
+                            Color.black
+                            LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing)
+                                .frame(width: 40)
+                        }
+                    )
                 }
                 .padding(.horizontal, 40)
                 .padding(.top, showDosingPill ? 16 : 24)

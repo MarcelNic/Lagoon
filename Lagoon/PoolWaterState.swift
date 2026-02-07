@@ -16,6 +16,7 @@ final class PoolWaterState {
 
     private(set) var lastChlorine: Double = 1.0
     private(set) var lastPH: Double = 7.2
+    private(set) var lastWaterTemperature: Double = 26.0
     private(set) var lastMeasurementDate: Date = Date()
 
     // MARK: - Estimated State (from Engine)
@@ -99,6 +100,7 @@ final class PoolWaterState {
         // Update last measurement
         lastChlorine = chlorine
         lastPH = pH
+        if let waterTemperature { lastWaterTemperature = waterTemperature }
         lastMeasurementDate = date
 
         // Save to UserDefaults (as backup)
@@ -330,6 +332,9 @@ final class PoolWaterState {
             }
             if let pH = latest.pH {
                 lastPH = pH
+            }
+            if let temp = latest.waterTemperature {
+                lastWaterTemperature = temp
             }
             lastMeasurementDate = latest.timestamp
         }

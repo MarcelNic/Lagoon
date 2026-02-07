@@ -12,18 +12,20 @@ struct Particle {
     var settled: Bool {
         let dx = baseX - x
         let dy = baseY - y
-        return sqrt(dx * dx + dy * dy) < 0.5
+        return (dx * dx + dy * dy) < 0.25 // 0.5²
     }
 
     mutating func update() {
         let dx = baseX - x
         let dy = baseY - y
-        let distance = sqrt(dx * dx + dy * dy)
+        let distSq = dx * dx + dy * dy
 
-        guard distance > 0.01 else { return }
+        guard distSq > 0.0001 else { return }
 
-        let forceDirectionX = dx / distance
-        let forceDirectionY = dy / distance
+        let distance = sqrt(distSq)
+        let invDist = 1.0 / distance
+        let forceDirectionX = dx * invDist
+        let forceDirectionY = dy * invDist
 
         let maxDistance: Double = 280
         let force = (maxDistance - distance) / maxDistance
@@ -37,8 +39,8 @@ struct Particle {
             x += directionX * 2.5
             y += directionY * 2.5
         } else {
-            x -= (x - baseX) / 10
-            y -= (y - baseY) / 10
+            x -= (x - baseX) * 0.1
+            y -= (y - baseY) * 0.1
         }
     }
 
