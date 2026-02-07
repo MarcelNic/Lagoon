@@ -13,9 +13,9 @@ struct MainTabView: View {
     @State private var showDosierenSheet = false
     @State private var showSettings = false
     @State private var showAddTaskSheet = false
+    @State private var showWasserPopover = false
     @State private var poolcareState = PoolcareState()
     @AppStorage("hasSeenDashboardOverlay") private var hasSeenDashboardOverlay = false
-    @Namespace private var tabBarNamespace
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
@@ -25,11 +25,13 @@ struct MainTabView: View {
                     showMessenSheet: $showMessenSheet,
                     showDosierenSheet: $showDosierenSheet
                 )
+                .lagoonTabBarSafeAreaPadding()
                 .toolbarVisibility(.hidden, for: .tabBar)
             }
 
             Tab(value: .care) {
                 PoolcareView(state: poolcareState, showAddSheet: $showAddTaskSheet)
+                    .lagoonTabBarSafeAreaPadding()
                     .toolbarVisibility(.hidden, for: .tabBar)
             }
 
@@ -37,13 +39,47 @@ struct MainTabView: View {
                 NavigationStack {
                     MeinPoolView(showSettings: $showSettings)
                 }
+                .lagoonTabBarSafeAreaPadding()
                 .toolbarVisibility(.hidden, for: .tabBar)
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            LagoonTabBarView()
-                .padding(.horizontal, 20)
-                .padding(.bottom, -15)
+        .lagoonTabBar(
+            selection: $activeTab,
+            tabs: [
+                LagoonTabBarTab(value: .home, title: "Wasser", systemImage: "figure.pool.swim"),
+                LagoonTabBarTab(value: .care, title: "Care", systemImage: "checklist"),
+                LagoonTabBarTab(value: .pool, title: "Logbuch", systemImage: "list.bullet.below.rectangle"),
+            ],
+            action: LagoonTabBarAction(systemImage: "plus", accessibilityLabel: "Aktion") {
+                switch activeTab {
+                case .home: showWasserPopover = true
+                case .care: showAddTaskSheet = true
+                case .pool: showSettings = true
+                }
+            }
+        )
+        .overlay(alignment: .bottomTrailing) {
+            Color.clear
+                .frame(width: 1, height: 1)
+                .padding(.trailing, 40)
+                .padding(.bottom, 40)
+                .popover(isPresented: $showWasserPopover, arrowEdge: .bottom) {
+                    VStack(spacing: 0) {
+                        Button { showMessenSheet = true; showWasserPopover = false } label: {
+                            Label("Messen", systemImage: "testtube.2")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding()
+                        }
+                        Divider()
+                        Button { showDosierenSheet = true; showWasserPopover = false } label: {
+                            Label("Dosieren", systemImage: "aqi.medium")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding()
+                        }
+                    }
+                    .frame(width: 200)
+                    .presentationCompactAdaptation(.popover)
+                }
         }
         .sheet(isPresented: $showMessenSheet) {
             MessenSheet()
@@ -65,80 +101,6 @@ struct MainTabView: View {
         .onAppear {
             poolcareState.setModelContext(modelContext)
         }
-    }
-
-    // TabBar Dimensionen
-    private let tabBarHeight: CGFloat = 62
-    private let tabBarSpacing: CGFloat = 8  // Abstand zwischen TabBar und Buttons
-    private let segmentPadding: CGFloat = 3  // Vertikaler Abstand für Concentricity
-    private let segmentHorizontalPadding: CGFloat = 3  // Horizontaler Abstand (Tabs näher zusammen)
-
-    @ViewBuilder
-    private func LagoonTabBarView() -> some View {
-        GlassEffectContainer(spacing: tabBarSpacing) {
-            HStack(spacing: tabBarSpacing) {
-                // TabBar mit Padding-Container für Concentricity
-                GeometryReader { geo in
-                    let innerSize = CGSize(
-                        width: geo.size.width - (segmentHorizontalPadding * 2),
-                        height: geo.size.height - (segmentPadding * 2)
-                    )
-                    LagoonTabBar(size: innerSize, activeTab: $activeTab) { tab in
-                        VStack(spacing: 3) {
-                            Image(systemName: tab.symbol)
-                                .font(.title3)
-
-                            Text(tab.rawValue)
-                                .font(.system(size: 10))
-                                .fontWeight(.medium)
-                        }
-                        .symbolVariant(.fill)
-                        .frame(maxWidth: .infinity)
-                    }
-                    .frame(width: innerSize.width, height: innerSize.height)
-                    .position(x: geo.size.width / 2, y: geo.size.height / 2)
-                }
-                .glassEffect(.regular.interactive(), in: .capsule)
-
-                // Action Button 1 (wechselt Icon je nach Tab mit blurFade)
-                Button {
-                    switch activeTab {
-                    case .home: showMessenSheet = true
-                    case .care: showAddTaskSheet = true
-                    case .pool: showSettings = true
-                    }
-                } label: {
-                    ZStack {
-                        Image(systemName: "testtube.2")
-                            .blurFade(activeTab == .home)
-                        Image(systemName: "plus")
-                            .blurFade(activeTab == .care)
-                        Image(systemName: "gearshape")
-                            .blurFade(activeTab == .pool)
-                    }
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(Color(light: .black, dark: .white))
-                }
-                .frame(width: tabBarHeight, height: tabBarHeight)
-                .glassEffect(.regular.interactive(), in: .capsule)
-
-                // Action Button 2 (nur bei Home sichtbar)
-                if activeTab == .home {
-                    Button {
-                        showDosierenSheet = true
-                    } label: {
-                        Image(systemName: "aqi.medium")
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundStyle(Color(light: .black, dark: .white))
-                    }
-                    .frame(width: tabBarHeight, height: tabBarHeight)
-                    .glassEffect(.regular.interactive(), in: .capsule)
-                    .transition(.blurReplace)
-                }
-            }
-            .animation(.smooth(duration: 0.4), value: activeTab)
-        }
-        .frame(height: tabBarHeight)
     }
 }
 
@@ -373,18 +335,6 @@ struct AdaptiveBackgroundGradient: View {
                 endPoint: .bottom
             )
         }
-    }
-}
-
-// MARK: - Blur Fade Extension
-
-extension View {
-    @ViewBuilder
-    func blurFade(_ isActive: Bool) -> some View {
-        self
-            .blur(radius: isActive ? 0 : 10)
-            .opacity(isActive ? 1 : 0)
-            .animation(.smooth(duration: 0.35), value: isActive)
     }
 }
 

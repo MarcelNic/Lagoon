@@ -8,9 +8,9 @@
 import SwiftUI
 
 enum LagoonTab: String, CaseIterable, Identifiable {
-    case home = "Pool"
+    case home = "Wasser"
     case care = "Care"
-    case pool = "Status"
+    case pool = "Logbuch"
 
     var id: String { rawValue }
 
