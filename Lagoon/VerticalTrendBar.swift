@@ -375,94 +375,171 @@ struct PredictionPopoverContent: View {
     let trend: TrendDirection
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Header mit Titel und Apple Intelligence
-            HStack {
-                Image(systemName: "apple.intelligence")
-                    .font(.system(size: 20))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.red, .orange, .yellow, .green, .blue, .purple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+        VStack(spacing: 20) {
+            // Header
+            headerView
 
-                Text("\(title) Vorhersage")
-                    .font(.headline)
-            }
+            // Hero: Wert + Trend + Confidence
+            heroValueSection
 
-            Divider()
-
-            // Geschätzter Wert
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Geschätzter aktueller Wert")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-
-                HStack(spacing: 8) {
-                    Text(formatValue(prediction.estimatedValue) + (unit.isEmpty ? "" : " \(unit)"))
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundStyle(tintColor)
-
-                    Image(systemName: trend.chevronName)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(trendColor)
-                }
-            }
-
-            // Letzte Messung
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Letzte Messung")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-
-                HStack {
-                    Text(formatValue(prediction.lastMeasuredValue) + (unit.isEmpty ? "" : " \(unit)"))
-                        .font(.system(size: 17, weight: .medium, design: .rounded))
-
-                    Spacer()
-
-                    Text(relativeTimeString(from: prediction.lastMeasurementTime))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            Divider()
-
-            // Confidence
-            HStack {
-                confidenceIcon
-                    .font(.system(size: 14))
-
-                Text("Konfidenz: \(confidenceText)")
-                    .font(.subheadline)
-
-                Spacer()
-            }
-
-            Text(prediction.confidenceReason)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            // Letzte Messung (kompakt)
+            lastMeasurementRow
 
             // Empfehlung (falls vorhanden)
             if let recommendation = prediction.recommendation,
                recommendation.action != .none {
-                Divider()
+                recommendationCard(recommendation)
+            }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Empfehlung")
-                        .font(.subheadline)
+            // Confidence-Reason als dezenter Footer
+            Text(prediction.confidenceReason)
+                .font(.caption2)
+                .foregroundStyle(.quaternary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(20)
+        .frame(width: 280)
+    }
+
+    // MARK: - Header
+
+    private var headerView: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "apple.intelligence")
+                .font(.system(size: 16))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.red, .orange, .yellow, .green, .blue, .purple],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+
+            Text("\(title) Vorhersage")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+
+            Spacer()
+        }
+    }
+
+    // MARK: - Hero Value
+
+    private var heroValueSection: some View {
+        VStack(spacing: 12) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(formatValue(prediction.estimatedValue))
+                    .font(.system(size: 48, weight: .bold, design: .rounded))
+                    .foregroundStyle(tintColor)
+
+                if !unit.isEmpty {
+                    Text(unit)
+                        .font(.system(size: 20, weight: .medium, design: .rounded))
+                        .foregroundStyle(tintColor.opacity(0.6))
+                }
+
+                trendBadge
+            }
+
+            // Confidence Dots
+            HStack(spacing: 6) {
+                HStack(spacing: 4) {
+                    ForEach(0..<5) { index in
+                        Circle()
+                            .fill(index < confidenceDotCount ? tintColor : Color.primary.opacity(0.15))
+                            .frame(width: 6, height: 6)
+                    }
+                }
+
+                Text(confidenceText)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var trendBadge: some View {
+        Image(systemName: trend.chevronName)
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(.white)
+            .frame(width: 24, height: 24)
+            .background {
+                Circle()
+                    .fill(trendColor.gradient)
+            }
+    }
+
+    // MARK: - Last Measurement
+
+    private var lastMeasurementRow: some View {
+        HStack(spacing: 8) {
+            Text(formatValue(prediction.lastMeasuredValue) + (unit.isEmpty ? "" : " \(unit)"))
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background {
+                    Capsule()
+                        .fill(Color.primary.opacity(0.06))
+                }
+
+            Image(systemName: "arrow.right")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.tertiary)
+
+            Text(relativeTimeString(from: prediction.lastMeasurementTime))
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+
+            Spacer()
+        }
+    }
+
+    // MARK: - Recommendation Card
+
+    private func recommendationCard(_ recommendation: DosingRecommendation) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: recommendationIcon(for: recommendation))
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(tintColor)
+
+                Text("Empfehlung")
+                    .font(.subheadline.weight(.semibold))
+            }
+
+            Text(recommendation.explanation)
+                .font(.callout)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let amount = recommendation.amount,
+               let doseUnit = recommendation.unit {
+                HStack(spacing: 6) {
+                    Text("~\(formatDoseAmount(amount)) \(doseUnit)")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(tintColor)
+
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(.secondary)
 
-                    Text(recommendation.explanation)
-                        .font(.callout)
+                    Text("Ziel: \(formatValue(recommendation.targetValue))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
-        .padding()
-        .frame(width: 280)
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(tintColor.opacity(0.08))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(tintColor.opacity(0.15), lineWidth: 1)
+                }
+        }
     }
 
     // MARK: - Helpers
@@ -475,19 +552,11 @@ struct PredictionPopoverContent: View {
         }
     }
 
-    private var confidenceIcon: some View {
-        Group {
-            switch prediction.confidence {
-            case .high:
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-            case .medium:
-                Image(systemName: "exclamationmark.circle.fill")
-                    .foregroundStyle(.orange)
-            case .low:
-                Image(systemName: "questionmark.circle.fill")
-                    .foregroundStyle(.red)
-            }
+    private var confidenceDotCount: Int {
+        switch prediction.confidence {
+        case .high: return 5
+        case .medium: return 3
+        case .low: return 1
         }
     }
 
@@ -499,11 +568,29 @@ struct PredictionPopoverContent: View {
         }
     }
 
+    private func recommendationIcon(for recommendation: DosingRecommendation) -> String {
+        switch recommendation.reasonCode {
+        case .TOO_LOW: return "arrow.down.circle.fill"
+        case .TOO_HIGH: return "arrow.up.circle.fill"
+        case .IN_RANGE: return "checkmark.circle.fill"
+        }
+    }
+
     private func formatValue(_ value: Double) -> String {
         if value == value.rounded() {
             return String(format: "%.0f", value)
         } else {
             return String(format: "%.1f", value)
+        }
+    }
+
+    private func formatDoseAmount(_ value: Double) -> String {
+        if value == value.rounded() {
+            return String(format: "%.0f", value)
+        } else if value * 10 == (value * 10).rounded() {
+            return String(format: "%.1f", value)
+        } else {
+            return String(format: "%.0f", value)
         }
     }
 
