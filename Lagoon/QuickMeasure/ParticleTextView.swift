@@ -4,10 +4,18 @@ struct ParticleTextView: View {
     let text: String
     var fontSize: CGFloat = 72
     var particlesPerCharacter: Int = 600
+    @Binding var dissolving: Bool
 
     @State private var particles: [Particle] = []
     @State private var size: CGSize = .zero
     @State private var timer: Timer?
+
+    init(text: String, fontSize: CGFloat = 72, particlesPerCharacter: Int = 600, dissolving: Binding<Bool> = .constant(false)) {
+        self.text = text
+        self.fontSize = fontSize
+        self.particlesPerCharacter = particlesPerCharacter
+        self._dissolving = dissolving
+    }
 
     private var particleCount: Int {
         max(1, text.count) * particlesPerCharacter
@@ -31,6 +39,11 @@ struct ParticleTextView: View {
         )
         .onChange(of: text) {
             createParticles()
+        }
+        .onChange(of: dissolving) {
+            if dissolving {
+                startDissolving()
+            }
         }
         .onDisappear {
             timer?.invalidate()
@@ -90,6 +103,21 @@ struct ParticleTextView: View {
             if allSettled {
                 timer?.invalidate()
                 timer = nil
+            }
+        }
+    }
+
+    private func startDissolving() {
+        timer?.invalidate()
+        for i in particles.indices {
+            let angle = Double.random(in: 0...(2 * .pi))
+            let speed = Double.random(in: 3...12)
+            particles[i].velocityX = cos(angle) * speed
+            particles[i].velocityY = sin(angle) * speed
+        }
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 120.0, repeats: true) { _ in
+            for i in particles.indices {
+                particles[i].updateDissolve()
             }
         }
     }

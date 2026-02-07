@@ -42,6 +42,7 @@ struct QuickMeasureSheet: View {
     @State private var chlorineProductName: String = "Chlorgranulat"
     @State private var phInRange: Bool = false
     @State private var chlorineInRange: Bool = false
+    @State private var particlesDissolving: Bool = false
 
     // Bearbeiten adjusted values
     @State private var editedPHAmount: Double = 0
@@ -317,6 +318,7 @@ struct QuickMeasureSheet: View {
                 label: phInRange && chlorineInRange ? "Speichern" : "Dosieren",
                 icon: "chevron.right"
             ) {
+                particlesDissolving = true
                 saveAll(phAmount: recommendedPHAmount, chlorineAmount: recommendedChlorineAmount)
             }
             .padding(.horizontal, 20)
@@ -339,8 +341,13 @@ struct QuickMeasureSheet: View {
             .font(.title2.weight(.semibold))
             .foregroundStyle(color)
 
-            ParticleTextView(text: amount, fontSize: particleFontSize)
+            Color.clear
                 .frame(height: 120)
+                .overlay {
+                    ParticleTextView(text: amount, fontSize: particleFontSize, dissolving: $particlesDissolving)
+                        .frame(height: 500)
+                        .allowsHitTesting(false)
+                }
 
             Text(unit)
                 .font(.caption)

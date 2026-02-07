@@ -6,6 +6,8 @@ struct Particle {
     let baseX: Double
     let baseY: Double
     let density: Double
+    var velocityX: Double = 0
+    var velocityY: Double = 0
 
     var settled: Bool {
         let dx = baseX - x
@@ -38,5 +40,10 @@ struct Particle {
             x -= (x - baseX) / 10
             y -= (y - baseY) / 10
         }
+    }
+
+    mutating func updateDissolve() {
+        x += velocityX
+        y += velocityY
     }
 }
