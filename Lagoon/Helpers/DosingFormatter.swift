@@ -17,6 +17,19 @@ struct DosingFormatter {
         return String(format: "%.0f g", grams)
     }
 
+    /// Returns only the numeric amount (e.g. "120" or "2 1/2")
+    static func formatAmount(grams: Double, unit: String, cupGrams: Double) -> String {
+        if unit == "becher" && cupGrams > 0 {
+            return formatCups(grams / cupGrams)
+        }
+        return String(format: "%.0f", grams)
+    }
+
+    /// Returns only the unit label (e.g. "Gramm" or "Becher")
+    static func formatUnit(unit: String) -> String {
+        unit == "becher" ? "Becher" : "Gramm"
+    }
+
     private static func formatCups(_ cups: Double) -> String {
         let whole = Int(cups)
         let quarters = Int(((cups - Double(whole)) * 4).rounded())

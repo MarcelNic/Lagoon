@@ -103,10 +103,8 @@ struct QuickMeasureSheet: View {
     private var dosierenDetent: PresentationDetent {
         if phInRange && chlorineInRange {
             return .height(200)
-        } else if !phInRange && !chlorineInRange && recommendedPHAmount > 0 && recommendedChlorineAmount > 0 {
-            return .height(262)
         } else {
-            return .height(212)
+            return .height(310)
         }
     }
 
@@ -123,17 +121,17 @@ struct QuickMeasureSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            Group {
                 switch phase {
                 case .messen:
-                    messenSections
+                    Form { messenSections }
+                        .contentMargins(.top, 16)
                 case .dosieren:
-                    dosierenSections
+                    dosierenView
                 case .bearbeiten:
-                    bearbeitenSections
+                    Form { bearbeitenSections }
                 }
             }
-            .contentMargins(.top, phase == .messen ? 16 : 0)
             .navigationTitle(headerTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(phase == .messen ? .hidden : .visible, for: .navigationBar)
@@ -171,7 +169,7 @@ struct QuickMeasureSheet: View {
                 }
             }
         }
-        .presentationDetents([Self.messenDetent, .height(200), .height(212), .height(262), .height(494)], selection: $currentDetent)
+        .presentationDetents([Self.messenDetent, .height(200), .height(310), .height(494)], selection: $currentDetent)
         .interactiveDismissDisabled(phase != .messen)
         .onChange(of: currentDetent) { _, newDetent in
             if newDetent != targetDetent {
@@ -274,57 +272,72 @@ struct QuickMeasureSheet: View {
         .listSectionSpacing(16)
     }
 
-    // MARK: - Dosieren (Compact)
+    // MARK: - Dosieren
 
-    @ViewBuilder
-    private var dosierenSections: some View {
-        if phInRange && chlorineInRange {
-            Section {
+    private var dosierenView: some View {
+        VStack(spacing: 0) {
+            if phInRange && chlorineInRange {
+                Spacer()
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
-                        .font(.title3)
+                        .font(.title)
                     Text("Alles im optimalen Bereich")
                         .font(.subheadline.weight(.medium))
                 }
-            }
-        } else {
-            Section {
-                if !phInRange && recommendedPHAmount > 0 {
-                    HStack {
-                        Label(phProductName, systemImage: "drop.fill")
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        Text(DosingFormatter.format(grams: recommendedPHAmount, unit: dosingUnit, cupGrams: cupGrams))
-                            .font(.system(size: 17, weight: .semibold, design: .rounded))
-                            .monospacedDigit()
+                Spacer()
+            } else {
+                Spacer()
+                let showPH = !phInRange && recommendedPHAmount > 0
+                let showCl = !chlorineInRange && recommendedChlorineAmount > 0
+                HStack(spacing: 0) {
+                    if showPH {
+                        dosingColumn(
+                            name: phProductName,
+                            amount: DosingFormatter.formatAmount(grams: recommendedPHAmount, unit: dosingUnit, cupGrams: cupGrams),
+                            unit: DosingFormatter.formatUnit(unit: dosingUnit)
+                        )
+                    }
+                    if showCl {
+                        dosingColumn(
+                            name: chlorineProductName,
+                            amount: DosingFormatter.formatAmount(grams: recommendedChlorineAmount, unit: dosingUnit, cupGrams: cupGrams),
+                            unit: DosingFormatter.formatUnit(unit: dosingUnit)
+                        )
                     }
                 }
-
-                if !chlorineInRange && recommendedChlorineAmount > 0 {
-                    HStack {
-                        Label(chlorineProductName, systemImage: "allergens.fill")
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        Text(DosingFormatter.format(grams: recommendedChlorineAmount, unit: dosingUnit, cupGrams: cupGrams))
-                            .font(.system(size: 17, weight: .semibold, design: .rounded))
-                            .monospacedDigit()
-                    }
-                }
+                Spacer()
             }
-        }
 
-        Section {
             SlideToConfirm(
                 label: phInRange && chlorineInRange ? "Speichern" : "Dosieren",
                 icon: "chevron.right"
             ) {
                 saveAll(phAmount: recommendedPHAmount, chlorineAmount: recommendedChlorineAmount)
             }
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 8, leading: 4, bottom: 0, trailing: 4))
+            .padding(.horizontal, 20)
+            .padding(.bottom, 16)
         }
-        .listSectionSpacing(8)
+    }
+
+    private var particleFontSize: CGFloat {
+        dosingUnit == "becher" ? 96 : 72
+    }
+
+    private func dosingColumn(name: String, amount: String, unit: String) -> some View {
+        VStack(spacing: 4) {
+            Text(name)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.secondary)
+
+            ParticleTextView(text: amount, fontSize: particleFontSize)
+                .frame(height: 100)
+
+            Text(unit)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Bearbeiten (Expanded)
