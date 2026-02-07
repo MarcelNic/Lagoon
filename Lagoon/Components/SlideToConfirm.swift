@@ -92,13 +92,15 @@ struct SlideToConfirm: View {
 
                                 if currentProgress >= commitThreshold {
                                     notificationGenerator.notificationOccurred(.success)
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                        offset = maxOffset
+                                    }
                                     action()
                                 } else {
                                     rigidImpact.impactOccurred(intensity: 0.6)
-                                }
-
-                                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                                    offset = 0
+                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                                        offset = 0
+                                    }
                                 }
                                 hasReachedThreshold = false
                             }
