@@ -47,6 +47,7 @@ struct QuickMeasureSheet: View {
     @State private var editedPHAmount: Double = 0
     @State private var editedChlorineAmount: Double = 0
     @State private var phType: PHType = .minus
+    @State private var editedDate: Date = Date()
 
     private var maxPHAmount: Double {
         dosingUnit == "becher" ? cupGrams * 10 : 300
@@ -98,24 +99,18 @@ struct QuickMeasureSheet: View {
         return Color(hue: hue, saturation: 0.75, brightness: 0.9)
     }
 
-    private static let messenDetent = PresentationDetent.height(415)
+    private static let messenDetent = PresentationDetent.height(360)
 
-    private var dosierenDetent: PresentationDetent {
-        if phInRange && chlorineInRange {
-            return .height(200)
-        } else {
-            return .height(380)
-        }
-    }
+    private static let dosierenDetent = PresentationDetent.height(380)
 
     private var targetDetent: PresentationDetent {
         switch phase {
         case .messen:
             return Self.messenDetent
         case .dosieren:
-            return dosierenDetent
+            return Self.dosierenDetent
         case .bearbeiten:
-            return .height(494)
+            return .height(470)
         }
     }
 
@@ -128,8 +123,12 @@ struct QuickMeasureSheet: View {
                         .contentMargins(.top, 16)
                 case .dosieren:
                     dosierenView
+                        .ignoresSafeArea(edges: .bottom)
                 case .bearbeiten:
                     Form { bearbeitenSections }
+                        .listSectionSpacing(.compact)
+                        .contentMargins(.top, 0)
+                        .scrollDisabled(true)
                 }
             }
             .navigationTitle(headerTitle)
@@ -142,7 +141,7 @@ struct QuickMeasureSheet: View {
                             withAnimation {
                                 if phase == .bearbeiten {
                                     phase = .dosieren
-                                    currentDetent = dosierenDetent
+                                    currentDetent = Self.dosierenDetent
                                 } else {
                                     phase = .messen
                                     currentDetent = Self.messenDetent
@@ -160,7 +159,7 @@ struct QuickMeasureSheet: View {
                             prepareEditValues()
                             withAnimation {
                                 phase = .bearbeiten
-                                currentDetent = .height(494)
+                                currentDetent = .height(470)
                             }
                         } label: {
                             Image(systemName: "slider.horizontal.3")
@@ -169,7 +168,8 @@ struct QuickMeasureSheet: View {
                 }
             }
         }
-        .presentationDetents([Self.messenDetent, .height(200), .height(380), .height(494)], selection: $currentDetent)
+        .presentationDetents([Self.messenDetent, Self.dosierenDetent, .height(470)], selection: $currentDetent)
+        .presentationDragIndicator(phase == .messen ? .visible : .hidden)
         .interactiveDismissDisabled(phase != .messen)
         .onChange(of: currentDetent) { _, newDetent in
             if newDetent != targetDetent {
@@ -256,7 +256,7 @@ struct QuickMeasureSheet: View {
                 calculateRecommendation()
                 withAnimation {
                     phase = .dosieren
-                    currentDetent = dosierenDetent
+                    currentDetent = Self.dosierenDetent
                 }
             } label: {
                 Text("Messen")
@@ -265,7 +265,7 @@ struct QuickMeasureSheet: View {
                     .padding(.vertical, 12)
             }
             .buttonStyle(.glassProminent)
-            .tint(.blue)
+            .tint(.primary)
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
         }
@@ -292,17 +292,21 @@ struct QuickMeasureSheet: View {
                 let showCl = !chlorineInRange && recommendedChlorineAmount > 0
                 HStack(spacing: 0) {
                     if showPH {
+                        let phIcon = phProductId == "ph_plus" ? "plus.circle" : "minus.circle"
                         dosingColumn(
-                            name: phProductName,
+                            name: "pH",
+                            icon: phIcon,
                             amount: DosingFormatter.formatAmount(grams: recommendedPHAmount, unit: dosingUnit, cupGrams: cupGrams),
-                            unit: DosingFormatter.formatUnit(unit: dosingUnit)
+                            unit: DosingFormatter.formatUnit(unit: dosingUnit),
+                            color: .phIdealColor
                         )
                     }
                     if showCl {
                         dosingColumn(
-                            name: chlorineProductName,
+                            name: "Chlor",
                             amount: DosingFormatter.formatAmount(grams: recommendedChlorineAmount, unit: dosingUnit, cupGrams: cupGrams),
-                            unit: DosingFormatter.formatUnit(unit: dosingUnit)
+                            unit: DosingFormatter.formatUnit(unit: dosingUnit),
+                            color: .chlorineIdealColor
                         )
                     }
                 }
@@ -316,7 +320,7 @@ struct QuickMeasureSheet: View {
                 saveAll(phAmount: recommendedPHAmount, chlorineAmount: recommendedChlorineAmount)
             }
             .padding(.horizontal, 20)
-            .padding(.bottom, 8)
+            .padding(.bottom, 20)
         }
     }
 
@@ -324,11 +328,16 @@ struct QuickMeasureSheet: View {
         dosingUnit == "becher" ? 96 : 72
     }
 
-    private func dosingColumn(name: String, amount: String, unit: String) -> some View {
+    private func dosingColumn(name: String, icon: String? = nil, amount: String, unit: String, color: Color) -> some View {
         VStack(spacing: 8) {
-            Text(name)
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
+            HStack(spacing: 4) {
+                Text(name)
+                if let icon {
+                    Image(systemName: icon)
+                }
+            }
+            .font(.title2.weight(.semibold))
+            .foregroundStyle(color)
 
             ParticleTextView(text: amount, fontSize: particleFontSize)
                 .frame(height: 120)
@@ -388,6 +397,10 @@ struct QuickMeasureSheet: View {
         }
 
         Section {
+            DatePicker("Zeitpunkt", selection: $editedDate)
+        }
+
+        Section {
             SlideToConfirm(
                 label: "Dosieren",
                 icon: "chevron.right"
@@ -395,7 +408,7 @@ struct QuickMeasureSheet: View {
                 saveAll(phAmount: editedPHAmount, chlorineAmount: editedChlorineAmount)
             }
             .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 18, leading: 4, bottom: 0, trailing: 4))
+            .listRowInsets(EdgeInsets(top: 8, leading: 4, bottom: 20, trailing: 4))
         }
     }
 
@@ -445,17 +458,18 @@ struct QuickMeasureSheet: View {
     private func prepareEditValues() {
         editedPHAmount = recommendedPHAmount
         editedChlorineAmount = recommendedChlorineAmount
+        editedDate = Date()
     }
 
     private func saveAll(phAmount: Double, chlorineAmount: Double) {
-        let now = Date()
-        let dosingDate = now.addingTimeInterval(1)
+        let baseDate = phase == .bearbeiten ? editedDate : Date()
+        let dosingDate = baseDate.addingTimeInterval(1)
 
         poolWaterState.recordMeasurement(
             chlorine: chlorineValue,
             pH: phValue,
             waterTemperature: waterTemperature,
-            date: now
+            date: baseDate
         )
 
         if phAmount > 0 {
