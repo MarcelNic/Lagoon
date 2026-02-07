@@ -104,7 +104,7 @@ struct QuickMeasureSheet: View {
         if phInRange && chlorineInRange {
             return .height(200)
         } else {
-            return .height(310)
+            return .height(380)
         }
     }
 
@@ -169,7 +169,7 @@ struct QuickMeasureSheet: View {
                 }
             }
         }
-        .presentationDetents([Self.messenDetent, .height(200), .height(310), .height(494)], selection: $currentDetent)
+        .presentationDetents([Self.messenDetent, .height(200), .height(380), .height(494)], selection: $currentDetent)
         .interactiveDismissDisabled(phase != .messen)
         .onChange(of: currentDetent) { _, newDetent in
             if newDetent != targetDetent {
@@ -316,7 +316,7 @@ struct QuickMeasureSheet: View {
                 saveAll(phAmount: recommendedPHAmount, chlorineAmount: recommendedChlorineAmount)
             }
             .padding(.horizontal, 20)
-            .padding(.bottom, 16)
+            .padding(.bottom, 8)
         }
     }
 
@@ -325,16 +325,16 @@ struct QuickMeasureSheet: View {
     }
 
     private func dosingColumn(name: String, amount: String, unit: String) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 8) {
             Text(name)
-                .font(.caption.weight(.medium))
+                .font(.subheadline.weight(.medium))
                 .foregroundStyle(.secondary)
 
             ParticleTextView(text: amount, fontSize: particleFontSize)
-                .frame(height: 100)
+                .frame(height: 120)
 
             Text(unit)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
