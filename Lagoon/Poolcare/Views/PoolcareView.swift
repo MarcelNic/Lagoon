@@ -144,14 +144,23 @@ private struct ScenarioPill: View {
                 Label("Neues Szenario", systemImage: "plus")
             }
         } label: {
-            Label(
-                currentScenario?.name ?? "Szenario",
-                systemImage: currentScenario?.icon ?? "list.bullet"
-            )
-            .font(.subheadline.weight(.medium))
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Text(currentScenario?.name ?? "Szenario")
+            }
+            .font(.body.weight(.medium))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
         }
         .menuStyle(.button)
-        .buttonStyle(.glass)
+        .buttonStyle(.plain)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .glassEffect(.clear.interactive(), in: .capsule)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 20)
     }
 }
 

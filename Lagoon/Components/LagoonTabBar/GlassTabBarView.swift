@@ -40,9 +40,9 @@ final class GlassTabBarView<Value: Hashable>: UIView {
         fabGlassEffect.isInteractive = true
         fabGlassView = UIVisualEffectView(effect: fabGlassEffect)
 
-        let button = UIButton(type: .system)
         let config = UIImage.SymbolConfiguration(pointSize: Constants.fabIconPointSize, weight: .medium)
         let buttonImage = UIImage(systemName: action.systemImage, withConfiguration: config)
+        let button = UIButton(type: .system)
         button.setImage(buttonImage, for: .normal)
         button.tintColor = .label
         button.accessibilityLabel = action.accessibilityLabel
