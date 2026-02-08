@@ -72,6 +72,14 @@ final class PoolWaterState {
     // MARK: - Engine
 
     private let engine = PoolWaterEngine()
+    private let isoFormatter = ISO8601DateFormatter()
+
+    // MARK: - Cached Data (avoid SwiftData fetches during simulation scrolling)
+
+    private var cachedDosingHistory: [DosingEvent] = []
+    private var cachedWeatherTemperature: Double = 25.0
+    private var cachedWeatherUV: UVExposureLevel = .medium
+    private var cachedEngineInput: PoolWaterEngineInput?
 
     // MARK: - SwiftData Context
 
@@ -123,7 +131,8 @@ final class PoolWaterState {
             }
         }
 
-        // Recalculate (also updates trends)
+        // Refresh cache and recalculate
+        refreshCache()
         recalculate()
     }
 
@@ -163,7 +172,8 @@ final class PoolWaterState {
             break
         }
 
-        // Recalculate after dosing
+        // Refresh cache and recalculate
+        refreshCache()
         recalculate()
     }
 
@@ -203,66 +213,42 @@ final class PoolWaterState {
             }
         }
 
-        // Recalculate after weather update
+        // Refresh cache and recalculate
+        refreshCache()
         recalculate()
     }
 
     /// Reload settings from UserDefaults and recalculate
     func reloadSettings() {
         loadSettingsFromUserDefaults()
+        refreshCache()
         recalculate()
     }
 
-    /// Recalculate estimated state based on current conditions
-    func recalculate() {
-        // Store previous values for trend calculation
-        let previousChlorine = estimatedChlorine
-        let previousPH = estimatedPH
-
-        // Load dosing history since last measurement
-        let dosingHistory = loadDosingHistorySinceLastMeasurement()
-
-        // Load latest weather input
+    /// Refresh cached SwiftData values and rebuild engine input.
+    /// Call this when underlying data changes (measurement, dosing, weather, settings).
+    private func refreshCache() {
+        cachedDosingHistory = loadDosingHistorySinceLastMeasurement()
         let weather = loadLatestWeather()
+        cachedWeatherTemperature = weather?.temperature ?? 25.0
+        cachedWeatherUV = weather?.uvExposureLevel ?? .medium
 
-        // Create engine input
-        let input = PoolWaterEngineInput.create(
+        cachedEngineInput = PoolWaterEngineInput.create(
             poolVolume_m3: poolVolume,
             lastChlorine_ppm: lastChlorine,
             lastPH: lastPH,
-            lastMeasurementISO: ISO8601DateFormatter().string(from: lastMeasurementDate),
-            waterTemperature_c: weather?.temperature ?? 25.0,
-            uvExposure: weather?.uvExposureLevel ?? .medium,
+            lastMeasurementISO: isoFormatter.string(from: lastMeasurementDate),
+            waterTemperature_c: cachedWeatherTemperature,
+            uvExposure: cachedWeatherUV,
             poolCovered: hasCover,
             batherLoad: .none,
             filterRuntime: pumpRuntime,
-            dosingHistory: dosingHistory,
+            dosingHistory: cachedDosingHistory,
             idealRanges: WaterTargets(
                 freeChlorine: ChlorineTargets(min_ppm: idealChlorineMin, max_ppm: idealChlorineMax),
                 pH: PHTargets(min: idealPHMin, max: idealPHMax)
             )
         )
-
-        // Process with engine (apply simulation offset)
-        let simulationDate = Date().addingTimeInterval(simulationOffsetHours * 3600)
-        let output = engine.process(input, at: simulationDate)
-
-        // Update state
-        estimatedChlorine = output.estimatedState.freeChlorine_ppm
-        estimatedPH = output.estimatedState.pH
-        confidence = output.confidence.confidence
-        confidenceReason = output.confidence.reason
-
-        // Update recommendations
-        chlorineRecommendation = output.recommendations.first { $0.parameter == .freeChlorine }
-        phRecommendation = output.recommendations.first { $0.parameter == .pH }
-
-        // Update trends
-        chlorineTrend = calculateTrend(previous: previousChlorine, current: estimatedChlorine)
-        phTrend = calculateTrend(previous: previousPH, current: estimatedPH)
-
-        // Override trends for pending dosing effects (mixing not yet complete)
-        overrideTrendsForPendingDosing(dosingHistory: dosingHistory)
 
         // Load recent dosing events for status pill (if not already set this session)
         if lastDosingTimestamp == nil, let context = modelContext {
@@ -290,6 +276,42 @@ final class PoolWaterState {
                 }
             }
         }
+    }
+
+    /// Recalculate estimated state based on current conditions.
+    /// Uses cached engine input — lightweight enough to call on every tick.
+    func recalculate() {
+        // Rebuild cache if no engine input exists yet
+        if cachedEngineInput == nil {
+            refreshCache()
+        }
+
+        guard let input = cachedEngineInput else { return }
+
+        // Store previous values for trend calculation
+        let previousChlorine = estimatedChlorine
+        let previousPH = estimatedPH
+
+        // Process with engine (apply simulation offset)
+        let simulationDate = Date().addingTimeInterval(simulationOffsetHours * 3600)
+        let output = engine.process(input, at: simulationDate)
+
+        // Update state
+        estimatedChlorine = output.estimatedState.freeChlorine_ppm
+        estimatedPH = output.estimatedState.pH
+        confidence = output.confidence.confidence
+        confidenceReason = output.confidence.reason
+
+        // Update recommendations
+        chlorineRecommendation = output.recommendations.first { $0.parameter == .freeChlorine }
+        phRecommendation = output.recommendations.first { $0.parameter == .pH }
+
+        // Update trends
+        chlorineTrend = calculateTrend(previous: previousChlorine, current: estimatedChlorine)
+        phTrend = calculateTrend(previous: previousPH, current: estimatedPH)
+
+        // Override trends for pending dosing effects (mixing not yet complete)
+        overrideTrendsForPendingDosing(dosingHistory: cachedDosingHistory)
     }
 
     // MARK: - Prediction Data (for Popovers)
@@ -323,25 +345,8 @@ final class PoolWaterState {
         let now = Date()
         guard endDate > now else { return ([], []) }
 
-        let dosingHistory = loadDosingHistorySinceLastMeasurement()
-        let weather = loadLatestWeather()
-
-        let input = PoolWaterEngineInput.create(
-            poolVolume_m3: poolVolume,
-            lastChlorine_ppm: lastChlorine,
-            lastPH: lastPH,
-            lastMeasurementISO: ISO8601DateFormatter().string(from: lastMeasurementDate),
-            waterTemperature_c: weather?.temperature ?? 25.0,
-            uvExposure: weather?.uvExposureLevel ?? .medium,
-            poolCovered: hasCover,
-            batherLoad: .none,
-            filterRuntime: pumpRuntime,
-            dosingHistory: dosingHistory,
-            idealRanges: WaterTargets(
-                freeChlorine: ChlorineTargets(min_ppm: idealChlorineMin, max_ppm: idealChlorineMax),
-                pH: PHTargets(min: idealPHMin, max: idealPHMax)
-            )
-        )
+        if cachedEngineInput == nil { refreshCache() }
+        guard let input = cachedEngineInput else { return ([], []) }
 
         var phPoints: [ChartDataPoint] = []
         var clPoints: [ChartDataPoint] = []
@@ -400,6 +405,7 @@ final class PoolWaterState {
             idealChlorineMax = settings.chlorineMax
         }
 
+        refreshCache()
         recalculate()
     }
 

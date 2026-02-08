@@ -17,8 +17,6 @@ struct SlideToConfirm: View {
     private let padding: CGFloat = 8
     private let commitThreshold: CGFloat = 0.85
 
-    private let notificationGenerator = UINotificationFeedbackGenerator()
-
     var body: some View {
         GeometryReader { geo in
             let maxOffset = geo.size.width - knobSize - (padding * 2)
@@ -86,7 +84,7 @@ struct SlideToConfirm: View {
                                 let currentProgress = offset / maxOffset
 
                                 if currentProgress >= commitThreshold {
-                                    notificationGenerator.notificationOccurred(.success)
+                                    playFireworkHaptic()
                                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                         offset = maxOffset
                                     }
@@ -103,7 +101,6 @@ struct SlideToConfirm: View {
         .frame(height: trackHeight)
         .containerShape(.capsule)
         .onAppear {
-            notificationGenerator.prepare()
             prepareHapticEngine()
         }
         .onDisappear {
@@ -168,5 +165,56 @@ struct SlideToConfirm: View {
     private func stopContinuousHaptic() {
         try? hapticPlayer?.stop(atTime: CHHapticTimeImmediate)
         hapticPlayer = nil
+    }
+
+    private func playFireworkHaptic() {
+        guard let engine = hapticEngine else { return }
+
+        var events: [CHHapticEvent] = []
+
+        // Initial explosion - strong sharp burst
+        events.append(CHHapticEvent(
+            eventType: .hapticTransient,
+            parameters: [
+                CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
+                CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.8)
+            ],
+            relativeTime: 0
+        ))
+
+        // Sparkle bursts - rapid taps that scatter and decay
+        let sparkleCount = 14
+        for i in 0..<sparkleCount {
+            let time = 0.06 + Double(i) * 0.045
+            let decay = 1.0 - (Double(i) / Double(sparkleCount))
+            let intensity = Float(0.3 + decay * 0.7) * Float.random(in: 0.6...1.0)
+            let sharpness = Float(0.4 + decay * 0.5) * Float.random(in: 0.5...1.0)
+
+            events.append(CHHapticEvent(
+                eventType: .hapticTransient,
+                parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: intensity),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: sharpness)
+                ],
+                relativeTime: time
+            ))
+        }
+
+        // Final soft rumble tail
+        events.append(CHHapticEvent(
+            eventType: .hapticContinuous,
+            parameters: [
+                CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.25),
+                CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.1)
+            ],
+            relativeTime: 0.7,
+            duration: 0.3
+        ))
+
+        do {
+            let pattern = try CHHapticPattern(events: events, parameters: [])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: CHHapticTimeImmediate)
+        } catch {}
     }
 }

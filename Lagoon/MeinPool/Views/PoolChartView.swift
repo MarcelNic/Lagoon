@@ -199,8 +199,10 @@ struct PoolChartView: View {
         .chartXSelection(value: $selectedDate)
         .chartScrollableAxes([]) // Disable chart scrolling to not interfere with page scroll
         .chartGesture { proxy in
-            DragGesture(minimumDistance: 0)
+            DragGesture(minimumDistance: 16)
                 .onChanged { value in
+                    // Only track if gesture is more horizontal than vertical
+                    guard abs(value.translation.width) > abs(value.translation.height) else { return }
                     if let date: Date = proxy.value(atX: value.location.x) {
                         selectedDate = date
                     }
