@@ -10,87 +10,103 @@ struct MeinPoolView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(PoolWaterState.self) private var poolWaterState
-    @AppStorage("poolName") private var poolName: String = "Pool"
     @State private var meinPoolState = MeinPoolState()
     @Binding var showSettings: Bool
-    @State private var selectedEntry: LogbookEntry?
+    @State private var selectedTimeRange: ChartTimeRange = .threeDays
+    @State private var showLogbookList = false
 
-    // Init für Binding
     init(showSettings: Binding<Bool> = .constant(false)) {
         self._showSettings = showSettings
     }
 
-    // Separate sheet states for each type
-    @State private var showMessenSheet = false
-    @State private var showDosierenSheet = false
-    @State private var showPflegeSheet = false
-    @State private var entryToEdit: LogbookEntry?
+    private var predictions: (ph: [ChartDataPoint], chlorine: [ChartDataPoint]) {
+        poolWaterState.predictionPoints(until: selectedTimeRange.endDate)
+    }
 
     var body: some View {
         ZStack {
-            // Background
             AdaptiveBackgroundGradient()
                 .ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: 20) {
-                    // Header Section
-                    VStack(spacing: 12) {
-                        PoolIdentityCard(
-                            poolName: poolName,
-                            isVacationModeActive: false
-                        )
-
-                        InfoPillsRow(state: meinPoolState)
+                VStack(spacing: 16) {
+                    // Time range picker
+                    Picker("Zeitraum", selection: $selectedTimeRange) {
+                        ForEach(ChartTimeRange.allCases) { range in
+                            Text(range.rawValue).tag(range)
+                        }
                     }
+                    .pickerStyle(.segmented)
 
-                    // Logbook Section
-                    LogbookSection(
-                        state: meinPoolState,
-                        selectedEntry: $selectedEntry
+                    // pH Chart
+                    PoolChartView(
+                        title: "pH-Wert",
+                        unit: "",
+                        data: meinPoolState.phChartData(in: selectedTimeRange),
+                        predictionData: predictions.ph,
+                        idealMin: poolWaterState.idealPHMin,
+                        idealMax: poolWaterState.idealPHMax,
+                        lineColor: .phIdealColor,
+                        idealRangeColor: .phIdealColor,
+                        yDomain: 6.8...8.0,
+                        timeRange: selectedTimeRange
                     )
+
+                    // Chlorine Chart
+                    PoolChartView(
+                        title: "Chlor",
+                        unit: "mg/l",
+                        data: meinPoolState.chlorineChartData(in: selectedTimeRange),
+                        predictionData: predictions.chlorine,
+                        idealMin: poolWaterState.idealChlorineMin,
+                        idealMax: poolWaterState.idealChlorineMax,
+                        lineColor: .chlorineIdealColor,
+                        idealRangeColor: .chlorineIdealColor,
+                        yDomain: 0.0...5.0,
+                        timeRange: selectedTimeRange
+                    )
+
+                    // Temperature Chart (no prediction)
+                    PoolChartView(
+                        title: "Wassertemperatur",
+                        unit: "°C",
+                        data: meinPoolState.temperatureChartData(in: selectedTimeRange),
+                        idealMin: nil,
+                        idealMax: nil,
+                        lineColor: .orange,
+                        idealRangeColor: .clear,
+                        yDomain: 10.0...40.0,
+                        timeRange: selectedTimeRange
+                    )
+
+                    // All entries button
+                    NavigationLink {
+                        LogbookListView(state: meinPoolState)
+                    } label: {
+                        HStack {
+                            Image(systemName: "list.bullet")
+                                .font(.system(size: 15, weight: .medium))
+                            Text("Alle Einträge")
+                                .font(.system(size: 15, weight: .medium))
+                        }
+                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .glassEffect(.clear.interactive(), in: .capsule)
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
-                .padding(.bottom, 40)
+                .padding(.bottom, 100)
             }
-
         }
         .toolbar(.hidden, for: .navigationBar)
-        .onChange(of: selectedEntry) { _, entry in
-            guard let entry = entry else { return }
-            entryToEdit = entry
-            selectedEntry = nil
-
-            switch entry.type {
-            case .messen:
-                showMessenSheet = true
-            case .dosieren:
-                showDosierenSheet = true
-            case .poolpflege:
-                showPflegeSheet = true
-            }
-        }
         .fullScreenCover(isPresented: $showSettings) {
             SettingsFullScreenCover(showSettings: $showSettings)
         }
         .onChange(of: showSettings) { _, isShowing in
             if !isShowing {
                 poolWaterState.reloadSettings()
-            }
-        }
-        .sheet(isPresented: $showMessenSheet) {
-            EditMessenSheet(entry: entryToEdit, state: meinPoolState)
-                .presentationDetents([.medium, .large])
-        }
-        .sheet(isPresented: $showDosierenSheet) {
-            EditDosierenSheet(entry: entryToEdit, state: meinPoolState)
-                .presentationDetents([.medium])
-        }
-        .sheet(isPresented: $showPflegeSheet) {
-            if let entry = entryToEdit {
-                LogbookEditSheet(entry: entry, state: meinPoolState)
-                    .presentationDetents([.medium, .large])
             }
         }
         .onAppear {

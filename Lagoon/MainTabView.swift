@@ -38,6 +38,7 @@ struct MainTabView: View {
                 .toolbarVisibility(.hidden, for: .tabBar)
             }
         }
+        .toolbarVisibility(.hidden, for: .tabBar)
         .lagoonTabBar(
             selection: $activeTab,
             tabs: [

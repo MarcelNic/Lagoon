@@ -22,32 +22,51 @@ struct PoolcareView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                // Active Timers
-                if state.hasActiveActions {
-                    Section {
-                        ForEach(state.activeActions) { action in
-                            ActiveActionRow(action: action, state: state)
+            ScrollView {
+                VStack(spacing: 16) {
+                    // Active Timers
+                    if state.hasActiveActions {
+                        VStack(spacing: 0) {
+                            ForEach(state.activeActions) { action in
+                                ActiveActionRow(action: action, state: state)
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 14)
+                                if action.id != state.activeActions.last?.id {
+                                    Divider()
+                                        .padding(.leading, 20)
+                                }
+                            }
                         }
+                        .glassEffect(.clear, in: .capsule)
                     }
-                }
 
-                // Task List
-                Section {
-                    ForEach(sortedTasks) { task in
-                        if task.isAction {
-                            ActionTaskRow(task: task, state: state)
+                    // Task List
+                    if !sortedTasks.isEmpty {
+                        VStack(spacing: 0) {
+                            ForEach(sortedTasks) { task in
+                                Group {
+                                    if task.isAction {
+                                        ActionTaskRow(task: task, state: state)
+                                    } else {
+                                        RegularTaskRow(task: task, state: state)
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
                                 .contextMenu {
                                     taskContextMenu(for: task)
                                 }
-                        } else {
-                            RegularTaskRow(task: task, state: state)
-                                .contextMenu {
-                                    taskContextMenu(for: task)
+                                if task.id != sortedTasks.last?.id {
+                                    Divider()
+                                        .padding(.leading, 16)
                                 }
+                            }
                         }
+                        .glassEffect(.clear, in: .rect(cornerRadius: 24))
                     }
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
             }
             .scrollContentBackground(.hidden)
             .background {
@@ -122,7 +141,7 @@ private struct ScenarioPill: View {
             Button {
                 showNewScenarioSheet = true
             } label: {
-                Label("Neues Szenario...", systemImage: "plus")
+                Label("Neues Szenario", systemImage: "plus")
             }
         } label: {
             Label(

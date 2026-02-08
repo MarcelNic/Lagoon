@@ -129,6 +129,44 @@ final class MeinPoolState {
         self.entries = allEntries.sorted { $0.timestamp > $1.timestamp }
     }
 
+    // MARK: - Chart Data
+
+    func phChartData(in range: ChartTimeRange) -> [ChartDataPoint] {
+        chartData(in: range, keyPath: \.phValue)
+    }
+
+    func chlorineChartData(in range: ChartTimeRange) -> [ChartDataPoint] {
+        chartData(in: range, keyPath: \.chlorineValue)
+    }
+
+    func temperatureChartData(in range: ChartTimeRange) -> [ChartDataPoint] {
+        chartData(in: range, keyPath: \.waterTemperature)
+    }
+
+    /// Build chart data with a carry-forward point at the range start
+    private func chartData(in range: ChartTimeRange, keyPath: KeyPath<LogbookEntry, Double?>) -> [ChartDataPoint] {
+        let measurements = entries
+            .filter { $0.type == .messen && $0[keyPath: keyPath] != nil }
+            .sorted { $0.timestamp < $1.timestamp }
+
+        var points: [ChartDataPoint] = []
+
+        // Find the last measurement before the range to anchor the line at the left edge
+        let lastBefore = measurements.last { $0.timestamp < range.startDate }
+        if let anchor = lastBefore, let value = anchor[keyPath: keyPath] {
+            points.append(ChartDataPoint(timestamp: range.startDate, value: value))
+        }
+
+        // Add all measurements within the range
+        for entry in measurements where entry.timestamp >= range.startDate {
+            if let value = entry[keyPath: keyPath] {
+                points.append(ChartDataPoint(timestamp: entry.timestamp, value: value))
+            }
+        }
+
+        return points
+    }
+
     // MARK: - Methods
 
     func updateEntry(_ updatedEntry: LogbookEntry) {
