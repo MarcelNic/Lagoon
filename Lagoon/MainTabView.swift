@@ -44,9 +44,9 @@ struct MainTabView: View {
             tabs: [
                 LagoonTabBarTab(value: .home, title: "Wasser", systemImage: "water.waves", symbolEffect: .wiggle),
                 LagoonTabBarTab(value: .care, title: "Care", systemImage: "checklist", symbolEffect: .bounce),
-                LagoonTabBarTab(value: .pool, title: "Logbuch", systemImage: "chart.line.text.clipboard", symbolEffect: .bounce),
+                LagoonTabBarTab(value: .pool, title: "Logbuch", systemImage: "chart.line.text.clipboard", symbolEffect: .wiggle),
             ],
-            action: LagoonTabBarAction(systemImage: activeTab == .pool ? "gearshape.fill" : "plus", accessibilityLabel: "Aktion") {
+            action: LagoonTabBarAction(systemImage: activeTab == .pool ? "gear" : "plus", accessibilityLabel: "Aktion") {
                 switch activeTab {
                 case .home: showQuickMeasure = true
                 case .care: showAddTaskSheet = true

@@ -14,13 +14,10 @@ struct MeinPoolView: View {
     @Binding var showSettings: Bool
     @State private var selectedTimeRange: ChartTimeRange = .threeDays
     @State private var showLogbookList = false
+    @State private var cachedPredictions: (ph: [ChartDataPoint], chlorine: [ChartDataPoint]) = ([], [])
 
     init(showSettings: Binding<Bool> = .constant(false)) {
         self._showSettings = showSettings
-    }
-
-    private var predictions: (ph: [ChartDataPoint], chlorine: [ChartDataPoint]) {
-        poolWaterState.predictionPoints(until: selectedTimeRange.endDate)
     }
 
     var body: some View {
@@ -43,7 +40,7 @@ struct MeinPoolView: View {
                         title: "pH-Wert",
                         unit: "",
                         data: meinPoolState.phChartData(in: selectedTimeRange),
-                        predictionData: predictions.ph,
+                        predictionData: cachedPredictions.ph,
                         idealMin: poolWaterState.idealPHMin,
                         idealMax: poolWaterState.idealPHMax,
                         lineColor: .phIdealColor,
@@ -57,7 +54,7 @@ struct MeinPoolView: View {
                         title: "Chlor",
                         unit: "mg/l",
                         data: meinPoolState.chlorineChartData(in: selectedTimeRange),
-                        predictionData: predictions.chlorine,
+                        predictionData: cachedPredictions.chlorine,
                         idealMin: poolWaterState.idealChlorineMin,
                         idealMax: poolWaterState.idealChlorineMax,
                         lineColor: .chlorineIdealColor,
@@ -109,6 +106,9 @@ struct MeinPoolView: View {
             if !isShowing {
                 poolWaterState.reloadSettings()
             }
+        }
+        .task(id: selectedTimeRange) {
+            cachedPredictions = poolWaterState.predictionPoints(until: selectedTimeRange.endDate)
         }
         .onAppear {
             meinPoolState.setModelContext(modelContext)
