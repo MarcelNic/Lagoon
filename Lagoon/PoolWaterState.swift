@@ -323,7 +323,12 @@ final class PoolWaterState {
             confidenceReason: confidenceReason,
             lastMeasuredValue: lastPH,
             lastMeasurementTime: lastMeasurementDate,
-            recommendation: phRecommendation
+            recommendation: phRecommendation,
+            lastDosingAmount: lastDosingPHAmount > 0 ? lastDosingPHAmount : nil,
+            lastDosingProduct: lastDosingPHAmount > 0 ? lastDosingPHType : nil,
+            lastDosingTime: lastDosingPHAmount > 0 ? lastDosingTimestamp : nil,
+            weatherTemperature: cachedWeatherTemperature,
+            uvLevel: cachedWeatherUV
         )
     }
 
@@ -334,7 +339,12 @@ final class PoolWaterState {
             confidenceReason: confidenceReason,
             lastMeasuredValue: lastChlorine,
             lastMeasurementTime: lastMeasurementDate,
-            recommendation: chlorineRecommendation
+            recommendation: chlorineRecommendation,
+            lastDosingAmount: lastDosingChlorineAmount > 0 ? lastDosingChlorineAmount : nil,
+            lastDosingProduct: lastDosingChlorineAmount > 0 ? "Chlorgranulat" : nil,
+            lastDosingTime: lastDosingChlorineAmount > 0 ? lastDosingTimestamp : nil,
+            weatherTemperature: cachedWeatherTemperature,
+            uvLevel: cachedWeatherUV
         )
     }
 

@@ -101,8 +101,9 @@ struct MeinPoolView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .fullScreenCover(isPresented: $showSettings) {
+        .sheet(isPresented: $showSettings) {
             SettingsFullScreenCover(showSettings: $showSettings)
+                .presentationDetents([.large])
         }
         .onChange(of: showSettings) { _, isShowing in
             if !isShowing {
@@ -359,7 +360,7 @@ private struct SettingsFullScreenCover: View {
         NavigationStack {
             SettingsView()
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
+                    ToolbarItem(placement: .confirmationAction) {
                         Button {
                             showSettings = false
                         } label: {

@@ -42,9 +42,9 @@ struct MainTabView: View {
         .lagoonTabBar(
             selection: $activeTab,
             tabs: [
-                LagoonTabBarTab(value: .home, title: "Wasser", systemImage: "water.waves"),
-                LagoonTabBarTab(value: .care, title: "Care", systemImage: "checklist"),
-                LagoonTabBarTab(value: .pool, title: "Logbuch", systemImage: "chart.line.text.clipboard"),
+                LagoonTabBarTab(value: .home, title: "Wasser", systemImage: "water.waves", symbolEffect: .wiggle),
+                LagoonTabBarTab(value: .care, title: "Care", systemImage: "checklist", symbolEffect: .bounce),
+                LagoonTabBarTab(value: .pool, title: "Logbuch", systemImage: "chart.line.text.clipboard", symbolEffect: .bounce),
             ],
             action: LagoonTabBarAction(systemImage: activeTab == .pool ? "gearshape.fill" : "plus", accessibilityLabel: "Aktion") {
                 switch activeTab {

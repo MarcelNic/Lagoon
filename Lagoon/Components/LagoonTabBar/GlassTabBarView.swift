@@ -145,9 +145,7 @@ final class GlassTabBarView<Value: Hashable>: UIView {
         let config = UIImage.SymbolConfiguration(pointSize: Constants.fabIconPointSize, weight: .medium)
         guard let newImage = UIImage(systemName: systemImage, withConfiguration: config) else { return }
 
-        UIView.transition(with: fabButton, duration: 0.25, options: .transitionCrossDissolve) {
-            self.fabButton.setImage(newImage, for: .normal)
-        }
+        fabButton.setImage(newImage, for: .normal)
     }
 
     override func layoutSubviews() {

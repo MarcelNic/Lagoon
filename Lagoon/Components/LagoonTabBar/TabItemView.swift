@@ -2,13 +2,13 @@ import UIKit
 import os
 
 /// A UIView that displays a single tab item with an icon and title stacked vertically.
-/// Uses tintColor for rendering, automatically participating in tintAdjustmentMode for proper dimming.
+/// Uses a UIImageView for the icon to support SF Symbol effects (bounce, wiggle, etc.).
 @available(iOS 26.0, *)
 final class TabItemView<Value: Hashable>: UIView {
-    private var image: UIImage?
-    private var text: String = ""
-    private let font: UIFont = .systemFont(ofSize: Constants.tabTitleFontSize, weight: .medium)
+    private let imageView: UIImageView
+    private let titleLabel: UILabel
     private let imageAreaHeight: CGFloat = Constants.iconViewSize
+    private let effect: TabSymbolEffect
 
     var activeTintColor: UIColor = .label {
         didSet { updateColors() }
@@ -21,31 +21,65 @@ final class TabItemView<Value: Hashable>: UIView {
     var isHighlighted: Bool = false
 
     init(tab: LagoonTabBarTab<Value>) {
-        super.init(frame: .zero)
-
-        isOpaque = false
-        contentMode = .redraw
-
         let config = UIImage.SymbolConfiguration(
             pointSize: Constants.tabIconPointSize,
             weight: .medium,
             scale: .large
         )
 
+        var tabImage: UIImage?
         if let imageName = tab.image {
             let bundle = tab.imageBundle ?? .main
-            image = UIImage(named: imageName, in: bundle, with: config)
-            if image == nil {
+            tabImage = UIImage(named: imageName, in: bundle, with: config)
+            if tabImage == nil {
                 lagoonTabBarLogger.warning("Failed to load image '\(imageName)' from bundle for tab '\(tab.title)'")
             }
         } else if let systemImageName = tab.systemImage {
-            image = UIImage(systemName: systemImageName, withConfiguration: config)
-            if image == nil {
+            tabImage = UIImage(systemName: systemImageName, withConfiguration: config)
+            if tabImage == nil {
                 lagoonTabBarLogger.warning("Failed to load SF Symbol '\(systemImageName)' for tab '\(tab.title)'")
             }
         }
 
-        text = tab.title
+        imageView = UIImageView(image: tabImage)
+        imageView.contentMode = .center
+        imageView.tintAdjustmentMode = .automatic
+
+        titleLabel = UILabel()
+        titleLabel.text = tab.title
+        titleLabel.font = .systemFont(ofSize: Constants.tabTitleFontSize, weight: .medium)
+        titleLabel.textAlignment = .center
+
+        self.effect = tab.symbolEffect
+
+        super.init(frame: .zero)
+
+        isOpaque = false
+        isUserInteractionEnabled = false
+
+        addSubview(imageView)
+        addSubview(titleLabel)
+
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            imageView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            imageView.heightAnchor.constraint(equalToConstant: imageAreaHeight),
+
+            titleLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
+            titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor),
+        ])
+
+        // Vertically center the image+label group
+        let group = UILayoutGuide()
+        addLayoutGuide(group)
+        NSLayoutConstraint.activate([
+            group.topAnchor.constraint(equalTo: imageView.topAnchor),
+            group.bottomAnchor.constraint(equalTo: titleLabel.bottomAnchor),
+            group.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
+
         updateColors()
     }
 
@@ -54,51 +88,21 @@ final class TabItemView<Value: Hashable>: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    override func tintColorDidChange() {
-        super.tintColorDidChange()
-        setNeedsDisplay()
-    }
-
     func updateColors(animated: Bool = false) {
         let color = isHighlighted ? activeTintColor : inactiveTintColor
 
         if animated {
             UIView.animate(withDuration: Constants.colorTransitionDuration) {
-                self.tintColor = color
+                self.imageView.tintColor = color
+                self.titleLabel.textColor = color
             }
         } else {
-            tintColor = color
+            imageView.tintColor = color
+            titleLabel.textColor = color
         }
     }
 
-    override func draw(_ rect: CGRect) {
-        guard let tintColor = tintColor else { return }
-
-        let textAttributes: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: tintColor
-        ]
-        let textSize = (text as NSString).size(withAttributes: textAttributes)
-
-        // Calculate total content height and vertical offset to center
-        let contentHeight = imageAreaHeight + textSize.height
-        let verticalOffset = (bounds.height - contentHeight) / 2
-
-        // Draw image centered in top area
-        if let image = image {
-            let imageSize = image.size
-            let imageX = (bounds.width - imageSize.width) / 2
-            let imageY = verticalOffset + (imageAreaHeight - imageSize.height) / 2
-            let imageRect = CGRect(x: imageX, y: imageY, width: imageSize.width, height: imageSize.height)
-
-            tintColor.setFill()
-            image.withRenderingMode(.alwaysTemplate).draw(in: imageRect)
-        }
-
-        // Draw text centered below image area
-        let textX = (bounds.width - textSize.width) / 2
-        let textY = verticalOffset + imageAreaHeight
-
-        (text as NSString).draw(at: CGPoint(x: textX, y: textY), withAttributes: textAttributes)
+    func playSymbolEffect() {
+        effect.apply(to: imageView)
     }
 }

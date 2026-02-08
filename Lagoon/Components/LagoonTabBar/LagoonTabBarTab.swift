@@ -1,4 +1,26 @@
-import Foundation
+import UIKit
+
+/// The symbol effect to play when a tab is selected.
+@available(iOS 26.0, *)
+enum TabSymbolEffect {
+    case bounce
+    case wiggle
+    case rotate
+    case breathe
+
+    func apply(to imageView: UIImageView) {
+        switch self {
+        case .bounce:
+            imageView.addSymbolEffect(.bounce, options: .nonRepeating)
+        case .wiggle:
+            imageView.addSymbolEffect(.wiggle, options: .nonRepeating)
+        case .rotate:
+            imageView.addSymbolEffect(.rotate, options: .nonRepeating)
+        case .breathe:
+            imageView.addSymbolEffect(.breathe, options: .nonRepeating)
+        }
+    }
+}
 
 /// A tab configuration for LagoonTabBar.
 ///
@@ -23,21 +45,19 @@ struct LagoonTabBarTab<Value: Hashable>: Identifiable {
     /// The bundle containing the custom image. Defaults to `.main` if not specified.
     let imageBundle: Bundle?
 
+    /// The symbol effect to play when this tab is selected.
+    let symbolEffect: TabSymbolEffect
+
     /// Called when the user taps this tab while it's already selected.
     /// Useful for scroll-to-top or similar behaviors.
     let onReselect: (() -> Void)?
 
     /// Creates a tab with an SF Symbol icon.
-    ///
-    /// - Parameters:
-    ///   - value: The tab identifier.
-    ///   - title: The title displayed below the icon.
-    ///   - systemImage: The SF Symbol name for the icon.
-    ///   - onReselect: Called when the user taps this tab while it's already selected.
     init(
         value: Value,
         title: String,
         systemImage: String,
+        symbolEffect: TabSymbolEffect = .bounce,
         onReselect: (() -> Void)? = nil
     ) {
         self.value = value
@@ -45,22 +65,17 @@ struct LagoonTabBarTab<Value: Hashable>: Identifiable {
         self.systemImage = systemImage
         self.image = nil
         self.imageBundle = nil
+        self.symbolEffect = symbolEffect
         self.onReselect = onReselect
     }
 
     /// Creates a tab with a custom image from a bundle.
-    ///
-    /// - Parameters:
-    ///   - value: The tab identifier.
-    ///   - title: The title displayed below the icon.
-    ///   - image: The custom image name.
-    ///   - imageBundle: The bundle containing the image. Defaults to `.main`.
-    ///   - onReselect: Called when the user taps this tab while it's already selected.
     init(
         value: Value,
         title: String,
         image: String,
         imageBundle: Bundle? = nil,
+        symbolEffect: TabSymbolEffect = .bounce,
         onReselect: (() -> Void)? = nil
     ) {
         self.value = value
@@ -68,6 +83,7 @@ struct LagoonTabBarTab<Value: Hashable>: Identifiable {
         self.systemImage = nil
         self.image = image
         self.imageBundle = imageBundle ?? .main
+        self.symbolEffect = symbolEffect
         self.onReselect = onReselect
     }
 }

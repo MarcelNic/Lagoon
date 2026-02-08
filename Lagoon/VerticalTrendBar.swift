@@ -34,6 +34,11 @@ struct PredictionData {
     let lastMeasuredValue: Double
     let lastMeasurementTime: Date
     let recommendation: DosingRecommendation?
+    let lastDosingAmount: Double?
+    let lastDosingProduct: String?
+    let lastDosingTime: Date?
+    let weatherTemperature: Double?
+    let uvLevel: UVExposureLevel?
 }
 
 struct VerticalTrendBar: View {
@@ -382,8 +387,8 @@ struct PredictionPopoverContent: View {
             // Hero: Wert + Trend + Confidence
             heroValueSection
 
-            // Letzte Messung (kompakt)
-            lastMeasurementRow
+            // Einflussfaktoren
+            factorsSection
 
             // Empfehlung (falls vorhanden)
             if let recommendation = prediction.recommendation,
@@ -391,12 +396,6 @@ struct PredictionPopoverContent: View {
                 recommendationCard(recommendation)
             }
 
-            // Confidence-Reason als dezenter Footer
-            Text(prediction.confidenceReason)
-                .font(.caption2)
-                .foregroundStyle(.quaternary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(20)
         .frame(width: 280)
@@ -406,16 +405,6 @@ struct PredictionPopoverContent: View {
 
     private var headerView: some View {
         HStack(spacing: 8) {
-            Image(systemName: "apple.intelligence")
-                .font(.system(size: 16))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.red, .orange, .yellow, .green, .blue, .purple],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-
             Text("\(title) Vorhersage")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.secondary)
@@ -427,7 +416,7 @@ struct PredictionPopoverContent: View {
     // MARK: - Hero Value
 
     private var heroValueSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(formatValue(prediction.estimatedValue))
                     .font(.system(size: 48, weight: .bold, design: .rounded))
@@ -438,61 +427,130 @@ struct PredictionPopoverContent: View {
                         .font(.system(size: 20, weight: .medium, design: .rounded))
                         .foregroundStyle(tintColor.opacity(0.6))
                 }
-
-                trendBadge
             }
 
-            // Confidence Dots
-            HStack(spacing: 6) {
-                HStack(spacing: 4) {
-                    ForEach(0..<5) { index in
-                        Circle()
-                            .fill(index < confidenceDotCount ? tintColor : Color.primary.opacity(0.15))
-                            .frame(width: 6, height: 6)
-                    }
-                }
+            // Trend + Konfidenz als Text
+            HStack(spacing: 8) {
+                Label(trendText, systemImage: trend.chevronName)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(trendColor)
 
-                Text(confidenceText)
+                Text("·")
+                    .foregroundStyle(.quaternary)
+
+                Text("Konfidenz: \(confidenceText)")
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.secondary)
             }
         }
     }
 
-    private var trendBadge: some View {
-        Image(systemName: trend.chevronName)
-            .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(.white)
-            .frame(width: 24, height: 24)
-            .background {
-                Circle()
-                    .fill(trendColor.gradient)
-            }
+    private var trendText: String {
+        switch trend {
+        case .up: return "Steigend"
+        case .down: return "Sinkend"
+        case .stable: return "Stabil"
+        }
     }
 
-    // MARK: - Last Measurement
+    // MARK: - Factors Section
 
-    private var lastMeasurementRow: some View {
-        HStack(spacing: 8) {
-            Text(formatValue(prediction.lastMeasuredValue) + (unit.isEmpty ? "" : " \(unit)"))
-                .font(.system(size: 14, weight: .medium, design: .rounded))
+    private var factorsSection: some View {
+        VStack(spacing: 0) {
+            // Letzte Messung
+            factorRow(
+                icon: "testtube.2",
+                label: "Letzte Messung",
+                value: formatValue(prediction.lastMeasuredValue) + (unit.isEmpty ? "" : " \(unit)"),
+                detail: relativeTimeString(from: prediction.lastMeasurementTime)
+            )
+
+            Divider().padding(.leading, 32)
+
+            // Letzte Dosierung
+            if let amount = prediction.lastDosingAmount,
+               let product = prediction.lastDosingProduct,
+               let time = prediction.lastDosingTime {
+                factorRow(
+                    icon: "eyedropper",
+                    label: "Letzte Dosierung",
+                    value: "\(formatDoseAmount(amount)) g \(product)",
+                    detail: relativeTimeString(from: time)
+                )
+
+                Divider().padding(.leading, 32)
+            }
+
+            // Wetter & Auswirkung
+            if let temp = prediction.weatherTemperature,
+               let uv = prediction.uvLevel {
+                factorRow(
+                    icon: "sun.max",
+                    label: "\(String(format: "%.0f", temp)) °C · UV \(uvLabel(uv))",
+                    value: weatherImpact(uv: uv, temp: temp),
+                    detail: nil
+                )
+            }
+        }
+        .padding(12)
+        .background {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.primary.opacity(0.04))
+        }
+    }
+
+    private func factorRow(icon: String, label: String, value: String, detail: String?) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background {
-                    Capsule()
-                        .fill(Color.primary.opacity(0.06))
+                .frame(width: 18)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                HStack(spacing: 4) {
+                    Text(value)
+                        .font(.caption.weight(.medium))
+                    if let detail {
+                        Text("· \(detail)")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
-
-            Image(systemName: "arrow.right")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.tertiary)
-
-            Text(relativeTimeString(from: prediction.lastMeasurementTime))
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+            }
 
             Spacer()
+        }
+        .padding(.vertical, 6)
+    }
+
+    private func uvLabel(_ uv: UVExposureLevel) -> String {
+        switch uv {
+        case .low: return "Niedrig"
+        case .medium: return "Mittel"
+        case .high: return "Hoch"
+        }
+    }
+
+    private func weatherImpact(uv: UVExposureLevel, temp: Double) -> String {
+        if title == "pH" {
+            if temp > 28 {
+                return "Wärme beschleunigt pH-Anstieg"
+            } else {
+                return "Geringer Einfluss auf pH"
+            }
+        } else {
+            // Chlor
+            switch uv {
+            case .high:
+                return "Starker Chlorabbau durch UV"
+            case .medium:
+                return "Mäßiger Chlorabbau"
+            case .low:
+                return "Langsamer Chlorabbau"
+            }
         }
     }
 
@@ -549,14 +607,6 @@ struct PredictionPopoverContent: View {
         case .high: return "Hoch"
         case .medium: return "Mittel"
         case .low: return "Niedrig"
-        }
-    }
-
-    private var confidenceDotCount: Int {
-        switch prediction.confidence {
-        case .high: return 5
-        case .medium: return 3
-        case .low: return 1
         }
     }
 

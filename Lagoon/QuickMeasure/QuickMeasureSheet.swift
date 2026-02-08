@@ -206,8 +206,7 @@ struct QuickMeasureSheet: View {
         Section {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Label("pH-Wert", systemImage: "drop.fill")
-                        .foregroundStyle(.primary)
+                    Text("pH-Wert")
                     Spacer()
                     Text(String(format: "%.1f", phValue))
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -221,8 +220,7 @@ struct QuickMeasureSheet: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Label("Chlor", systemImage: "allergens.fill")
-                        .foregroundStyle(.primary)
+                    Text("Chlor")
                     Spacer()
                     Text(String(format: "%.1f mg/l", chlorineValue))
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -243,13 +241,12 @@ struct QuickMeasureSheet: View {
                         .foregroundStyle(.primary)
                     Spacer()
                     Text(String(format: "%.0f °C", waterTemperature))
-                        .foregroundStyle(temperatureColor(for: waterTemperature))
                         .monospacedDigit()
                         .contentTransition(.numericText())
                         .animation(.snappy, value: waterTemperature)
                 }
                 Slider(value: $waterTemperature, in: 10.0...40.0, step: 1.0)
-                    .tint(Color(light: .black, dark: .white))
+                    .tint(temperatureColor(for: waterTemperature))
             }
         }
 
@@ -263,12 +260,10 @@ struct QuickMeasureSheet: View {
             } label: {
                 Text("Messen")
                     .font(.headline)
-                    .foregroundStyle(Color(light: .white, dark: .black))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
             }
             .buttonStyle(.glassProminent)
-            .tint(.primary)
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 0, trailing: 4))
         }
@@ -368,8 +363,7 @@ struct QuickMeasureSheet: View {
         Section {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Label("pH", systemImage: "drop.fill")
-                        .foregroundStyle(.primary)
+                    Text("pH")
                     Spacer()
                     Text(DosingFormatter.format(grams: editedPHAmount, unit: dosingUnit, cupGrams: cupGrams))
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -393,8 +387,7 @@ struct QuickMeasureSheet: View {
         Section {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Label("Chlor", systemImage: "allergens.fill")
-                        .foregroundStyle(.primary)
+                    Text("Chlor")
                     Spacer()
                     Text(DosingFormatter.format(grams: editedChlorineAmount, unit: dosingUnit, cupGrams: cupGrams))
                         .font(.system(size: 17, weight: .semibold, design: .rounded))

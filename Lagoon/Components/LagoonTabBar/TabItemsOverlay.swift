@@ -62,10 +62,19 @@ final class TabItemsOverlay<Value: Hashable>: UIView {
     }
 
     func setSelectedIndex(_ index: Int, animated: Bool) {
+        let changed = selectedIndex != index
         selectedIndex = index
         if highlightedIndex == nil {
             updateHighlightStates(animated: animated)
         }
+        if changed {
+            playSymbolEffect(at: index)
+        }
+    }
+
+    private func playSymbolEffect(at index: Int) {
+        guard index >= 0 && index < tabItemViews.count else { return }
+        tabItemViews[index].playSymbolEffect()
     }
 
     func setHighlightedIndex(_ index: Int?) {

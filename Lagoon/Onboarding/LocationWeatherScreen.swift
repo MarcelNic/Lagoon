@@ -172,15 +172,15 @@ private struct LocationSearchSheet: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(searchResults, id: \.self) { item in
+                        let displayName: String = item.name ?? item.address?.shortAddress ?? "Unbekannt"
                         Button {
-                            let coord = item.placemark.coordinate
-                            let name = item.name ?? item.placemark.title ?? "Unbekannt"
+                            let coord = item.location.coordinate
                             locationManager.location = CLLocation(latitude: coord.latitude, longitude: coord.longitude)
-                            locationManager.locationName = name
-                            onSelect(coord, name)
+                            locationManager.locationName = displayName
+                            onSelect(coord, displayName)
                             dismiss()
                         } label: {
-                            Label(item.name ?? item.placemark.title ?? "Unbekannt", systemImage: "mappin.circle.fill")
+                            Label(displayName, systemImage: "mappin.circle.fill")
                         }
                     }
                 }
