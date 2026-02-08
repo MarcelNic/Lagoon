@@ -6,18 +6,33 @@
 import SwiftUI
 import SwiftData
 
+enum TaskFilter: String, CaseIterable {
+    case all = "Alle"
+    case today = "Heute"
+    case completed = "Erledigte"
+}
+
 struct PoolcareView: View {
     @Bindable var state: PoolcareState
     @Binding var showAddSheet: Bool
     @State private var editingTask: CareTask?
     @State private var showNewScenarioSheet = false
+    @State private var taskFilter: TaskFilter = .all
 
     private var scenario: CareScenario? {
         state.currentScenario()
     }
 
     private var sortedTasks: [CareTask] {
-        scenario?.sortedTasks ?? []
+        let tasks = scenario?.sortedTasks ?? []
+        switch taskFilter {
+        case .all:
+            return tasks.filter { !$0.isCompleted }
+        case .today:
+            return tasks.filter { !$0.isCompleted && $0.urgency <= .dueToday }
+        case .completed:
+            return tasks.filter { $0.isCompleted }
+        }
     }
 
     var body: some View {
@@ -41,7 +56,14 @@ struct PoolcareView: View {
                     }
 
                     // Task List
-                    if !sortedTasks.isEmpty {
+                    if sortedTasks.isEmpty {
+                        ContentUnavailableView(
+                            taskFilter == .today ? "Keine Aufgaben heute" : "Keine erledigten Aufgaben",
+                            systemImage: taskFilter == .today ? "calendar" : "checkmark.circle",
+                            description: Text(taskFilter == .today ? "Für heute steht nichts an." : "Noch keine Aufgaben erledigt.")
+                        )
+                        .padding(.top, 40)
+                    } else {
                         VStack(spacing: 0) {
                             ForEach(sortedTasks) { task in
                                 Group {
@@ -53,6 +75,7 @@ struct PoolcareView: View {
                                 }
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 12)
+                                .contentShape(Rectangle())
                                 .contextMenu {
                                     taskContextMenu(for: task)
                                 }
@@ -66,7 +89,7 @@ struct PoolcareView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 16)
+                .padding(.top, 32)
             }
             .scrollContentBackground(.hidden)
             .background {
@@ -74,9 +97,14 @@ struct PoolcareView: View {
                     .ignoresSafeArea()
             }
             .safeAreaInset(edge: .top, spacing: 0) {
-                ScenarioPill(state: state, showNewScenarioSheet: $showNewScenarioSheet)
-                    .padding(.top, 8)
-                    .padding(.bottom, 4)
+                HStack {
+                    ScenarioPill(state: state, showNewScenarioSheet: $showNewScenarioSheet)
+                    Spacer()
+                    FilterButton(filter: $taskFilter)
+                        .padding(.trailing, 20)
+                }
+                .padding(.top, 16)
+                .padding(.bottom, 4)
             }
             .sheet(isPresented: $showAddSheet) {
                 AddItemSheet(state: state)
@@ -144,23 +172,52 @@ private struct ScenarioPill: View {
                 Label("Neues Szenario", systemImage: "plus")
             }
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
                 Image(systemName: "chevron.up.chevron.down")
-                    .font(.caption.weight(.semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
                 Text(currentScenario?.name ?? "Szenario")
             }
-            .font(.body.weight(.medium))
+            .font(.title3.weight(.medium))
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
         }
         .menuStyle(.button)
         .buttonStyle(.plain)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 8)
         .glassEffect(.clear.interactive(), in: .capsule)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 20)
+        .padding(.leading, 20)
+    }
+}
+
+// MARK: - Filter Button
+
+private struct FilterButton: View {
+    @Binding var filter: TaskFilter
+
+    var body: some View {
+        Menu {
+            ForEach(TaskFilter.allCases, id: \.self) { option in
+                Button {
+                    filter = option
+                } label: {
+                    Label(
+                        option.rawValue,
+                        systemImage: option == .all ? "line.3.horizontal.decrease"
+                            : option == .today ? "calendar"
+                            : "checkmark.circle"
+                    )
+                }
+            }
+        } label: {
+            Image(systemName: "line.3.horizontal.decrease")
+                .imageScale(.large)
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .padding(15)
+        .glassEffect(.clear.interactive(), in: .circle)
     }
 }
 
@@ -463,8 +520,7 @@ private struct AddItemSheet: View {
                         Button {
                             showSymbolPicker = true
                         } label: {
-                            Image(systemName: selectedIcon)
-                                .font(.title2)
+                            TaskIconView(iconName: selectedIcon, isCustomIcon: SymbolPickerSheet.customIconNames.contains(selectedIcon), size: 24)
                                 .foregroundStyle(.tint)
                                 .frame(width: 32, height: 32)
                         }
@@ -571,6 +627,7 @@ private struct AddItemSheet: View {
             isAction: itemType == .action,
             actionDurationSeconds: itemType == .action ? duration : 0,
             iconName: selectedIcon,
+            isCustomIcon: SymbolPickerSheet.customIconNames.contains(selectedIcon),
             reminderTime: reminderEnabled ? reminderTime : nil,
             remindAfterTimer: itemType == .action ? remindAfterTimer : false
         )
@@ -582,6 +639,9 @@ private struct AddItemSheet: View {
 private struct SymbolPickerSheet: View {
     @Binding var selectedIcon: String
     @Environment(\.dismiss) private var dismiss
+
+    static let customIconNames: Set<String> = ["Robi"]
+    private let customIcons = Array(customIconNames)
 
     private let symbols = [
         "checkmark.circle", "drop.fill", "water.waves",
@@ -598,6 +658,27 @@ private struct SymbolPickerSheet: View {
         NavigationStack {
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 16) {
+                    ForEach(customIcons, id: \.self) { icon in
+                        Button {
+                            selectedIcon = icon
+                            dismiss()
+                        } label: {
+                            Image(icon)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 28, height: 28)
+                                .frame(width: 48, height: 48)
+                                .foregroundStyle(selectedIcon == icon ? .white : .primary)
+                                .background {
+                                    if selectedIcon == icon {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(.tint)
+                                    }
+                                }
+                        }
+                        .buttonStyle(.plain)
+                    }
+
                     ForEach(symbols, id: \.self) { symbol in
                         Button {
                             selectedIcon = symbol
@@ -686,8 +767,7 @@ private struct EditTaskSheet: View {
                         Button {
                             showSymbolPicker = true
                         } label: {
-                            Image(systemName: selectedIcon)
-                                .font(.title2)
+                            TaskIconView(iconName: selectedIcon, isCustomIcon: SymbolPickerSheet.customIconNames.contains(selectedIcon), size: 24)
                                 .foregroundStyle(.tint)
                                 .frame(width: 32, height: 32)
                         }
@@ -783,7 +863,7 @@ private struct EditTaskSheet: View {
     private func saveChanges() {
         let duration = Double(actionHours * 3600 + actionMinutes * 60)
         task.iconName = selectedIcon
-        task.isCustomIcon = false
+        task.isCustomIcon = SymbolPickerSheet.customIconNames.contains(selectedIcon)
         task.reminderTime = reminderEnabled ? reminderTime : nil
         task.remindAfterTimer = task.isAction ? remindAfterTimer : false
         state.updateTask(

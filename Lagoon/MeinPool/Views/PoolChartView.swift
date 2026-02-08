@@ -27,7 +27,8 @@ struct PoolChartView: View {
     let idealRangeColor: Color
     let yDomain: ClosedRange<Double>
     let timeRange: ChartTimeRange
-    
+    let showAreaFill: Bool
+
     @State private var selectedDate: Date?
 
     init(
@@ -40,7 +41,8 @@ struct PoolChartView: View {
         lineColor: Color,
         idealRangeColor: Color,
         yDomain: ClosedRange<Double>,
-        timeRange: ChartTimeRange
+        timeRange: ChartTimeRange,
+        showAreaFill: Bool = false
     ) {
         self.title = title
         self.unit = unit
@@ -52,6 +54,7 @@ struct PoolChartView: View {
         self.idealRangeColor = idealRangeColor
         self.yDomain = yDomain
         self.timeRange = timeRange
+        self.showAreaFill = showAreaFill
     }
 
     // Combined data for selection lookup
@@ -148,23 +151,25 @@ struct PoolChartView: View {
                 )
                 .foregroundStyle(lineColor)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
-                .interpolationMethod(.catmullRom)
+                .interpolationMethod(.linear)
             }
 
             // Area under measured curve
-            ForEach(data) { point in
-                AreaMark(
-                    x: .value("Zeit", point.timestamp),
-                    y: .value("Wert", point.value)
-                )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [lineColor.opacity(0.2), lineColor.opacity(0.0)],
-                        startPoint: .top,
-                        endPoint: .bottom
+            if showAreaFill {
+                ForEach(data) { point in
+                    AreaMark(
+                        x: .value("Zeit", point.timestamp),
+                        y: .value("Wert", point.value)
                     )
-                )
-                .interpolationMethod(.catmullRom)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [lineColor.opacity(0.2), lineColor.opacity(0.0)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .interpolationMethod(.linear)
+                }
             }
 
             // Data points
@@ -186,7 +191,7 @@ struct PoolChartView: View {
                 )
                 .foregroundStyle(lineColor.opacity(0.5))
                 .lineStyle(StrokeStyle(lineWidth: 2, dash: [6, 4]))
-                .interpolationMethod(.catmullRom)
+                .interpolationMethod(.linear)
             }
             
             // Selection rule line

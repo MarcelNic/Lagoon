@@ -70,10 +70,11 @@ struct MeinPoolView: View {
                         data: meinPoolState.temperatureChartData(in: selectedTimeRange),
                         idealMin: nil,
                         idealMax: nil,
-                        lineColor: .orange,
+                        lineColor: .red,
                         idealRangeColor: .clear,
                         yDomain: 10.0...40.0,
-                        timeRange: selectedTimeRange
+                        timeRange: selectedTimeRange,
+                        showAreaFill: true
                     )
 
                     // All entries button
