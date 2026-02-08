@@ -151,7 +151,7 @@ struct PoolChartView: View {
                 )
                 .foregroundStyle(lineColor)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
-                .interpolationMethod(.linear)
+                .interpolationMethod(.monotone)
             }
 
             // Area under measured curve
@@ -168,7 +168,7 @@ struct PoolChartView: View {
                             endPoint: .bottom
                         )
                     )
-                    .interpolationMethod(.linear)
+                    .interpolationMethod(.monotone)
                 }
             }
 
@@ -191,7 +191,7 @@ struct PoolChartView: View {
                 )
                 .foregroundStyle(lineColor.opacity(0.5))
                 .lineStyle(StrokeStyle(lineWidth: 2, dash: [6, 4]))
-                .interpolationMethod(.linear)
+                .interpolationMethod(.monotone)
             }
             
             // Selection rule line
