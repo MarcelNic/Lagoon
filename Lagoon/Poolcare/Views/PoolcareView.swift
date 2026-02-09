@@ -479,7 +479,6 @@ private struct AddItemSheet: View {
         return Calendar.current.date(from: components) ?? Date()
     }()
     @State private var remindAfterTimer = true
-    @State private var showSymbolPicker = false
     @State private var currentDetent: PresentationDetent = .large
     @State private var actionHours = 1
     @State private var actionMinutes = 0
@@ -502,18 +501,49 @@ private struct AddItemSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    HStack(spacing: 12) {
+                    TextField("Name", text: $title)
+                }
+
+                Section("Symbol") {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 16) {
                         Button {
-                            showSymbolPicker = true
+                            selectedIcon = "Robi"
                         } label: {
-                            TaskIconView(iconName: selectedIcon, isCustomIcon: SymbolPickerSheet.customIconNames.contains(selectedIcon), size: 24)
-                                .foregroundStyle(.tint)
-                                .frame(width: 32, height: 32)
+                            Image("Robi")
+                                .resizable()
+                                .renderingMode(.template)
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 24, height: 24)
+                                .frame(width: 44, height: 44)
+                                .foregroundStyle(selectedIcon == "Robi" ? .white : .primary)
+                                .background {
+                                    if selectedIcon == "Robi" {
+                                        Circle()
+                                            .fill(.tint)
+                                    }
+                                }
                         }
                         .buttonStyle(.plain)
 
-                        TextField("Name", text: $title)
+                        ForEach(taskIconOptions, id: \.self) { icon in
+                            Button {
+                                selectedIcon = icon
+                            } label: {
+                                Image(systemName: icon)
+                                    .font(.title2)
+                                    .frame(width: 44, height: 44)
+                                    .foregroundStyle(selectedIcon == icon ? .white : .primary)
+                                    .background {
+                                        if selectedIcon == icon {
+                                            Circle()
+                                                .fill(.tint)
+                                        }
+                                    }
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
+                    .padding(.vertical, 8)
                 }
 
                 Section("Fälligkeit") {
@@ -594,10 +624,6 @@ private struct AddItemSheet: View {
                     .disabled(title.isEmpty)
                 }
             }
-            .sheet(isPresented: $showSymbolPicker) {
-                SymbolPickerSheet(selectedIcon: $selectedIcon)
-                    .presentationDetents([.medium])
-            }
         }
     }
 
@@ -613,91 +639,40 @@ private struct AddItemSheet: View {
             isAction: itemType == .action,
             actionDurationSeconds: itemType == .action ? duration : 0,
             iconName: selectedIcon,
-            isCustomIcon: SymbolPickerSheet.customIconNames.contains(selectedIcon),
+            isCustomIcon: customTaskIconNames.contains(selectedIcon),
             reminderTime: reminderEnabled ? reminderTime : nil,
             remindAfterTimer: itemType == .action ? remindAfterTimer : false
         )
     }
 }
 
-// MARK: - Symbol Picker Sheet
+// MARK: - Task Icon Constants
 
-private struct SymbolPickerSheet: View {
-    @Binding var selectedIcon: String
-    @Environment(\.dismiss) private var dismiss
+private let customTaskIconNames: Set<String> = ["Robi"]
 
-    static let customIconNames: Set<String> = ["Robi"]
-    private let customIcons = Array(customIconNames)
-
-    private let symbols = [
-        "checkmark.circle", "drop.fill", "water.waves",
-        "thermometer.medium", "sun.max.fill", "snowflake",
-        "wind", "cloud.fill", "leaf.fill", "flame.fill",
-        "wrench.fill", "gearshape.fill", "paintbrush.fill",
-        "sparkles", "arrow.circlepath", "testtube.2",
-        "clock.fill", "bell.fill", "star.fill", "bolt.fill",
-        "eye", "gauge.with.dots.needle.bottom.50percent",
-        "figure.pool.swim", "slider.horizontal.3",
-    ]
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 16) {
-                    ForEach(customIcons, id: \.self) { icon in
-                        Button {
-                            selectedIcon = icon
-                            dismiss()
-                        } label: {
-                            Image(icon)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 28, height: 28)
-                                .frame(width: 48, height: 48)
-                                .foregroundStyle(selectedIcon == icon ? .white : .primary)
-                                .background {
-                                    if selectedIcon == icon {
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(.tint)
-                                    }
-                                }
-                        }
-                        .buttonStyle(.plain)
-                    }
-
-                    ForEach(symbols, id: \.self) { symbol in
-                        Button {
-                            selectedIcon = symbol
-                            dismiss()
-                        } label: {
-                            Image(systemName: symbol)
-                                .font(.title2)
-                                .frame(width: 48, height: 48)
-                                .foregroundStyle(selectedIcon == symbol ? .white : .primary)
-                                .background {
-                                    if selectedIcon == symbol {
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(.tint)
-                                    }
-                                }
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding()
-            }
-            .navigationTitle("Symbol")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark")
-                    }
-                }
-            }
-        }
-    }
-}
+private let taskIconOptions = [
+    // Wasser / Chemie
+    "drop.fill", "drop.triangle.fill", "water.waves", "testtube.2", "flask.fill",
+    // Reinigung / Pflege
+    "sparkles", "paintbrush.fill", "leaf.fill", "arrow.circlepath",
+    // Pool
+    "figure.pool.swim", "eye", "aqi.medium",
+    // Temperatur
+    "thermometer.medium", "thermometer.sun", "thermometer.snowflake", "flame.fill",
+    // Wetter
+    "sun.max.fill", "snowflake", "wind",
+    // Technik / Wartung
+    "wrench.fill", "gearshape.fill", "gauge.with.dots.needle.50percent",
+    "fuel.filter.water", "power", "lightbulb.fill",
+    // Wasser / Kreislauf
+    "arrow.up.and.down.circle", "arrow.counterclockwise.circle",
+    // Zeit / Erinnerung
+    "clock.fill", "calendar",
+    // Abdeckung
+    "window.shade.open", "window.shade.closed",
+    // Allgemein
+    "checkmark.circle", "basket.fill", "pipe.and.drop", "bolt.circle.fill",
+]
 
 // MARK: - Edit Task Sheet
 
@@ -715,7 +690,6 @@ private struct EditTaskSheet: View {
     @State private var remindAfterTimer: Bool
     @State private var actionHours: Int
     @State private var actionMinutes: Int
-    @State private var showSymbolPicker = false
 
     private let intervalOptions: [(String, Int)] = [
         ("Einmalig", 0),
@@ -749,18 +723,49 @@ private struct EditTaskSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    HStack(spacing: 12) {
+                    TextField("Name", text: $title)
+                }
+
+                Section("Symbol") {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 16) {
                         Button {
-                            showSymbolPicker = true
+                            selectedIcon = "Robi"
                         } label: {
-                            TaskIconView(iconName: selectedIcon, isCustomIcon: SymbolPickerSheet.customIconNames.contains(selectedIcon), size: 24)
-                                .foregroundStyle(.tint)
-                                .frame(width: 32, height: 32)
+                            Image("Robi")
+                                .resizable()
+                                .renderingMode(.template)
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 24, height: 24)
+                                .frame(width: 44, height: 44)
+                                .foregroundStyle(selectedIcon == "Robi" ? .white : .primary)
+                                .background {
+                                    if selectedIcon == "Robi" {
+                                        Circle()
+                                            .fill(.tint)
+                                    }
+                                }
                         }
                         .buttonStyle(.plain)
 
-                        TextField("Name", text: $title)
+                        ForEach(taskIconOptions, id: \.self) { icon in
+                            Button {
+                                selectedIcon = icon
+                            } label: {
+                                Image(systemName: icon)
+                                    .font(.title2)
+                                    .frame(width: 44, height: 44)
+                                    .foregroundStyle(selectedIcon == icon ? .white : .primary)
+                                    .background {
+                                        if selectedIcon == icon {
+                                            Circle()
+                                                .fill(.tint)
+                                        }
+                                    }
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
+                    .padding(.vertical, 8)
                 }
 
                 Section("Fälligkeit") {
@@ -839,17 +844,13 @@ private struct EditTaskSheet: View {
                     .disabled(title.isEmpty)
                 }
             }
-            .sheet(isPresented: $showSymbolPicker) {
-                SymbolPickerSheet(selectedIcon: $selectedIcon)
-                    .presentationDetents([.medium])
-            }
         }
     }
 
     private func saveChanges() {
         let duration = Double(actionHours * 3600 + actionMinutes * 60)
         task.iconName = selectedIcon
-        task.isCustomIcon = SymbolPickerSheet.customIconNames.contains(selectedIcon)
+        task.isCustomIcon = customTaskIconNames.contains(selectedIcon)
         task.reminderTime = reminderEnabled ? reminderTime : nil
         task.remindAfterTimer = task.isAction ? remindAfterTimer : false
         state.updateTask(
@@ -874,9 +875,22 @@ private struct NewScenarioSheet: View {
     @State private var nextScenarioId: UUID?
 
     private let iconOptions = [
-        "leaf.fill", "flame.fill", "drop.fill", "sparkles",
-        "star.fill", "heart.fill", "bolt.fill", "moon.fill",
-        "cloud.fill", "wind", "thermometer.medium", "wrench.fill",
+        // Wasser / Pool
+        "drop.fill", "drop.triangle.fill", "water.waves", "figure.pool.swim",
+        // Temperatur
+        "thermometer.medium", "thermometer.sun", "thermometer.snowflake", "flame.fill",
+        // Wetter / Jahreszeiten
+        "sun.max.fill", "snowflake", "cloud.fill", "wind",
+        "moon.fill", "leaf.fill", "umbrella.fill", "bolt.fill",
+        // Werkzeug / Chemie
+        "wrench.fill", "gearshape.fill", "sparkles", "testtube.2",
+        "flask.fill", "lightbulb.fill",
+        // Szenarien / Lifestyle
+        "door.left.hand.open", "power", "calendar", "checklist",
+        "airplane", "suitcase.fill", "house.fill", "tent.fill",
+        "person.2.fill", "flag.fill",
+        // Allgemein
+        "heart.fill", "star.fill", "arrow.triangle.2.circlepath", "exclamationmark.triangle.fill",
     ]
 
     var body: some View {
@@ -910,25 +924,11 @@ private struct NewScenarioSheet: View {
                 }
 
                 Section("Wenn alles erledigt, wechseln zu") {
-                    Menu {
-                        Button {
-                            nextScenarioId = nil
-                        } label: {
-                            Text("Keins")
-                        }
+                    Picker("Folge-Szenario", selection: $nextScenarioId) {
+                        Text("Keins").tag(UUID?.none)
+                        Divider()
                         ForEach(scenarios) { s in
-                            Button {
-                                nextScenarioId = s.id
-                            } label: {
-                                Label(s.name, systemImage: s.icon)
-                            }
-                        }
-                    } label: {
-                        HStack {
-                            Text("Folge-Szenario")
-                            Spacer()
-                            Text(scenarios.first { $0.id == nextScenarioId }?.name ?? "Keins")
-                                .foregroundStyle(.secondary)
+                            Text(s.name).tag(UUID?.some(s.id))
                         }
                     }
                 }
@@ -969,13 +969,25 @@ private struct EditScenarioSheet: View {
     @State private var name: String
     @State private var selectedIcon: String
     @State private var nextScenarioId: UUID?
+    @State private var showDeleteConfirmation = false
 
     private let iconOptions = [
-        "leaf.fill", "flame.fill", "drop.fill", "sparkles",
-        "star.fill", "heart.fill", "bolt.fill", "moon.fill",
-        "cloud.fill", "wind", "thermometer.medium", "wrench.fill",
-        "sun.max.fill", "snowflake", "airplane", "door.left.hand.open",
-        "thermometer.snowflake",
+        // Wasser / Pool
+        "drop.fill", "drop.triangle.fill", "water.waves", "figure.pool.swim",
+        // Temperatur
+        "thermometer.medium", "thermometer.sun", "thermometer.snowflake", "flame.fill",
+        // Wetter / Jahreszeiten
+        "sun.max.fill", "snowflake", "cloud.fill", "wind",
+        "moon.fill", "leaf.fill", "umbrella.fill", "bolt.fill",
+        // Werkzeug / Chemie
+        "wrench.fill", "gearshape.fill", "sparkles", "testtube.2",
+        "flask.fill", "lightbulb.fill",
+        // Szenarien / Lifestyle
+        "door.left.hand.open", "power", "calendar", "checklist",
+        "airplane", "suitcase.fill", "house.fill", "tent.fill",
+        "person.2.fill", "flag.fill",
+        // Allgemein
+        "heart.fill", "star.fill", "arrow.triangle.2.circlepath", "exclamationmark.triangle.fill",
     ]
 
     init(scenario: CareScenario, state: PoolcareState) {
@@ -1017,33 +1029,18 @@ private struct EditScenarioSheet: View {
                 }
 
                 Section("Wenn alles erledigt, wechseln zu") {
-                    Menu {
-                        Button {
-                            nextScenarioId = nil
-                        } label: {
-                            Text("Keins")
-                        }
+                    Picker("Folge-Szenario", selection: $nextScenarioId) {
+                        Text("Keins").tag(UUID?.none)
+                        Divider()
                         ForEach(scenarios.filter { $0.id != scenario.id }) { s in
-                            Button {
-                                nextScenarioId = s.id
-                            } label: {
-                                Label(s.name, systemImage: s.icon)
-                            }
-                        }
-                    } label: {
-                        HStack {
-                            Text("Folge-Szenario")
-                            Spacer()
-                            Text(scenarios.first { $0.id == nextScenarioId }?.name ?? "Keins")
-                                .foregroundStyle(.secondary)
+                            Text(s.name).tag(UUID?.some(s.id))
                         }
                     }
                 }
 
                 Section {
                     Button(role: .destructive) {
-                        state.deleteScenario(scenario)
-                        dismiss()
+                        showDeleteConfirmation = true
                     } label: {
                         HStack {
                             Spacer()
@@ -1054,6 +1051,15 @@ private struct EditScenarioSheet: View {
                 }
             }
             .navigationTitle("Szenario bearbeiten")
+            .alert("Szenario löschen?", isPresented: $showDeleteConfirmation) {
+                Button("Löschen", role: .destructive) {
+                    state.deleteScenario(scenario)
+                    dismiss()
+                }
+                Button("Abbrechen", role: .cancel) { }
+            } message: {
+                Text("Das Szenario \"\(scenario.name)\" und alle zugehörigen Aufgaben werden unwiderruflich gelöscht.")
+            }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
