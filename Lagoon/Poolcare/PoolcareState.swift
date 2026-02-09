@@ -14,6 +14,8 @@ final class PoolcareState {
     // MARK: - Scenario Selection
 
     var currentScenarioId: UUID?
+    var showSwitchScenarioAlert = false
+    var pendingNextScenario: CareScenario?
 
     // MARK: - Active Timers (in-memory)
 
@@ -22,7 +24,7 @@ final class PoolcareState {
 
     // MARK: - Private
 
-    private var modelContext: ModelContext?
+    private(set) var modelContext: ModelContext?
     private var timerCancellable: AnyCancellable?
     private var robotActivity: Activity<RobotActivityAttributes>?
     private var lastLiveActivityUpdate: Date = .distantPast
@@ -72,8 +74,13 @@ final class PoolcareState {
         return scenario
     }
 
+    func confirmScenarioSwitch() {
+        guard let next = pendingNextScenario else { return }
+        currentScenarioId = next.id
+        pendingNextScenario = nil
+    }
+
     func deleteScenario(_ scenario: CareScenario) {
-        guard !scenario.isBuiltIn else { return }
         modelContext?.delete(scenario)
         try? modelContext?.save()
 
@@ -109,7 +116,26 @@ final class PoolcareState {
                 context.delete(task)
             }
             try? context.save()
+
+            // Check if all tasks in scenario are completed → offer switch
+            self.checkAllTasksCompleted()
         }
+    }
+
+    private func checkAllTasksCompleted() {
+        guard let scenario = currentScenario(),
+              let nextId = scenario.nextScenarioId else { return }
+
+        let remainingTasks = scenario.tasks.filter { !$0.isCompleted }
+        guard remainingTasks.isEmpty else { return }
+
+        // Find the next scenario
+        guard let context = modelContext else { return }
+        let descriptor = FetchDescriptor<CareScenario>(predicate: #Predicate { $0.id == nextId })
+        guard let nextScenario = try? context.fetch(descriptor).first else { return }
+
+        pendingNextScenario = nextScenario
+        showSwitchScenarioAlert = true
     }
 
     func addTask(
@@ -351,6 +377,38 @@ final class PoolcareState {
                 intervalDays: 0
             )
             task.scenario = urlaub
+            context.insert(task)
+        }
+
+        // Pool Öffnen (→ Sommer)
+        let oeffnen = CareScenario(name: "Pool Öffnen", icon: "door.left.hand.open", sortOrder: 3, isBuiltIn: true, nextScenarioId: sommer.id)
+        context.insert(oeffnen)
+
+        let oeffnenTasks = ["Abdeckung entfernen", "Wasser auffüllen", "Filteranlage starten", "pH-Wert messen", "Chlor-Stoßbehandlung", "Boden & Wände reinigen"]
+
+        for title in oeffnenTasks {
+            let task = CareTask(
+                title: title,
+                dueDate: now,
+                intervalDays: 0
+            )
+            task.scenario = oeffnen
+            context.insert(task)
+        }
+
+        // Einwintern (→ Winter)
+        let einwintern = CareScenario(name: "Einwintern", icon: "thermometer.snowflake", sortOrder: 4, isBuiltIn: true, nextScenarioId: winter.id)
+        context.insert(einwintern)
+
+        let einwinternTasks = ["Wasserpegel absenken", "Leitungen entleeren", "Wintermittel zugeben", "Filteranlage abstellen", "Abdeckung anbringen", "Skimmer sichern"]
+
+        for title in einwinternTasks {
+            let task = CareTask(
+                title: title,
+                dueDate: now,
+                intervalDays: 0
+            )
+            task.scenario = einwintern
             context.insert(task)
         }
 

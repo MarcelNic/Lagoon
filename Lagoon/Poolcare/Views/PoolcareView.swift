@@ -18,6 +18,7 @@ struct PoolcareView: View {
     @Query(sort: \CareScenario.sortOrder) private var scenarios: [CareScenario]
     @State private var editingTask: CareTask?
     @State private var showNewScenarioSheet = false
+    @State private var showEditScenarioSheet = false
     @State private var taskFilter: TaskFilter = .all
 
     private var scenario: CareScenario? {
@@ -118,6 +119,11 @@ struct PoolcareView: View {
                         }
                         Divider()
                         Button {
+                            showEditScenarioSheet = true
+                        } label: {
+                            Label("Bearbeiten", systemImage: "pencil")
+                        }
+                        Button {
                             showNewScenarioSheet = true
                         } label: {
                             Label("Neues Szenario", systemImage: "plus")
@@ -160,7 +166,25 @@ struct PoolcareView: View {
             }
             .sheet(isPresented: $showNewScenarioSheet) {
                 NewScenarioSheet(state: state)
-                    .presentationDetents([.medium])
+                    .presentationDetents([.large])
+            }
+            .sheet(isPresented: $showEditScenarioSheet) {
+                if let scenario {
+                    EditScenarioSheet(scenario: scenario, state: state)
+                        .presentationDetents([.large])
+                }
+            }
+            .alert(
+                "Alle Aufgaben erledigt",
+                isPresented: $state.showSwitchScenarioAlert,
+                presenting: state.pendingNextScenario
+            ) { next in
+                Button("Zu \"\(next.name)\" wechseln") {
+                    state.confirmScenarioSwitch()
+                }
+                Button("Abbrechen", role: .cancel) { }
+            } message: { next in
+                Text("Möchtest du jetzt zu \"\(next.name)\" wechseln?")
             }
         }
     }
@@ -843,9 +867,11 @@ private struct EditTaskSheet: View {
 private struct NewScenarioSheet: View {
     @Bindable var state: PoolcareState
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \CareScenario.sortOrder) private var scenarios: [CareScenario]
 
     @State private var name = ""
     @State private var selectedIcon = "leaf.fill"
+    @State private var nextScenarioId: UUID?
 
     private let iconOptions = [
         "leaf.fill", "flame.fill", "drop.fill", "sparkles",
@@ -882,19 +908,169 @@ private struct NewScenarioSheet: View {
                     }
                     .padding(.vertical, 8)
                 }
+
+                Section("Wenn alles erledigt, wechseln zu") {
+                    Menu {
+                        Button {
+                            nextScenarioId = nil
+                        } label: {
+                            Text("Keins")
+                        }
+                        ForEach(scenarios) { s in
+                            Button {
+                                nextScenarioId = s.id
+                            } label: {
+                                Label(s.name, systemImage: s.icon)
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Text("Folge-Szenario")
+                            Spacer()
+                            Text(scenarios.first { $0.id == nextScenarioId }?.name ?? "Keins")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
             }
             .navigationTitle("Neues Szenario")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                    }
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Erstellen") {
+                    Button {
                         let scenario = state.createScenario(name: name, icon: selectedIcon)
+                        scenario.nextScenarioId = nextScenarioId
                         state.currentScenarioId = scenario.id
                         dismiss()
+                    } label: {
+                        Image(systemName: "checkmark")
+                    }
+                    .disabled(name.isEmpty)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Edit Scenario Sheet
+
+private struct EditScenarioSheet: View {
+    let scenario: CareScenario
+    @Bindable var state: PoolcareState
+    @Environment(\.dismiss) private var dismiss
+    @Query(sort: \CareScenario.sortOrder) private var scenarios: [CareScenario]
+
+    @State private var name: String
+    @State private var selectedIcon: String
+    @State private var nextScenarioId: UUID?
+
+    private let iconOptions = [
+        "leaf.fill", "flame.fill", "drop.fill", "sparkles",
+        "star.fill", "heart.fill", "bolt.fill", "moon.fill",
+        "cloud.fill", "wind", "thermometer.medium", "wrench.fill",
+        "sun.max.fill", "snowflake", "airplane", "door.left.hand.open",
+        "thermometer.snowflake",
+    ]
+
+    init(scenario: CareScenario, state: PoolcareState) {
+        self.scenario = scenario
+        self.state = state
+        _name = State(initialValue: scenario.name)
+        _selectedIcon = State(initialValue: scenario.icon)
+        _nextScenarioId = State(initialValue: scenario.nextScenarioId)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Name", text: $name)
+                }
+
+                Section("Icon") {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 16) {
+                        ForEach(iconOptions, id: \.self) { icon in
+                            Button {
+                                selectedIcon = icon
+                            } label: {
+                                Image(systemName: icon)
+                                    .font(.title2)
+                                    .frame(width: 44, height: 44)
+                                    .foregroundStyle(selectedIcon == icon ? .white : .primary)
+                                    .background {
+                                        if selectedIcon == icon {
+                                            Circle()
+                                                .fill(.tint)
+                                        }
+                                    }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
+
+                Section("Wenn alles erledigt, wechseln zu") {
+                    Menu {
+                        Button {
+                            nextScenarioId = nil
+                        } label: {
+                            Text("Keins")
+                        }
+                        ForEach(scenarios.filter { $0.id != scenario.id }) { s in
+                            Button {
+                                nextScenarioId = s.id
+                            } label: {
+                                Label(s.name, systemImage: s.icon)
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Text("Folge-Szenario")
+                            Spacer()
+                            Text(scenarios.first { $0.id == nextScenarioId }?.name ?? "Keins")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                Section {
+                    Button(role: .destructive) {
+                        state.deleteScenario(scenario)
+                        dismiss()
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Text("Szenario löschen")
+                            Spacer()
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Szenario bearbeiten")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                    }
+                }
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        scenario.name = name
+                        scenario.icon = selectedIcon
+                        scenario.nextScenarioId = nextScenarioId
+                        try? state.modelContext?.save()
+                        dismiss()
+                    } label: {
+                        Image(systemName: "checkmark")
                     }
                     .disabled(name.isEmpty)
                 }
