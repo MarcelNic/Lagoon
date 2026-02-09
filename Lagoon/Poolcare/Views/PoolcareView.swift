@@ -15,6 +15,7 @@ enum TaskFilter: String, CaseIterable {
 struct PoolcareView: View {
     @Bindable var state: PoolcareState
     @Binding var showAddSheet: Bool
+    @Query(sort: \CareScenario.sortOrder) private var scenarios: [CareScenario]
     @State private var editingTask: CareTask?
     @State private var showNewScenarioSheet = false
     @State private var taskFilter: TaskFilter = .all
@@ -32,6 +33,14 @@ struct PoolcareView: View {
             return tasks.filter { !$0.isCompleted && $0.urgency <= .dueToday }
         case .completed:
             return tasks.filter { $0.isCompleted }
+        }
+    }
+
+    private var filterIcon: String {
+        switch taskFilter {
+        case .all: "line.3.horizontal.decrease"
+        case .today: "calendar"
+        case .completed: "checkmark.circle"
         }
     }
 
@@ -89,22 +98,58 @@ struct PoolcareView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 32)
+                .padding(.top, 16)
             }
             .scrollContentBackground(.hidden)
             .background {
                 AdaptiveBackgroundGradient()
                     .ignoresSafeArea()
             }
-            .safeAreaInset(edge: .top, spacing: 0) {
-                HStack {
-                    ScenarioPill(state: state, showNewScenarioSheet: $showNewScenarioSheet)
-                    Spacer()
-                    FilterButton(filter: $taskFilter)
-                        .padding(.trailing, 20)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Menu {
+                        ForEach(scenarios) { s in
+                            Button {
+                                state.currentScenarioId = s.id
+                            } label: {
+                                Label(s.name, systemImage: s.icon)
+                            }
+                        }
+                        Divider()
+                        Button {
+                            showNewScenarioSheet = true
+                        } label: {
+                            Label("Neues Szenario", systemImage: "plus")
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                            Text(scenario?.name ?? "Szenario")
+                        }
+                    }
+                    .buttonStyle(.glass)
                 }
-                .padding(.top, 16)
-                .padding(.bottom, 4)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        ForEach(TaskFilter.allCases, id: \.self) { option in
+                            Button {
+                                taskFilter = option
+                            } label: {
+                                Label(
+                                    option.rawValue,
+                                    systemImage: option == .all ? "line.3.horizontal.decrease"
+                                        : option == .today ? "calendar"
+                                        : "checkmark.circle"
+                                )
+                            }
+                        }
+                    } label: {
+                        Image(systemName: filterIcon)
+                    }
+                }
             }
             .sheet(isPresented: $showAddSheet) {
                 AddItemSheet(state: state)
@@ -135,89 +180,6 @@ struct PoolcareView: View {
         } label: {
             Label("Löschen", systemImage: "trash")
         }
-    }
-}
-
-// MARK: - Scenario Pill
-
-private struct ScenarioPill: View {
-    @Bindable var state: PoolcareState
-    @Binding var showNewScenarioSheet: Bool
-    @Query(sort: \CareScenario.sortOrder) private var scenarios: [CareScenario]
-
-    private var currentScenario: CareScenario? {
-        scenarios.first { $0.id == state.currentScenarioId }
-    }
-
-    var body: some View {
-        Menu {
-            ForEach(scenarios) { scenario in
-                Button {
-                    state.currentScenarioId = scenario.id
-                } label: {
-                    Label(
-                        scenario.id == state.currentScenarioId
-                            ? "\(scenario.name)  ✓"
-                            : scenario.name,
-                        systemImage: scenario.icon
-                    )
-                }
-            }
-
-            Divider()
-
-            Button {
-                showNewScenarioSheet = true
-            } label: {
-                Label("Neues Szenario", systemImage: "plus")
-            }
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                Text(currentScenario?.name ?? "Szenario")
-            }
-            .font(.title3.weight(.medium))
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-        }
-        .menuStyle(.button)
-        .buttonStyle(.plain)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 8)
-        .glassEffect(.clear.interactive(), in: .capsule)
-        .padding(.leading, 20)
-    }
-}
-
-// MARK: - Filter Button
-
-private struct FilterButton: View {
-    @Binding var filter: TaskFilter
-
-    var body: some View {
-        Menu {
-            ForEach(TaskFilter.allCases, id: \.self) { option in
-                Button {
-                    filter = option
-                } label: {
-                    Label(
-                        option.rawValue,
-                        systemImage: option == .all ? "line.3.horizontal.decrease"
-                            : option == .today ? "calendar"
-                            : "checkmark.circle"
-                    )
-                }
-            }
-        } label: {
-            Image(systemName: "line.3.horizontal.decrease")
-                .imageScale(.large)
-        }
-        .menuStyle(.button)
-        .buttonStyle(.plain)
-        .padding(15)
-        .glassEffect(.clear.interactive(), in: .circle)
     }
 }
 
