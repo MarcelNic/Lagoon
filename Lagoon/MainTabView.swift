@@ -78,6 +78,7 @@ struct DashboardTabView: View {
 
     @AppStorage("dosingUnit") private var dosingUnit: String = "gramm"
     @AppStorage("cupGrams") private var cupGrams: Double = 50.0
+    @AppStorage("barStyle") private var barStyle: String = "classic"
 
     @Binding var showQuickMeasure: Bool
     @State private var quickMeasurePhase: Int = 0
@@ -151,39 +152,75 @@ struct DashboardTabView: View {
             VStack(spacing: 0) {
                 Spacer(minLength: 20)
 
-                // Dashboard Content - Classic Style
+                // Dashboard Content
                 HStack(spacing: 72) {
-                    VerticalTrendBar(
-                        title: "pH",
-                        value: poolWaterState.estimatedPH,
-                        minValue: 6.8,
-                        maxValue: 8.0,
-                        idealMin: poolWaterState.idealPHMin,
-                        idealMax: poolWaterState.idealPHMax,
-                        barColor: .phBarColor,
-                        idealRangeColor: .phIdealColor,
-                        trend: poolWaterState.phTrend,
-                        scalePosition: .leading,
-                        prediction: poolWaterState.phPrediction,
-                        compact: anySheetPresented
-                    )
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    if barStyle == "v2" {
+                        VerticalTrendBarV2(
+                            title: "pH",
+                            value: poolWaterState.estimatedPH,
+                            minValue: 6.8,
+                            maxValue: 8.0,
+                            idealMin: poolWaterState.idealPHMin,
+                            idealMax: poolWaterState.idealPHMax,
+                            barColor: .phBarColor,
+                            idealRangeColor: .phIdealColor,
+                            trend: poolWaterState.phTrend,
+                            scalePosition: .leading,
+                            prediction: poolWaterState.phPrediction,
+                            compact: anySheetPresented
+                        )
+                        .frame(maxWidth: .infinity, alignment: .trailing)
 
-                    VerticalTrendBar(
-                        title: "Cl",
-                        value: poolWaterState.estimatedChlorine,
-                        minValue: 0,
-                        maxValue: 5,
-                        idealMin: poolWaterState.idealChlorineMin,
-                        idealMax: poolWaterState.idealChlorineMax,
-                        barColor: .chlorineBarColor,
-                        idealRangeColor: .chlorineIdealColor,
-                        trend: poolWaterState.chlorineTrend,
-                        scalePosition: .trailing,
-                        prediction: poolWaterState.chlorinePrediction,
-                        compact: anySheetPresented
-                    )
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                        VerticalTrendBarV2(
+                            title: "Cl",
+                            value: poolWaterState.estimatedChlorine,
+                            minValue: 0,
+                            maxValue: 5,
+                            idealMin: poolWaterState.idealChlorineMin,
+                            idealMax: poolWaterState.idealChlorineMax,
+                            barColor: .chlorineBarColor,
+                            idealRangeColor: .chlorineIdealColor,
+                            trend: poolWaterState.chlorineTrend,
+                            scalePosition: .trailing,
+                            prediction: poolWaterState.chlorinePrediction,
+                            scalePoints: [0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0],
+                            compact: anySheetPresented
+                        )
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        VerticalTrendBar(
+                            title: "pH",
+                            value: poolWaterState.estimatedPH,
+                            minValue: 6.8,
+                            maxValue: 8.0,
+                            idealMin: poolWaterState.idealPHMin,
+                            idealMax: poolWaterState.idealPHMax,
+                            barColor: .phBarColor,
+                            idealRangeColor: .phIdealColor,
+                            trend: poolWaterState.phTrend,
+                            scalePosition: .leading,
+                            prediction: poolWaterState.phPrediction,
+                            compact: anySheetPresented
+                        )
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+
+                        VerticalTrendBar(
+                            title: "Cl",
+                            value: poolWaterState.estimatedChlorine,
+                            minValue: 0,
+                            maxValue: 5,
+                            idealMin: poolWaterState.idealChlorineMin,
+                            idealMax: poolWaterState.idealChlorineMax,
+                            barColor: .chlorineBarColor,
+                            idealRangeColor: .chlorineIdealColor,
+                            trend: poolWaterState.chlorineTrend,
+                            scalePosition: .trailing,
+                            prediction: poolWaterState.chlorinePrediction,
+                            scalePoints: [0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0],
+                            compact: anySheetPresented
+                        )
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
                 .scaleEffect(barScale, anchor: .top)
                 .offset(y: anySheetPresented ? -80 : (showDosingPill ? -44 : -40))

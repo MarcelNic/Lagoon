@@ -54,6 +54,7 @@ struct VerticalTrendBar: View {
     let unit: String
     let scalePosition: ScalePosition
     let prediction: PredictionData?
+    let scalePoints: [Double]?
     var compact: Bool = false
 
     @State private var showPredictionPopover = false
@@ -98,6 +99,7 @@ struct VerticalTrendBar: View {
         unit: String = "",
         scalePosition: ScalePosition = .leading,
         prediction: PredictionData? = nil,
+        scalePoints: [Double]? = nil,
         compact: Bool = false
     ) {
         self.title = title
@@ -112,20 +114,36 @@ struct VerticalTrendBar: View {
         self.unit = unit
         self.scalePosition = scalePosition
         self.prediction = prediction
+        self.scalePoints = scalePoints
         self.compact = compact
     }
 
+    private func normalizeToScale(_ v: Double) -> CGFloat {
+        guard let points = scalePoints, points.count >= 2 else {
+            let clamped = min(max(v, minValue), maxValue)
+            return CGFloat((clamped - minValue) / (maxValue - minValue))
+        }
+        let clamped = min(max(v, points.first!), points.last!)
+        for i in 0..<(points.count - 1) {
+            if clamped <= points[i + 1] {
+                let segmentFraction = (clamped - points[i]) / (points[i + 1] - points[i])
+                let position = (Double(i) + segmentFraction) / Double(points.count - 1)
+                return CGFloat(position)
+            }
+        }
+        return 1.0
+    }
+
     private var normalizedValue: CGFloat {
-        let clamped = min(max(value, minValue), maxValue)
-        return CGFloat((clamped - minValue) / (maxValue - minValue))
+        normalizeToScale(value)
     }
 
     private var idealMinNormalized: CGFloat {
-        CGFloat((idealMin - minValue) / (maxValue - minValue))
+        normalizeToScale(idealMin)
     }
 
     private var idealMaxNormalized: CGFloat {
-        CGFloat((idealMax - minValue) / (maxValue - minValue))
+        normalizeToScale(idealMax)
     }
 
     private var markerYPosition: CGFloat {
@@ -240,29 +258,64 @@ struct VerticalTrendBar: View {
 
     // MARK: - Skala Markierungen
 
+    private var scaleTicks: [(id: Int, value: Double, isMajor: Bool)] {
+        if let points = scalePoints, points.count >= 2 {
+            var ticks: [(id: Int, value: Double, isMajor: Bool)] = []
+            var id = 0
+            for i in 0..<points.count {
+                ticks.append((id: id, value: points[i], isMajor: true))
+                id += 1
+                if i < points.count - 1 {
+                    let mid = (points[i] + points[i + 1]) / 2
+                    ticks.append((id: id, value: mid, isMajor: false))
+                    id += 1
+                }
+            }
+            return ticks
+        }
+
+        let range = maxValue - minValue
+        let rawStep = range / 10.0
+        let magnitude = pow(10, floor(log10(rawStep)))
+        let normalized = rawStep / magnitude
+
+        let minorStep: Double
+        if normalized <= 1.5 { minorStep = magnitude }
+        else if normalized <= 3.5 { minorStep = 2.0 * magnitude }
+        else if normalized <= 7.5 { minorStep = 5.0 * magnitude }
+        else { minorStep = 10.0 * magnitude }
+
+        let majorStep = minorStep * 2
+        let count = Int(round(range / minorStep))
+
+        return (0...count).map { i in
+            let value = minValue + Double(i) * minorStep
+            let remainder = abs(value.remainder(dividingBy: majorStep))
+            let isMajor = remainder < minorStep * 0.1
+            return (id: i, value: value, isMajor: isMajor)
+        }
+    }
+
     private func scaleMarks(leading: Bool) -> some View {
-        let steps = 10
-        let majorInterval = 2
+        let ticks = scaleTicks
         let labelHeight: CGFloat = 14
 
         return ZStack {
-            ForEach(0...steps, id: \.self) { i in
-                let isMajor = i % majorInterval == 0
-                let normalizedPosition = CGFloat(steps - i) / CGFloat(steps)
-                let scaleValue = minValue + Double(normalizedPosition) * (maxValue - minValue)
+            ForEach(ticks, id: \.id) { tick in
+                let normalizedPosition = normalizeToScale(tick.value)
                 let yPosition = scaleTopOffset + (1 - normalizedPosition) * scaleHeight - barHeight / 2
 
                 // Check overlap with value pill
                 let labelY = scaleTopOffset + (1 - normalizedPosition) * scaleHeight
                 let distance = abs(markerYPosition - labelY)
                 let overlapThreshold = (valuePillHeight + labelHeight) / 2
-                let labelVisible = !isMajor || distance >= overlapThreshold
+                let labelVisible = !tick.isMajor || distance >= overlapThreshold
 
                 HStack(spacing: 4) {
                     if leading {
                         // Wert-Label bei major ticks
-                        if isMajor {
-                            Text(formatValue(scaleValue))
+                        if tick.isMajor {
+                            Text(formatValue(tick.value))
                                 .font(.system(size: 10, weight: .medium, design: .rounded))
                                 .foregroundStyle(Color(light: Color(white: 0.35), dark: Color.white.opacity(0.6)))
                                 .frame(width: 28, alignment: .trailing)
@@ -273,22 +326,22 @@ struct VerticalTrendBar: View {
                         }
 
                         Rectangle()
-                            .fill(Color(light: isMajor ? Color(white: 0.35) : Color(white: 0.5), dark: Color.white.opacity(isMajor ? 0.4 : 0.25)))
+                            .fill(Color(light: tick.isMajor ? Color(white: 0.35) : Color(white: 0.5), dark: Color.white.opacity(tick.isMajor ? 0.4 : 0.25)))
                             .frame(
-                                width: isMajor ? 10 : 6,
-                                height: isMajor ? 2 : 1
+                                width: tick.isMajor ? 10 : 6,
+                                height: tick.isMajor ? 2 : 1
                             )
                     } else {
                         Rectangle()
-                            .fill(Color(light: isMajor ? Color(white: 0.35) : Color(white: 0.5), dark: Color.white.opacity(isMajor ? 0.4 : 0.25)))
+                            .fill(Color(light: tick.isMajor ? Color(white: 0.35) : Color(white: 0.5), dark: Color.white.opacity(tick.isMajor ? 0.4 : 0.25)))
                             .frame(
-                                width: isMajor ? 10 : 6,
-                                height: isMajor ? 2 : 1
+                                width: tick.isMajor ? 10 : 6,
+                                height: tick.isMajor ? 2 : 1
                             )
 
                         // Wert-Label bei major ticks
-                        if isMajor {
-                            Text(formatValue(scaleValue))
+                        if tick.isMajor {
+                            Text(formatValue(tick.value))
                                 .font(.system(size: 10, weight: .medium, design: .rounded))
                                 .foregroundStyle(Color(light: Color(white: 0.35), dark: Color.white.opacity(0.6)))
                                 .frame(width: 28, alignment: .leading)
@@ -353,7 +406,7 @@ struct VerticalTrendBar: View {
 
 // MARK: - Popover Helper (für Zoom-Transition)
 
-fileprivate struct PopoverHelper<Content: View>: View {
+struct PopoverHelper<Content: View>: View {
     @ViewBuilder var content: Content
     @State private var isVisible: Bool = false
 
@@ -698,7 +751,8 @@ struct PredictionPopoverContent: View {
                 idealRangeColor: .chlorineIdealColor,
                 trend: .down,
                 scalePosition: .trailing,
-                prediction: nil
+                prediction: nil,
+                scalePoints: [0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0]
             )
         }
     }

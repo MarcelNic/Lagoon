@@ -7,6 +7,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @AppStorage("appearanceMode") private var appearanceMode: String = "system"
+    @AppStorage("barStyle") private var barStyle: String = "classic"
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("hasSeenDashboardOverlay") private var hasSeenDashboardOverlay = false
     @Environment(\.dismiss) private var dismiss
@@ -47,6 +48,11 @@ struct SettingsView: View {
                     Text("System").tag("system")
                     Text("Hell").tag("light")
                     Text("Dunkel").tag("dark")
+                }
+
+                Picker("Bar-Stil", selection: $barStyle) {
+                    Text("Klassisch").tag("classic")
+                    Text("V2").tag("v2")
                 }
             }
 
