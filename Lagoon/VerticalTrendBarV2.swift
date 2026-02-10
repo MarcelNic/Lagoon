@@ -130,7 +130,7 @@ struct VerticalTrendBarV2: View {
                         ZStack(alignment: .top) {
                             // Haupt-Bar (Hintergrund)
                             RoundedRectangle(cornerRadius: barWidth / 2)
-                                .fill(barColor)
+                                .fill(Color(light: barColor.opacity(0.8), dark: barColor.opacity(0.5)))
                                 .frame(width: barWidth, height: barHeight)
 
                             // Marker (aktueller Wert) mit Farbe + Label
@@ -196,72 +196,79 @@ struct VerticalTrendBarV2: View {
                 ticks.append((id: id, value: points[i], isMajor: true))
                 id += 1
                 if i < points.count - 1 {
-                    let mid = (points[i] + points[i + 1]) / 2
-                    ticks.append((id: id, value: mid, isMajor: false))
-                    id += 1
+                    for j in 1...4 {
+                        let frac = Double(j) / 5.0
+                        let v = points[i] + frac * (points[i + 1] - points[i])
+                        ticks.append((id: id, value: v, isMajor: false))
+                        id += 1
+                    }
                 }
             }
             return ticks
         }
 
         let range = maxValue - minValue
-        let rawStep = range / 10.0
+        let rawStep = range / 5.0
         let magnitude = pow(10, floor(log10(rawStep)))
         let normalized = rawStep / magnitude
 
-        let minorStep: Double
-        if normalized <= 1.5 { minorStep = magnitude }
-        else if normalized <= 3.5 { minorStep = 2.0 * magnitude }
-        else if normalized <= 7.5 { minorStep = 5.0 * magnitude }
-        else { minorStep = 10.0 * magnitude }
+        let majorStep: Double
+        if normalized <= 1.5 { majorStep = magnitude }
+        else if normalized <= 3.5 { majorStep = 2.0 * magnitude }
+        else if normalized <= 7.5 { majorStep = 5.0 * magnitude }
+        else { majorStep = 10.0 * magnitude }
 
-        let majorStep = minorStep * 2
-        let count = Int(round(range / minorStep))
-
-        return (0...count).map { i in
-            let value = minValue + Double(i) * minorStep
-            let remainder = abs(value.remainder(dividingBy: majorStep))
-            let isMajor = remainder < minorStep * 0.1
-            return (id: i, value: value, isMajor: isMajor)
+        let majorCount = Int(round(range / majorStep))
+        var ticks: [(id: Int, value: Double, isMajor: Bool)] = []
+        var id = 0
+        for i in 0...majorCount {
+            let majorValue = minValue + Double(i) * majorStep
+            ticks.append((id: id, value: majorValue, isMajor: true))
+            id += 1
+            if i < majorCount {
+                for j in 1...4 {
+                    let frac = Double(j) / 5.0
+                    let v = majorValue + frac * majorStep
+                    ticks.append((id: id, value: v, isMajor: false))
+                    id += 1
+                }
+            }
         }
+        return ticks
     }
 
     private func scaleMarks(leading: Bool) -> some View {
         let ticks = scaleTicks
-        let labelHeight: CGFloat = 14
 
         return ZStack {
             ForEach(ticks, id: \.id) { tick in
                 let normalizedPosition = normalizeToScale(tick.value)
                 let yPosition = scaleTopOffset + (1 - normalizedPosition) * scaleHeight - barHeight / 2
-
-                let labelY = scaleTopOffset + (1 - normalizedPosition) * scaleHeight
-                let distance = abs(markerYPosition - labelY)
-                let overlapThreshold = (markerTotalHeight + labelHeight) / 2
-                let labelVisible = !tick.isMajor || distance >= overlapThreshold
+                let inIdealRange = tick.value >= idealMin && tick.value <= idealMax
+                let tickColor: Color = inIdealRange ? idealRangeColor : Color(light: tick.isMajor ? Color(white: 0.35) : Color(white: 0.5), dark: Color.white.opacity(tick.isMajor ? 0.4 : 0.25))
+                let labelColor: Color = inIdealRange ? idealRangeColor : Color(light: Color(white: 0.35), dark: Color.white.opacity(0.6))
 
                 HStack(spacing: 4) {
                     if leading {
                         if tick.isMajor {
                             Text(formatValue(tick.value))
                                 .font(.system(size: 10, weight: .medium, design: .rounded))
-                                .foregroundStyle(Color(light: Color(white: 0.35), dark: Color.white.opacity(0.6)))
+                                .foregroundStyle(labelColor)
                                 .frame(width: 28, alignment: .trailing)
-                                .opacity(labelVisible ? 1 : 0)
                         } else {
                             Color.clear
                                 .frame(width: 28)
                         }
 
                         Rectangle()
-                            .fill(Color(light: tick.isMajor ? Color(white: 0.35) : Color(white: 0.5), dark: Color.white.opacity(tick.isMajor ? 0.4 : 0.25)))
+                            .fill(tickColor)
                             .frame(
                                 width: tick.isMajor ? 10 : 6,
                                 height: tick.isMajor ? 2 : 1
                             )
                     } else {
                         Rectangle()
-                            .fill(Color(light: tick.isMajor ? Color(white: 0.35) : Color(white: 0.5), dark: Color.white.opacity(tick.isMajor ? 0.4 : 0.25)))
+                            .fill(tickColor)
                             .frame(
                                 width: tick.isMajor ? 10 : 6,
                                 height: tick.isMajor ? 2 : 1
@@ -270,9 +277,8 @@ struct VerticalTrendBarV2: View {
                         if tick.isMajor {
                             Text(formatValue(tick.value))
                                 .font(.system(size: 10, weight: .medium, design: .rounded))
-                                .foregroundStyle(Color(light: Color(white: 0.35), dark: Color.white.opacity(0.6)))
+                                .foregroundStyle(labelColor)
                                 .frame(width: 28, alignment: .leading)
-                                .opacity(labelVisible ? 1 : 0)
                         } else {
                             Color.clear
                                 .frame(width: 28)
@@ -289,11 +295,7 @@ struct VerticalTrendBarV2: View {
     // MARK: - Helpers
 
     private func formatValue(_ value: Double) -> String {
-        if value == value.rounded() {
-            return String(format: "%.0f", value)
-        } else {
-            return String(format: "%.1f", value)
-        }
+        String(format: "%.1f", value)
     }
 }
 
