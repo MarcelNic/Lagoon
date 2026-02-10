@@ -14,7 +14,7 @@ extension Color {
     static let phBarColor = Color(light: Color(hex: "0AAAC6").opacity(0.5), dark: Color(hex: "42edfe").opacity(0.25))
 
     /// pH Ideal Range Farbe
-    static let phIdealColor = Color(light: Color(hex: "0AAAC6"), dark: Color(hex: "42edfe"))
+    static let phIdealColor = Color(light: Color(hex: "0AAAC6"), dark: Color(hex: "35c4d4"))
 
     // MARK: - Chlor Farben
 
@@ -22,7 +22,7 @@ extension Color {
     static let chlorineBarColor = Color(light: Color(hex: "1FBF4A").opacity(0.5), dark: Color(hex: "5df66d").opacity(0.25))
 
     /// Chlor Ideal Range Farbe
-    static let chlorineIdealColor = Color(light: Color(hex: "1FBF4A"), dark: Color(hex: "5df66d"))
+    static let chlorineIdealColor = Color(light: Color(hex: "1FBF4A"), dark: Color(hex: "4ccc5a"))
 
     // MARK: - Helpers
 

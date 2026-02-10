@@ -266,6 +266,7 @@ struct VerticalTrendBarV2: View {
                                 width: tick.isMajor ? 10 : 6,
                                 height: tick.isMajor ? 2 : 1
                             )
+                            .frame(width: 10, alignment: .trailing)
                     } else {
                         Rectangle()
                             .fill(tickColor)
@@ -273,6 +274,7 @@ struct VerticalTrendBarV2: View {
                                 width: tick.isMajor ? 10 : 6,
                                 height: tick.isMajor ? 2 : 1
                             )
+                            .frame(width: 10, alignment: .leading)
 
                         if tick.isMajor {
                             Text(formatValue(tick.value))
