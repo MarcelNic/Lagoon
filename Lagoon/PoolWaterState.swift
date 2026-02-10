@@ -348,38 +348,6 @@ final class PoolWaterState {
         )
     }
 
-    // MARK: - Chart Prediction Data
-
-    /// Generate prediction points from now until endDate (hourly steps)
-    func predictionPoints(until endDate: Date) -> (ph: [ChartDataPoint], chlorine: [ChartDataPoint]) {
-        let now = Date()
-        guard endDate > now else { return ([], []) }
-
-        if cachedEngineInput == nil { refreshCache() }
-        guard let input = cachedEngineInput else { return ([], []) }
-
-        var phPoints: [ChartDataPoint] = []
-        var clPoints: [ChartDataPoint] = []
-
-        // Start with current estimated value
-        phPoints.append(ChartDataPoint(timestamp: now, value: estimatedPH))
-        clPoints.append(ChartDataPoint(timestamp: now, value: estimatedChlorine))
-
-        // Generate hourly prediction points
-        let totalHours = Int(endDate.timeIntervalSince(now) / 3600)
-        let step = max(1, totalHours / 12) // max ~12 points
-        var hour = step
-        while hour <= totalHours {
-            let futureDate = now.addingTimeInterval(Double(hour) * 3600)
-            let output = engine.process(input, at: futureDate)
-            phPoints.append(ChartDataPoint(timestamp: futureDate, value: output.estimatedState.pH))
-            clPoints.append(ChartDataPoint(timestamp: futureDate, value: output.estimatedState.freeChlorine_ppm))
-            hour += step
-        }
-
-        return (phPoints, clPoints)
-    }
-
     // MARK: - Private Methods
 
     private func loadFromSwiftData() {

@@ -25,17 +25,25 @@ enum ChartTimeRange: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Start of the range: midnight N-1 days ago
     var startDate: Date {
-        let calendar = Calendar.current
-        let todayMidnight = calendar.startOfDay(for: Date())
-        return calendar.date(byAdding: .day, value: -(days - 1), to: todayMidnight)!
+        switch self {
+        case .twentyFourHours:
+            return Date().addingTimeInterval(-24 * 3600)
+        default:
+            let calendar = Calendar.current
+            let todayMidnight = calendar.startOfDay(for: Date())
+            return calendar.date(byAdding: .day, value: -(days - 1), to: todayMidnight)!
+        }
     }
 
-    /// End of the range: midnight tonight
     var endDate: Date {
-        let calendar = Calendar.current
-        let todayMidnight = calendar.startOfDay(for: Date())
-        return calendar.date(byAdding: .day, value: 1, to: todayMidnight)!
+        switch self {
+        case .twentyFourHours:
+            return Date()
+        default:
+            let calendar = Calendar.current
+            let todayMidnight = calendar.startOfDay(for: Date())
+            return calendar.date(byAdding: .day, value: 1, to: todayMidnight)!
+        }
     }
 }

@@ -20,7 +20,6 @@ struct PoolChartView: View {
     let title: String
     let unit: String
     let data: [ChartDataPoint]
-    let predictionData: [ChartDataPoint]
     let idealMin: Double?
     let idealMax: Double?
     let lineColor: Color
@@ -35,7 +34,6 @@ struct PoolChartView: View {
         title: String,
         unit: String,
         data: [ChartDataPoint],
-        predictionData: [ChartDataPoint] = [],
         idealMin: Double?,
         idealMax: Double?,
         lineColor: Color,
@@ -47,7 +45,6 @@ struct PoolChartView: View {
         self.title = title
         self.unit = unit
         self.data = data
-        self.predictionData = predictionData
         self.idealMin = idealMin
         self.idealMax = idealMax
         self.lineColor = lineColor
@@ -57,32 +54,29 @@ struct PoolChartView: View {
         self.showAreaFill = showAreaFill
     }
 
-    // Combined data for selection lookup
-    private var allData: [ChartDataPoint] {
-        data + predictionData
-    }
-    
     // Find the closest data point to the selected date
     private var selectedDataPoint: ChartDataPoint? {
         guard let selectedDate else { return nil }
-        return allData.min(by: {
+        return data.min(by: {
             abs($0.timestamp.timeIntervalSince(selectedDate)) < abs($1.timestamp.timeIntervalSince(selectedDate))
         })
     }
-    
-    // Check if selected point is a prediction
-    private var isSelectedPrediction: Bool {
-        guard let selectedDataPoint else { return false }
-        return predictionData.contains(where: { $0.id == selectedDataPoint.id })
-    }
-    
+
     // Extend Y domain slightly to prevent clipping at edges
     private var extendedYDomain: ClosedRange<Double> {
         let range = yDomain.upperBound - yDomain.lowerBound
         let padding = range * 0.05 // 5% padding
         return (yDomain.lowerBound - padding)...(yDomain.upperBound + padding)
     }
-    
+
+    private var gridLineValues: [Double] {
+        let count = 16
+        let lower = extendedYDomain.lowerBound
+        let upper = extendedYDomain.upperBound
+        let step = (upper - lower) / Double(count)
+        return (0...count).map { lower + Double($0) * step }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Title row with selection info
@@ -101,7 +95,7 @@ struct PoolChartView: View {
                             .foregroundStyle(.secondary)
                         Text(formattedValue(selectedPoint.value))
                             .font(.system(size: 22, weight: .bold))
-                            .foregroundStyle(isSelectedPrediction ? lineColor.opacity(0.6) : lineColor)
+                            .foregroundStyle(lineColor)
                             .monospacedDigit()
                             .contentTransition(.numericText())
                     }
@@ -116,7 +110,7 @@ struct PoolChartView: View {
             .padding(.horizontal, 16)
             .animation(.easeInOut(duration: 0.15), value: selectedDate)
 
-            if data.isEmpty && predictionData.isEmpty {
+            if data.isEmpty {
                 emptyChart
             } else {
                 chart
@@ -150,7 +144,7 @@ struct PoolChartView: View {
                     series: .value("Type", "measured")
                 )
                 .foregroundStyle(lineColor)
-                .lineStyle(StrokeStyle(lineWidth: 2.5))
+                .lineStyle(StrokeStyle(lineWidth: 3))
                 .interpolationMethod(.monotone)
             }
 
@@ -179,21 +173,9 @@ struct PoolChartView: View {
                     y: .value("Wert", point.value)
                 )
                 .foregroundStyle(lineColor)
-                .symbolSize(30)
+                .symbolSize(40)
             }
 
-            // Prediction line (dashed)
-            ForEach(predictionData) { point in
-                LineMark(
-                    x: .value("Zeit", point.timestamp),
-                    y: .value("Wert", point.value),
-                    series: .value("Type", "prediction")
-                )
-                .foregroundStyle(lineColor.opacity(0.5))
-                .lineStyle(StrokeStyle(lineWidth: 2, dash: [6, 4]))
-                .interpolationMethod(.monotone)
-            }
-            
             // Selection rule line
             if let selectedPoint = selectedDataPoint {
                 RuleMark(x: .value("Selected", selectedPoint.timestamp))
@@ -223,9 +205,11 @@ struct PoolChartView: View {
         }
         .chartLegend(.hidden)
         .chartYAxis {
-            AxisMarks(position: .leading) { value in
-                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                    .foregroundStyle(.secondary.opacity(0.3))
+            AxisMarks(position: .leading, values: gridLineValues) { value in
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 1))
+                    .foregroundStyle(.secondary.opacity(0.15))
+            }
+            AxisMarks(position: .leading, values: .automatic(desiredCount: 8)) { value in
                 AxisValueLabel {
                     if let v = value.as(Double.self) {
                         Text(formattedAxisValue(v))
@@ -237,8 +221,6 @@ struct PoolChartView: View {
         }
         .chartXAxis {
             AxisMarks(values: .automatic(desiredCount: xAxisDesiredCount)) { value in
-                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                    .foregroundStyle(.secondary.opacity(0.3))
                 AxisValueLabel {
                     if let date = value.as(Date.self) {
                         Text(formattedDate(date))
@@ -333,12 +315,6 @@ struct PoolChartView: View {
         ChartDataPoint(timestamp: calendar.date(byAdding: .hour, value: -2, to: now)!, value: 7.3),
     ]
 
-    let predictionData: [ChartDataPoint] = [
-        ChartDataPoint(timestamp: now, value: 7.3),
-        ChartDataPoint(timestamp: calendar.date(byAdding: .hour, value: 4, to: now)!, value: 7.35),
-        ChartDataPoint(timestamp: calendar.date(byAdding: .hour, value: 8, to: now)!, value: 7.4),
-    ]
-
     ZStack {
         Color.black.ignoresSafeArea()
 
@@ -348,7 +324,6 @@ struct PoolChartView: View {
                     title: "pH-Wert",
                     unit: "",
                     data: sampleData,
-                    predictionData: predictionData,
                     idealMin: 7.0,
                     idealMax: 7.4,
                     lineColor: .phIdealColor,
