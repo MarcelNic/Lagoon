@@ -140,10 +140,27 @@ struct VerticalTrendBarV2: View {
                                 .fill(Color(light: barColor.opacity(0.8), dark: barColor.opacity(0.5)))
                                 .frame(width: barWidth, height: barHeight)
 
-                            // Marker (aktueller Wert) mit Farbe + Label
-                            markerView
+                            // Marker-Kreis (nur visuell, ohne Text)
+                            markerCircle
                                 .offset(y: markerYPosition - markerTotalHeight / 2)
                                 .animation(.smooth, value: value)
+
+                            // Wert-Label (getrennt, eigene Animation)
+                            markerLabel
+                                .offset(y: markerYPosition - markerTotalHeight / 2)
+                                .animation(.smooth, value: value)
+
+                            // Trend-Chevron (über oder unter dem Marker)
+                            if trend != .stable {
+                                Image(systemName: trend == .up ? "chevron.up" : "chevron.down")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundStyle(.white.opacity(0.8))
+                                    .offset(y: trend == .up
+                                        ? markerYPosition - markerTotalHeight / 2 - 18
+                                        : markerYPosition + markerTotalHeight / 2 + 4)
+                                    .animation(.smooth, value: value)
+                            }
+
                         }
                     }
                     .buttonStyle(.plain)
@@ -176,9 +193,9 @@ struct VerticalTrendBarV2: View {
         .animation(.smooth, value: compact)
     }
 
-    // MARK: - Marker View
+    // MARK: - Marker Circle (nur Kreis, kein Text)
 
-    private var markerView: some View {
+    private var markerCircle: some View {
         Circle()
             .fill(idealRangeColor)
             .frame(width: markerDiameter, height: markerDiameter)
@@ -186,14 +203,19 @@ struct VerticalTrendBarV2: View {
                 Circle()
                     .strokeBorder(colorScheme == .dark ? markerBorderColorDark : markerBorderColorLight, lineWidth: 1)
             }
-            .overlay {
-                Text(formatValue(value))
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(.white)
-                    .contentTransition(.numericText())
-            }
             .padding(markerPadding)
+    }
+
+    // MARK: - Marker Label (getrennt für saubere Animation)
+
+    private var markerLabel: some View {
+        Text(formatValue(value))
+            .font(.system(size: 18, weight: .bold, design: .rounded))
+            .monospacedDigit()
+            .foregroundStyle(.white)
+            .contentTransition(.numericText())
+            .animation(.smooth, value: value)
+            .frame(width: markerDiameter + 2 * markerPadding, height: markerDiameter + 2 * markerPadding)
     }
 
     // MARK: - Skala Markierungen
