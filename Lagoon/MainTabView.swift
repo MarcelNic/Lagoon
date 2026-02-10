@@ -167,6 +167,8 @@ struct DashboardTabView: View {
                             trend: poolWaterState.phTrend,
                             scalePosition: .leading,
                             prediction: poolWaterState.phPrediction,
+                            markerBorderColorLight: Color(hex: "a0ffff"),
+                            markerBorderColorDark: Color(hex: "1083a6"),
                             compact: anySheetPresented
                         )
                         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -184,6 +186,8 @@ struct DashboardTabView: View {
                             scalePosition: .trailing,
                             prediction: poolWaterState.chlorinePrediction,
                             scalePoints: [0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0],
+                            markerBorderColorLight: Color(hex: "a8ffe2"),
+                            markerBorderColorDark: Color(hex: "19877b"),
                             compact: anySheetPresented
                         )
                         .frame(maxWidth: .infinity, alignment: .leading)

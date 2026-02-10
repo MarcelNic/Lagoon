@@ -22,8 +22,11 @@ struct VerticalTrendBarV2: View {
     let scalePosition: ScalePosition
     let prediction: PredictionData?
     let scalePoints: [Double]?
+    let markerBorderColorLight: Color
+    let markerBorderColorDark: Color
     var compact: Bool = false
 
+    @Environment(\.colorScheme) private var colorScheme
     @State private var showPredictionPopover = false
     @Namespace private var namespace
 
@@ -62,6 +65,8 @@ struct VerticalTrendBarV2: View {
         scalePosition: ScalePosition = .leading,
         prediction: PredictionData? = nil,
         scalePoints: [Double]? = nil,
+        markerBorderColorLight: Color = .white,
+        markerBorderColorDark: Color = .white,
         compact: Bool = false
     ) {
         self.title = title
@@ -77,6 +82,8 @@ struct VerticalTrendBarV2: View {
         self.scalePosition = scalePosition
         self.prediction = prediction
         self.scalePoints = scalePoints
+        self.markerBorderColorLight = markerBorderColorLight
+        self.markerBorderColorDark = markerBorderColorDark
         self.compact = compact
     }
 
@@ -175,6 +182,10 @@ struct VerticalTrendBarV2: View {
         Circle()
             .fill(idealRangeColor)
             .frame(width: markerDiameter, height: markerDiameter)
+            .overlay {
+                Circle()
+                    .strokeBorder(colorScheme == .dark ? markerBorderColorDark : markerBorderColorLight, lineWidth: 1)
+            }
             .overlay {
                 Text(formatValue(value))
                     .font(.system(size: 13, weight: .bold, design: .rounded))
@@ -333,7 +344,9 @@ struct VerticalTrendBarV2: View {
                 idealRangeColor: .phIdealColor,
                 trend: .up,
                 scalePosition: .leading,
-                prediction: nil
+                prediction: nil,
+                markerBorderColorLight: Color(hex: "a0ffff"),
+                markerBorderColorDark: Color(hex: "1083a6")
             )
 
             VerticalTrendBarV2(
@@ -348,7 +361,9 @@ struct VerticalTrendBarV2: View {
                 trend: .down,
                 scalePosition: .trailing,
                 prediction: nil,
-                scalePoints: [0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0]
+                scalePoints: [0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0],
+                markerBorderColorLight: Color(hex: "a8ffe2"),
+                markerBorderColorDark: Color(hex: "19877b")
             )
         }
     }
