@@ -192,7 +192,6 @@ struct VerticalTrendBarV2: View {
                     .monospacedDigit()
                     .foregroundStyle(.white)
                     .contentTransition(.numericText())
-                    .animation(.snappy, value: value)
             }
             .padding(markerPadding)
     }
