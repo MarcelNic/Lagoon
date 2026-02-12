@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 import UserNotifications
 
 @Observable
@@ -78,6 +79,62 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         )
 
         center.add(request)
+    }
+
+    // MARK: - Care Task Reminders
+
+    func scheduleCareTaskReminder(task: CareTask) {
+        guard isAuthorized, let reminderTime = task.reminderTime, let dueDate = task.dueDate else { return }
+
+        let center = UNUserNotificationCenter.current()
+        let identifier = "careTask-\(task.id.uuidString)"
+
+        // Remove existing reminder for this task
+        center.removePendingNotificationRequests(withIdentifiers: [identifier])
+
+        let content = UNMutableNotificationContent()
+        content.title = task.title
+        content.body = task.isAction ? "Timer-Aufgabe steht an." : "Aufgabe ist fällig."
+        content.sound = .default
+
+        // Combine dueDate (day) with reminderTime (hour/minute)
+        let calendar = Calendar.current
+        var components = calendar.dateComponents([.year, .month, .day], from: dueDate)
+        let timeComponents = calendar.dateComponents([.hour, .minute], from: reminderTime)
+        components.hour = timeComponents.hour
+        components.minute = timeComponents.minute
+
+        guard let fireDate = calendar.date(from: components), fireDate > Date() else { return }
+
+        let trigger = UNCalendarNotificationTrigger(
+            dateMatching: calendar.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate),
+            repeats: false
+        )
+
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        center.add(request)
+    }
+
+    func cancelCareTaskReminder(taskId: UUID) {
+        let identifier = "careTask-\(taskId.uuidString)"
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
+    }
+
+    func scheduleTimerExpiredNotification(taskTitle: String, taskId: UUID) {
+        guard isAuthorized else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = taskTitle
+        content.body = "Timer ist abgelaufen."
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: "careTimer-\(taskId.uuidString)",
+            content: content,
+            trigger: nil // Fire immediately
+        )
+
+        UNUserNotificationCenter.current().add(request)
     }
 
     // MARK: - Delegate

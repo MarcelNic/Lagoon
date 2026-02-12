@@ -22,8 +22,7 @@ struct VerticalTrendBarV2: View {
     let scalePosition: ScalePosition
     let prediction: PredictionData?
     let scalePoints: [Double]?
-    let markerBorderColorLight: Color
-    let markerBorderColorDark: Color
+    let markerBorderColor: Color
     var compact: Bool = false
 
     @Environment(\.colorScheme) private var colorScheme
@@ -65,8 +64,7 @@ struct VerticalTrendBarV2: View {
         scalePosition: ScalePosition = .leading,
         prediction: PredictionData? = nil,
         scalePoints: [Double]? = nil,
-        markerBorderColorLight: Color = .white,
-        markerBorderColorDark: Color = .white,
+        markerBorderColor: Color = .white,
         compact: Bool = false
     ) {
         self.title = title
@@ -82,8 +80,7 @@ struct VerticalTrendBarV2: View {
         self.scalePosition = scalePosition
         self.prediction = prediction
         self.scalePoints = scalePoints
-        self.markerBorderColorLight = markerBorderColorLight
-        self.markerBorderColorDark = markerBorderColorDark
+        self.markerBorderColor = markerBorderColor
         self.compact = compact
     }
 
@@ -195,9 +192,6 @@ struct VerticalTrendBarV2: View {
 
     // MARK: - Marker Circle (nur Kreis, kein Text)
 
-    private var markerBorderColor: Color {
-        colorScheme == .dark ? markerBorderColorDark : markerBorderColorLight
-    }
 
     private var markerCircle: some View {
         Circle()
@@ -384,8 +378,7 @@ struct VerticalTrendBarV2: View {
                 trend: .up,
                 scalePosition: .leading,
                 prediction: nil,
-                markerBorderColorLight: Color(hex: "a0ffff"),
-                markerBorderColorDark: Color(hex: "1083a6")
+                markerBorderColor: .phMarkerBorderColor
             )
 
             VerticalTrendBarV2(
@@ -401,8 +394,7 @@ struct VerticalTrendBarV2: View {
                 scalePosition: .trailing,
                 prediction: nil,
                 scalePoints: [0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0],
-                markerBorderColorLight: Color(hex: "a8ffe2"),
-                markerBorderColorDark: Color(hex: "19877b")
+                markerBorderColor: .chlorineMarkerBorderColor
             )
         }
     }

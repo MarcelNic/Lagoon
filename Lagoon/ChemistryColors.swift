@@ -24,6 +24,34 @@ extension Color {
     /// Chlor Ideal Range Farbe
     static let chlorineIdealColor = Color(light: Color(hex: "1FBF4A"), dark: Color(hex: "4ccc5a"))
 
+    // MARK: - Marker Border Farben (V2 Bars)
+
+    /// pH Marker Border
+    static let phMarkerBorderColor = Color(light: Color(hex: "a0ffff"), dark: Color(hex: "1083a6"))
+
+    /// Chlor Marker Border
+    static let chlorineMarkerBorderColor = Color(light: Color(hex: "a8ffe2"), dark: Color(hex: "19877b"))
+
+    // MARK: - Temperatur Farbe
+
+    /// Temperatur-abhaengige Farbe (10°C blau → 20°C gruen → 25°C gelb → 30°C+ rot)
+    static func temperatureColor(for temp: Double) -> Color {
+        let hue: Double
+        if temp < 20 {
+            let t = (temp - 10) / 10
+            hue = 0.6 - t * 0.27
+        } else if temp < 25 {
+            let t = (temp - 20) / 5
+            hue = 0.33 - t * 0.18
+        } else if temp < 30 {
+            let t = (temp - 25) / 5
+            hue = 0.15 - t * 0.15
+        } else {
+            hue = 0.0
+        }
+        return Color(hue: hue, saturation: 0.75, brightness: 0.9)
+    }
+
     // MARK: - Helpers
 
     init(hex: String) {

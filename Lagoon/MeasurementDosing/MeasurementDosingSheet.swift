@@ -79,28 +79,6 @@ struct MeasurementDosingSheet: View {
         }
     }
 
-    private func temperatureColor(for temp: Double) -> Color {
-        // 10: blau, 20: grün, 25: gelb, 30+: rot
-        let hue: Double
-        if temp < 20 {
-            // 10-20: blau (0.6) → grün (0.33)
-            let t = (temp - 10) / 10
-            hue = 0.6 - t * 0.27
-        } else if temp < 25 {
-            // 20-25: grün (0.33) → gelb (0.15)
-            let t = (temp - 20) / 5
-            hue = 0.33 - t * 0.18
-        } else if temp < 30 {
-            // 25-30: gelb (0.15) → rot (0.0)
-            let t = (temp - 25) / 5
-            hue = 0.15 - t * 0.15
-        } else {
-            // 30+: rot
-            hue = 0.0
-        }
-        return Color(hue: hue, saturation: 0.75, brightness: 0.9)
-    }
-
     private static let messenDetent = PresentationDetent.height(415)
 
     private static let dosierenDetent = PresentationDetent.height(380)
@@ -259,7 +237,7 @@ struct MeasurementDosingSheet: View {
                         .animation(.snappy, value: waterTemperature)
                 }
                 Slider(value: $waterTemperature, in: 10.0...40.0, step: 1.0)
-                    .tint(temperatureColor(for: waterTemperature))
+                    .tint(Color.temperatureColor(for: waterTemperature))
             }
         }
 

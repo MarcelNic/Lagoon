@@ -13,6 +13,7 @@ struct ActiveAction: Identifiable, Equatable {
     let isCustomIcon: Bool     // true = Asset, false = SF Symbol
     let startTime: Date
     let duration: TimeInterval
+    let remindAfterTimer: Bool
 
     init(
         id: UUID = UUID(),
@@ -21,7 +22,8 @@ struct ActiveAction: Identifiable, Equatable {
         iconName: String? = nil,
         isCustomIcon: Bool = false,
         startTime: Date = Date(),
-        duration: TimeInterval
+        duration: TimeInterval,
+        remindAfterTimer: Bool = false
     ) {
         self.id = id
         self.taskId = taskId
@@ -30,6 +32,7 @@ struct ActiveAction: Identifiable, Equatable {
         self.isCustomIcon = isCustomIcon
         self.startTime = startTime
         self.duration = duration
+        self.remindAfterTimer = remindAfterTimer
     }
 
     var endTime: Date {

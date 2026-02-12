@@ -177,24 +177,6 @@ final class PoolWaterState {
         recalculate()
     }
 
-    /// Record a care task and save to SwiftData
-    func recordCareTask(taskName: String, description: String? = nil, date: Date = Date()) {
-        if let context = modelContext {
-            let task = CareTaskModel(
-                taskName: taskName,
-                taskDescription: description,
-                timestamp: date
-            )
-            context.insert(task)
-
-            do {
-                try context.save()
-            } catch {
-                print("Error saving care task: \(error)")
-            }
-        }
-    }
-
     /// Save weather input to SwiftData
     func recordWeather(temperature: Double, uvIndex: Double, source: String = "manual", date: Date = Date()) {
         if let context = modelContext {

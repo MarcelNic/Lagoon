@@ -25,6 +25,7 @@ final class PoolcareState {
     // MARK: - Private
 
     private(set) var modelContext: ModelContext?
+    private var notificationManager: NotificationManager?
     private var timerCancellable: AnyCancellable?
     private var robotActivity: Activity<RobotActivityAttributes>?
     private var lastLiveActivityUpdate: Date = .distantPast
@@ -35,8 +36,9 @@ final class PoolcareState {
         startTimerUpdates()
     }
 
-    func setModelContext(_ context: ModelContext) {
+    func configure(modelContext context: ModelContext, notificationManager: NotificationManager) {
         self.modelContext = context
+        self.notificationManager = notificationManager
 
         // Seed default data if needed
         let descriptor = FetchDescriptor<CareScenario>()
@@ -98,6 +100,10 @@ final class PoolcareState {
 
         let taskId = task.persistentModelID
         let intervalDays = task.intervalDays
+        let careTaskId = task.id
+
+        // Cancel current reminder
+        notificationManager?.cancelCareTaskReminder(taskId: careTaskId)
 
         // After delay: reschedule or delete
         Task { @MainActor in
@@ -111,11 +117,15 @@ final class PoolcareState {
                 // Reschedule: move to next due date
                 task.dueDate = Calendar.current.date(byAdding: .day, value: intervalDays, to: Date())
                 task.completedAt = nil
+                try? context.save()
+
+                // Schedule reminder for next occurrence
+                self.notificationManager?.scheduleCareTaskReminder(task: task)
             } else {
                 // One-time task: delete
                 context.delete(task)
+                try? context.save()
             }
-            try? context.save()
 
             // Check if all tasks in scenario are completed → offer switch
             self.checkAllTasksCompleted()
@@ -164,6 +174,8 @@ final class PoolcareState {
         task.scenario = scenario
         modelContext?.insert(task)
         try? modelContext?.save()
+
+        notificationManager?.scheduleCareTaskReminder(task: task)
     }
 
     func updateTask(
@@ -182,9 +194,17 @@ final class PoolcareState {
         if let iconName { task.iconName = iconName }
         if let isCustomIcon { task.isCustomIcon = isCustomIcon }
         try? modelContext?.save()
+
+        // Reschedule notification with updated data
+        if task.reminderTime != nil {
+            notificationManager?.scheduleCareTaskReminder(task: task)
+        } else {
+            notificationManager?.cancelCareTaskReminder(taskId: task.id)
+        }
     }
 
     func deleteTask(_ task: CareTask) {
+        notificationManager?.cancelCareTaskReminder(taskId: task.id)
         modelContext?.delete(task)
         try? modelContext?.save()
     }
@@ -201,7 +221,8 @@ final class PoolcareState {
             title: task.title,
             iconName: task.iconName,
             isCustomIcon: task.isCustomIcon,
-            duration: duration
+            duration: duration,
+            remindAfterTimer: task.remindAfterTimer
         )
         activeActions.append(action)
 
@@ -218,9 +239,13 @@ final class PoolcareState {
         activeActions.removeAll { $0.id == action.id }
 
         // Mark the underlying task as completed
-        if let context = modelContext,
-           let task = try? context.fetch(FetchDescriptor<CareTask>()).first(where: { $0.id == action.taskId }) {
-            completeTask(task)
+        if let context = modelContext {
+            let taskId = action.taskId
+            var descriptor = FetchDescriptor<CareTask>(predicate: #Predicate { $0.id == taskId })
+            descriptor.fetchLimit = 1
+            if let task = try? context.fetch(descriptor).first {
+                completeTask(task)
+            }
         }
     }
 
@@ -243,6 +268,15 @@ final class PoolcareState {
             if action.iconName == "Robi" || action.title.lowercased().contains("roboter") {
                 endRobotLiveActivity()
             }
+
+            // Send notification if remindAfterTimer is enabled
+            if action.remindAfterTimer {
+                notificationManager?.scheduleTimerExpiredNotification(
+                    taskTitle: action.title,
+                    taskId: action.taskId
+                )
+            }
+
             activeActions.removeAll { $0.id == action.id }
         }
     }
