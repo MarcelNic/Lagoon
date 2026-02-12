@@ -331,10 +331,10 @@ final class PoolcareState {
         let sommerTasks: [(String, Int, Bool, Double, String?, Bool)] = [
             ("Roboter", 2, true, 2 * 60 * 60, "Robi", true),
             ("Rückspülen", 7, true, 3 * 60, "arrow.circlepath", false),
-            ("Skimmer leeren", 1, false, 0, nil, false),
-            ("Wasserlinie bürsten", 7, false, 0, nil, false),
-            ("Filterdruck prüfen", 7, false, 0, nil, false),
-            ("Boden saugen", 14, false, 0, nil, false),
+            ("Skimmer leeren", 1, false, 0, "basket.fill", false),
+            ("Wasserlinie bürsten", 7, false, 0, "paintbrush.fill", false),
+            ("Filterdruck prüfen", 7, false, 0, "gauge.with.dots.needle.50percent", false),
+            ("Boden saugen", 14, false, 0, "sparkles", false),
         ]
 
         for (i, (title, interval, isAction, duration, icon, isCustom)) in sommerTasks.enumerated() {
@@ -355,16 +355,17 @@ final class PoolcareState {
         let winter = CareScenario(name: "Winter", icon: "snowflake", sortOrder: 1, isBuiltIn: true)
         context.insert(winter)
 
-        let winterTasks: [(String, Int)] = [
-            ("Abdeckung prüfen", 7),
-            ("Wasserstand prüfen", 30),
+        let winterTasks: [(String, Int, String)] = [
+            ("Abdeckung prüfen", 7, "window.shade.closed"),
+            ("Wasserstand prüfen", 30, "water.waves"),
         ]
 
-        for (i, (title, interval)) in winterTasks.enumerated() {
+        for (i, (title, interval, icon)) in winterTasks.enumerated() {
             let task = CareTask(
                 title: title,
                 dueDate: calendar.date(byAdding: .day, value: i * 7, to: now),
-                intervalDays: interval
+                intervalDays: interval,
+                iconName: icon
             )
             task.scenario = winter
             context.insert(task)
@@ -374,13 +375,19 @@ final class PoolcareState {
         let urlaub = CareScenario(name: "Urlaub", icon: "airplane", sortOrder: 2, isBuiltIn: true)
         context.insert(urlaub)
 
-        let urlaubTasks = ["Chlorwert erhöhen", "pH-Wert prüfen", "Abdeckung sichern", "Pumpen-Timer einstellen"]
+        let urlaubTasks: [(String, String)] = [
+            ("Chlorwert erhöhen", "testtube.2"),
+            ("pH-Wert prüfen", "drop.triangle.fill"),
+            ("Abdeckung sichern", "window.shade.closed"),
+            ("Pumpen-Timer einstellen", "clock.fill"),
+        ]
 
-        for title in urlaubTasks {
+        for (title, icon) in urlaubTasks {
             let task = CareTask(
                 title: title,
                 dueDate: now,
-                intervalDays: 0
+                intervalDays: 0,
+                iconName: icon
             )
             task.scenario = urlaub
             context.insert(task)
@@ -390,13 +397,21 @@ final class PoolcareState {
         let oeffnen = CareScenario(name: "Pool Öffnen", icon: "door.left.hand.open", sortOrder: 3, isBuiltIn: true, nextScenarioId: sommer.id)
         context.insert(oeffnen)
 
-        let oeffnenTasks = ["Abdeckung entfernen", "Wasser auffüllen", "Filteranlage starten", "pH-Wert messen", "Chlor-Stoßbehandlung", "Boden & Wände reinigen"]
+        let oeffnenTasks: [(String, String)] = [
+            ("Abdeckung entfernen", "window.shade.open"),
+            ("Wasser auffüllen", "drop.fill"),
+            ("Filteranlage starten", "power"),
+            ("pH-Wert messen", "drop.triangle.fill"),
+            ("Chlor-Stoßbehandlung", "testtube.2"),
+            ("Boden & Wände reinigen", "sparkles"),
+        ]
 
-        for title in oeffnenTasks {
+        for (title, icon) in oeffnenTasks {
             let task = CareTask(
                 title: title,
                 dueDate: now,
-                intervalDays: 0
+                intervalDays: 0,
+                iconName: icon
             )
             task.scenario = oeffnen
             context.insert(task)
@@ -406,13 +421,21 @@ final class PoolcareState {
         let einwintern = CareScenario(name: "Einwintern", icon: "thermometer.snowflake", sortOrder: 4, isBuiltIn: true, nextScenarioId: winter.id)
         context.insert(einwintern)
 
-        let einwinternTasks = ["Wasserpegel absenken", "Leitungen entleeren", "Wintermittel zugeben", "Filteranlage abstellen", "Abdeckung anbringen", "Skimmer sichern"]
+        let einwinternTasks: [(String, String)] = [
+            ("Wasserpegel absenken", "arrow.up.and.down.circle"),
+            ("Leitungen entleeren", "pipe.and.drop"),
+            ("Wintermittel zugeben", "flask.fill"),
+            ("Filteranlage abstellen", "power"),
+            ("Abdeckung anbringen", "window.shade.closed"),
+            ("Skimmer sichern", "basket.fill"),
+        ]
 
-        for title in einwinternTasks {
+        for (title, icon) in einwinternTasks {
             let task = CareTask(
                 title: title,
                 dueDate: now,
-                intervalDays: 0
+                intervalDays: 0,
+                iconName: icon
             )
             task.scenario = einwintern
             context.insert(task)

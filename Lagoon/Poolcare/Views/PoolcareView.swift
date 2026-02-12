@@ -275,7 +275,7 @@ private struct ActionTaskRow: View {
             } label: {
                 Image(systemName: "play.circle")
                     .font(.title2)
-                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(Color.secondary.opacity(0.5))
             }
             .buttonStyle(.plain)
 
