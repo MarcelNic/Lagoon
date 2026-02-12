@@ -234,6 +234,9 @@ private struct RegularTaskRow: View {
             }
             .buttonStyle(.plain)
 
+            TaskIconView(iconName: task.iconName, isCustomIcon: task.isCustomIcon, size: 22)
+                .foregroundStyle(.tint)
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(task.title)
                     .strikethrough(task.isCompleted)
@@ -245,9 +248,6 @@ private struct RegularTaskRow: View {
             }
 
             Spacer()
-
-            TaskIconView(iconName: task.iconName, isCustomIcon: task.isCustomIcon, size: 22)
-                .foregroundStyle(.tint)
         }
     }
 
@@ -273,11 +273,14 @@ private struct ActionTaskRow: View {
                     state.startAction(task, duration: task.actionDurationSeconds)
                 }
             } label: {
-                Image(systemName: "play.circle.fill")
+                Image(systemName: "play.circle")
                     .font(.title2)
                     .symbolRenderingMode(.hierarchical)
             }
             .buttonStyle(.plain)
+
+            TaskIconView(iconName: task.iconName, isCustomIcon: task.isCustomIcon, size: 22)
+                .foregroundStyle(.tint)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(task.title)
@@ -288,9 +291,6 @@ private struct ActionTaskRow: View {
             }
 
             Spacer()
-
-            TaskIconView(iconName: task.iconName, isCustomIcon: task.isCustomIcon, size: 22)
-                .foregroundStyle(.tint)
         }
     }
 }
