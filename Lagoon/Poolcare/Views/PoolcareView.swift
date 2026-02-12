@@ -245,6 +245,9 @@ private struct RegularTaskRow: View {
             }
 
             Spacer()
+
+            TaskIconView(iconName: task.iconName, isCustomIcon: task.isCustomIcon, size: 22)
+                .foregroundStyle(.tint)
         }
     }
 
@@ -265,8 +268,16 @@ private struct ActionTaskRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            TaskIconView(iconName: task.iconName, isCustomIcon: task.isCustomIcon, size: 22)
-                .foregroundStyle(.tint)
+            Button {
+                withAnimation {
+                    state.startAction(task, duration: task.actionDurationSeconds)
+                }
+            } label: {
+                Image(systemName: "play.circle.fill")
+                    .font(.title2)
+                    .symbolRenderingMode(.hierarchical)
+            }
+            .buttonStyle(.plain)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(task.title)
@@ -278,16 +289,8 @@ private struct ActionTaskRow: View {
 
             Spacer()
 
-            Button {
-                withAnimation {
-                    state.startAction(task, duration: task.actionDurationSeconds)
-                }
-            } label: {
-                Image(systemName: "play.circle.fill")
-                    .font(.title2)
-                    .symbolRenderingMode(.hierarchical)
-            }
-            .buttonStyle(.plain)
+            TaskIconView(iconName: task.iconName, isCustomIcon: task.isCustomIcon, size: 22)
+                .foregroundStyle(.tint)
         }
     }
 }
@@ -366,7 +369,7 @@ struct TaskIconView: View {
                     .font(.system(size: size))
             }
         } else {
-            Image(systemName: "checkmark.circle")
+            Image(systemName: "water.waves")
                 .font(.system(size: size))
         }
     }
@@ -464,7 +467,7 @@ private struct AddItemSheet: View {
 
     @State private var itemType: ItemType = .task
     @State private var title = ""
-    @State private var selectedIcon = "checkmark.circle"
+    @State private var selectedIcon = "water.waves"
     @State private var dueDate = Date()
     @State private var intervalDays = 0
     @State private var reminderEnabled = true
@@ -475,13 +478,12 @@ private struct AddItemSheet: View {
         return Calendar.current.date(from: components) ?? Date()
     }()
     @State private var remindAfterTimer = true
-    @State private var currentDetent: PresentationDetent = .large
-    @State private var actionHours = 1
+@State private var actionHours = 1
     @State private var actionMinutes = 0
 
     enum ItemType: String, CaseIterable {
         case task = "Aufgabe"
-        case action = "Aktion"
+        case action = "Timer"
     }
 
     private let intervalOptions: [(String, Int)] = [
@@ -542,16 +544,6 @@ private struct AddItemSheet: View {
                     .padding(.vertical, 8)
                 }
 
-                Section("Fälligkeit") {
-                    DatePicker("Fällig ab", selection: $dueDate, displayedComponents: .date)
-
-                    Picker("Intervall", selection: $intervalDays) {
-                        ForEach(intervalOptions, id: \.1) { option in
-                            Text(option.0).tag(option.1)
-                        }
-                    }
-                }
-
                 if itemType == .action {
                     Section("Timer-Dauer") {
                         HStack(spacing: 0) {
@@ -572,6 +564,16 @@ private struct AddItemSheet: View {
                     }
                 }
 
+                Section("Fälligkeit") {
+                    DatePicker("Fällig ab", selection: $dueDate, displayedComponents: .date)
+
+                    Picker("Intervall", selection: $intervalDays) {
+                        ForEach(intervalOptions, id: \.1) { option in
+                            Text(option.0).tag(option.1)
+                        }
+                    }
+                }
+
                 Section("Erinnerung") {
                     Toggle("Erinnern", isOn: $reminderEnabled)
                     if reminderEnabled {
@@ -583,12 +585,7 @@ private struct AddItemSheet: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .presentationDetents([.medium, .large], selection: $currentDetent)
-            .onChange(of: itemType) { _, newValue in
-                withAnimation {
-                    currentDetent = newValue == .action ? .large : .medium
-                }
-            }
+            .presentationDetents([.large])
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button { dismiss() } label: {
@@ -700,7 +697,7 @@ private struct EditTaskSheet: View {
         self.task = task
         self.state = state
         _title = State(initialValue: task.title)
-        _selectedIcon = State(initialValue: task.iconName ?? "checkmark.circle")
+        _selectedIcon = State(initialValue: task.iconName ?? "water.waves")
         _dueDate = State(initialValue: task.dueDate ?? Date())
         _intervalDays = State(initialValue: task.intervalDays)
         _reminderEnabled = State(initialValue: task.reminderTime != nil)
