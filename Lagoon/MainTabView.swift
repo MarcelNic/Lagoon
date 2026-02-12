@@ -331,6 +331,14 @@ struct DashboardTabView: View {
                 poolWaterState.reloadSettings()
             }
         }
+        .alert("Speicherfehler", isPresented: Binding(
+            get: { poolWaterState.lastSaveError != nil },
+            set: { if !$0 { poolWaterState.lastSaveError = nil } }
+        )) {
+            Button("OK") { poolWaterState.lastSaveError = nil }
+        } message: {
+            Text(poolWaterState.lastSaveError ?? "")
+        }
     }
 }
 

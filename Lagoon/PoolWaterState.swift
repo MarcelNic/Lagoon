@@ -9,6 +9,7 @@
 import SwiftUI
 import SwiftData
 
+@MainActor
 @Observable
 final class PoolWaterState {
 
@@ -63,6 +64,11 @@ final class PoolWaterState {
     private(set) var idealPHMax: Double = 7.4
     private(set) var idealChlorineMin: Double = 0.5
     private(set) var idealChlorineMax: Double = 1.5
+
+    // MARK: - Error State
+
+    /// Letzte Fehlermeldung beim Speichern (nil = kein Fehler)
+    var lastSaveError: String?
 
     // MARK: - Simulation
 
@@ -124,11 +130,7 @@ final class PoolWaterState {
             )
             context.insert(measurement)
 
-            do {
-                try context.save()
-            } catch {
-                print("Error saving measurement: \(error)")
-            }
+            saveContext(context, operation: "Messung")
         }
 
         // Refresh cache and recalculate
@@ -150,11 +152,7 @@ final class PoolWaterState {
             )
             context.insert(dosing)
 
-            do {
-                try context.save()
-            } catch {
-                print("Error saving dosing: \(error)")
-            }
+            saveContext(context, operation: "Dosierung")
         }
 
         // Update last dosing info for status pill
@@ -188,11 +186,7 @@ final class PoolWaterState {
             )
             context.insert(weather)
 
-            do {
-                try context.save()
-            } catch {
-                print("Error saving weather: \(error)")
-            }
+            saveContext(context, operation: "Wetter")
         }
 
         // Refresh cache and recalculate
@@ -205,6 +199,16 @@ final class PoolWaterState {
         loadSettingsFromUserDefaults()
         refreshCache()
         recalculate()
+    }
+
+    private func saveContext(_ context: ModelContext, operation: String) {
+        do {
+            try context.save()
+            lastSaveError = nil
+        } catch {
+            lastSaveError = "Fehler beim Speichern (\(operation))"
+            print("Error saving \(operation): \(error)")
+        }
     }
 
     /// Refresh cached SwiftData values and rebuild engine input.

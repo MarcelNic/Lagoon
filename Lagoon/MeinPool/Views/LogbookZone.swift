@@ -99,11 +99,11 @@ struct LogbookSection: View {
         VStack(spacing: 12) {
             Image(systemName: "book.closed")
                 .font(.system(size: 32, weight: .medium))
-                .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.3))
+                .foregroundStyle(.secondary)
 
             Text("Keine Einträge")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(Color(light: Color.black, dark: Color.white).opacity(0.5))
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)

@@ -17,10 +17,10 @@ struct LogbookEntryRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.type.rawValue)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.callout.weight(.medium))
 
                 Text(entry.summary)
-                    .font(.system(size: 13))
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -28,7 +28,7 @@ struct LogbookEntryRow: View {
             Spacer()
 
             Text(relativeTime)
-                .font(.system(size: 13))
+                .font(.footnote)
                 .foregroundStyle(.tertiary)
         }
         .contentShape(Rectangle())

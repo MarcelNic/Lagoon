@@ -100,27 +100,34 @@ final class MeinPoolState {
         }
 
         var allEntries: [LogbookEntry] = []
+        let cutoffDate = Calendar.current.date(byAdding: .day, value: -90, to: Date()) ?? Date()
 
-        // Load measurements
-        let measurementDescriptor = FetchDescriptor<Measurement>(
+        // Load measurements (last 90 days, max 200)
+        var measurementDescriptor = FetchDescriptor<Measurement>(
+            predicate: #Predicate { $0.timestamp > cutoffDate },
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
+        measurementDescriptor.fetchLimit = 200
         if let measurements = try? context.fetch(measurementDescriptor) {
             allEntries.append(contentsOf: measurements.map { $0.toLogbookEntry() })
         }
 
-        // Load dosing events
-        let dosingDescriptor = FetchDescriptor<DosingEventModel>(
+        // Load dosing events (last 90 days, max 200)
+        var dosingDescriptor = FetchDescriptor<DosingEventModel>(
+            predicate: #Predicate { $0.timestamp > cutoffDate },
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
+        dosingDescriptor.fetchLimit = 200
         if let dosings = try? context.fetch(dosingDescriptor) {
             allEntries.append(contentsOf: dosings.map { $0.toLogbookEntry() })
         }
 
-        // Load care tasks
-        let careTaskDescriptor = FetchDescriptor<CareTaskModel>(
+        // Load care tasks (last 90 days, max 200)
+        var careTaskDescriptor = FetchDescriptor<CareTaskModel>(
+            predicate: #Predicate { $0.timestamp > cutoffDate },
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
+        careTaskDescriptor.fetchLimit = 200
         if let tasks = try? context.fetch(careTaskDescriptor) {
             allEntries.append(contentsOf: tasks.map { $0.toLogbookEntry() })
         }

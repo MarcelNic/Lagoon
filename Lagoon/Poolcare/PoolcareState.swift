@@ -36,6 +36,10 @@ final class PoolcareState {
         startTimerUpdates()
     }
 
+    deinit {
+        timerCancellable?.cancel()
+    }
+
     func configure(modelContext context: ModelContext, notificationManager: NotificationManager) {
         self.modelContext = context
         self.notificationManager = notificationManager
@@ -110,8 +114,11 @@ final class PoolcareState {
             try? await Task.sleep(for: .seconds(0.8))
             guard let context = self.modelContext else { return }
 
-            // Re-fetch task
-            guard let task = context.model(for: taskId) as? CareTask else { return }
+            // Safely re-fetch task (context.model(for:) can fault-crash if deleted)
+            let fetchId = careTaskId
+            var descriptor = FetchDescriptor<CareTask>(predicate: #Predicate { $0.id == fetchId })
+            descriptor.fetchLimit = 1
+            guard let task = try? context.fetch(descriptor).first else { return }
 
             if intervalDays > 0 {
                 // Reschedule: move to next due date

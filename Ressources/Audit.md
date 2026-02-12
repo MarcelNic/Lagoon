@@ -25,24 +25,24 @@
 - `remindAfterTimer`: ActiveAction traegt Flag, checkExpiredActions() feuert Notification bei Timer-Ablauf
 - `PoolcareState.configure(modelContext:notificationManager:)` ersetzt `setModelContext()`
 
+### Robustheit / Safety
+- **Division by Zero** behoben in `ActiveAction.swift` und `LiveActivityBackgroundManager.swift` — Guard fuer `duration <= 0`
+- **Force Cast** behoben in `LiveActivityBackgroundManager.swift` — `as!` durch sicheres `as?` mit `setTaskCompleted(success: false)` Fallback ersetzt
+- **Timer-Cleanup** hinzugefuegt in `PoolcareState` — `deinit` cancelt `timerCancellable`
+- **Save-Fehler sichtbar** in `PoolWaterState` — `lastSaveError` Property + `saveContext()` Helper + Alert in MainTabView
+
+### Architektur
+- **@MainActor** auf `PoolWaterState` hinzugefuegt — Thread-Safety fuer @Observable class
+- **Data Race in completeTask()** behoben — `context.model(for:)` durch sicheren `FetchDescriptor` mit Predicate ersetzt
+- **Input-Validierung** im Engine-Layer — `PoolWaterEngineInput.validated()` Extension clampt alle Werte auf physikalisch sinnvolle Bereiche
+
+### Performance
+- **Logbook-Queries optimiert** in `MeinPoolState` — 90-Tage Predicate + `fetchLimit: 200` fuer alle drei FetchDescriptors
+- **Doppelte @Query entfernt** in ScenarioSheets — `scenarios` wird als Parameter von PoolcareView uebergeben statt dreifach per @Query geladen
+
 ---
 
 ## Offen (moegliche naechste Schritte)
-
-### Robustheit / Safety
-- **Division by Zero** in `ActiveAction.swift:49` — `progress` rechnet `elapsed / duration` ohne Guard fuer `duration == 0`
-- **Force Cast** in `LiveActivityBackgroundManager.swift:24` — `task as! BGAppRefreshTask` sollte `as?` sein
-- **Timer nie gestoppt** in `PoolcareState` — kein `deinit` um `timerCancellable` zu canceln
-- **Stille Save-Fehler** in `PoolWaterState` (Zeilen 130, 156, 193, 212) — Errors nur geloggt, kein User-Feedback
-
-### Performance
-- **N+1 Queries** in `MeinPoolState.swift:105-126` — laedt ALLE Measurements/DosingEvents/CareTasks ohne Limit oder Predicate
-- **Mehrfache @Query** in PoolcareView-Structs — gleiche Query in mehreren Structs, erzeugt doppelte Subscriptions
-
-### Architektur
-- **Fehlende @MainActor** auf `PoolWaterState` — Properties koennen theoretisch von Background-Thread geaendert werden
-- **Data Race bei Task-Completion** in `PoolcareState.completeTask()` — 0.8s Delay zwischen Save und Re-Fetch, Task koennte zwischenzeitlich geloescht werden
-- **Keine Input-Validierung** im Engine-Layer — ungueltige Messwerte werden ohne Pruefung verarbeitet
 
 ### UI-Konsistenz (kleinere Punkte)
 - Horizontales Padding variiert zwischen 12-80px je nach View

@@ -263,6 +263,32 @@ public struct PHTargets: Codable {
     }
 }
 
+// MARK: - Input Validation
+
+extension PoolWaterEngineInput {
+    /// Returns a copy with values clamped to physically meaningful ranges
+    public func validated() -> PoolWaterEngineInput {
+        PoolWaterEngineInput(
+            poolVolume_m3: Swift.max(0.1, poolVolume_m3),
+            lastMeasurement: LastMeasurement(
+                freeChlorine_ppm: Swift.min(Swift.max(lastMeasurement.freeChlorine_ppm, 0), 10),
+                pH: Swift.min(Swift.max(lastMeasurement.pH, 0), 14),
+                timestampISO: lastMeasurement.timestampISO
+            ),
+            conditions: PoolConditions(
+                waterTemperature_c: Swift.min(Swift.max(conditions.waterTemperature_c, 0), 50),
+                uvExposure: conditions.uvExposure,
+                poolCovered: conditions.poolCovered,
+                batherLoad: conditions.batherLoad,
+                filterRuntime_hours_per_day: Swift.min(Swift.max(conditions.filterRuntime_hours_per_day, 0), 24)
+            ),
+            dosingHistory: dosingHistory,
+            products: products,
+            targets: targets
+        )
+    }
+}
+
 // MARK: - Default Products
 
 /// Standard pool chemicals with typical effectiveness values

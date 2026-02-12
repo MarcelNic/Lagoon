@@ -48,6 +48,7 @@ struct ActiveAction: Identifiable, Equatable {
     }
 
     var progress: Double {
+        guard duration > 0 else { return 1.0 }
         let elapsed = Date().timeIntervalSince(startTime)
         return min(1.0, elapsed / duration)
     }

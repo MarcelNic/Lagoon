@@ -82,7 +82,7 @@ struct PoolChartView: View {
             // Title row with selection info
             HStack(alignment: .firstTextBaseline) {
                 Text(title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
 
                 Spacer()
@@ -91,7 +91,7 @@ struct PoolChartView: View {
                     // Show selected point info inline (date left of value)
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         Text(formattedSelectionDate(selectedPoint.timestamp))
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.footnote.weight(.medium))
                             .foregroundStyle(.secondary)
                         Text(formattedValue(selectedPoint.value))
                             .font(.system(size: 22, weight: .bold))
@@ -240,7 +240,7 @@ struct PoolChartView: View {
         VStack(spacing: 8) {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.system(size: 28))
-                .foregroundStyle(.secondary.opacity(0.5))
+                .foregroundStyle(.secondary)
             Text("Keine Daten")
                 .font(.system(size: 14))
                 .foregroundStyle(.secondary)

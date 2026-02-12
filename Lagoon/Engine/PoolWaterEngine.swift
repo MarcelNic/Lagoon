@@ -37,18 +37,20 @@ public struct PoolWaterEngine {
         at currentDate: Date
     ) -> PoolWaterEngineOutput {
 
+        let validInput = input.validated()
+
         // 1. Estimate current water state
         let (estimatedState, confidence) = WaterStateEstimator.estimate(
-            from: input,
+            from: validInput,
             at: currentDate
         )
 
         // 2. Generate dosing recommendations
         let recommendations = DosingRecommender.recommend(
             for: estimatedState,
-            targets: input.targets,
-            products: input.products,
-            poolVolume_m3: input.poolVolume_m3
+            targets: validInput.targets,
+            products: validInput.products,
+            poolVolume_m3: validInput.poolVolume_m3
         )
 
         // 3. Return complete output

@@ -79,9 +79,9 @@ struct MeinPoolView: View {
                     } label: {
                         HStack {
                             Image(systemName: "list.bullet")
-                                .font(.system(size: 15, weight: .medium))
+                                .font(.subheadline.weight(.medium))
                             Text("Alle Einträge")
-                                .font(.system(size: 15, weight: .medium))
+                                .font(.subheadline.weight(.medium))
                         }
                         .foregroundStyle(.primary)
                         .frame(maxWidth: .infinity)

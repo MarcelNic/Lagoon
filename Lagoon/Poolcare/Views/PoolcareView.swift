@@ -54,11 +54,11 @@ struct PoolcareView: View {
                         VStack(spacing: 0) {
                             ForEach(state.activeActions) { action in
                                 ActiveActionRow(action: action, state: state)
-                                    .padding(.horizontal, 20)
+                                    .padding(.horizontal, 16)
                                     .padding(.vertical, 14)
                                 if action.id != state.activeActions.last?.id {
                                     Divider()
-                                        .padding(.leading, 20)
+                                        .padding(.leading, 16)
                                 }
                             }
                         }
@@ -165,12 +165,12 @@ struct PoolcareView: View {
                     .presentationDetents([.large])
             }
             .sheet(isPresented: $showNewScenarioSheet) {
-                NewScenarioSheet(state: state)
+                NewScenarioSheet(state: state, scenarios: scenarios)
                     .presentationDetents([.large])
             }
             .sheet(isPresented: $showEditScenarioSheet) {
                 if let scenario {
-                    EditScenarioSheet(scenario: scenario, state: state)
+                    EditScenarioSheet(scenario: scenario, state: state, scenarios: scenarios)
                         .presentationDetents([.large])
                 }
             }

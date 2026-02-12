@@ -10,8 +10,8 @@ import SwiftData
 
 struct NewScenarioSheet: View {
     @Bindable var state: PoolcareState
+    let scenarios: [CareScenario]
     @Environment(\.dismiss) private var dismiss
-    @Query(sort: \CareScenario.sortOrder) private var scenarios: [CareScenario]
 
     @State private var name = ""
     @State private var selectedIcon = "leaf.fill"
@@ -89,8 +89,8 @@ struct NewScenarioSheet: View {
 struct EditScenarioSheet: View {
     let scenario: CareScenario
     @Bindable var state: PoolcareState
+    let scenarios: [CareScenario]
     @Environment(\.dismiss) private var dismiss
-    @Query(sort: \CareScenario.sortOrder) private var scenarios: [CareScenario]
 
     @State private var name: String
     @State private var selectedIcon: String
@@ -99,9 +99,10 @@ struct EditScenarioSheet: View {
 
     private let iconOptions = scenarioIconOptions
 
-    init(scenario: CareScenario, state: PoolcareState) {
+    init(scenario: CareScenario, state: PoolcareState, scenarios: [CareScenario]) {
         self.scenario = scenario
         self.state = state
+        self.scenarios = scenarios
         _name = State(initialValue: scenario.name)
         _selectedIcon = State(initialValue: scenario.icon)
         _nextScenarioId = State(initialValue: scenario.nextScenarioId)

@@ -54,10 +54,10 @@ struct InfoPill: View {
         HStack(spacing: 6) {
             if let icon = icon {
                 Image(systemName: icon)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.footnote.weight(.medium))
             }
             Text(text)
-                .font(.system(size: 13, weight: .medium))
+                .font(.footnote.weight(.medium))
         }
         .foregroundStyle(foregroundColor)
         .padding(.horizontal, 12)

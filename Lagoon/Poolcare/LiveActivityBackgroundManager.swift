@@ -21,7 +21,11 @@ final class LiveActivityBackgroundManager {
             forTaskWithIdentifier: Self.taskIdentifier,
             using: nil
         ) { task in
-            self.handleBackgroundTask(task as! BGAppRefreshTask)
+            guard let refreshTask = task as? BGAppRefreshTask else {
+                task.setTaskCompleted(success: false)
+                return
+            }
+            self.handleBackgroundTask(refreshTask)
         }
     }
 
@@ -71,7 +75,7 @@ final class LiveActivityBackgroundManager {
 
             // Calculate current progress
             let elapsed = Date().timeIntervalSince(startTime)
-            let progress = min(1.0, max(0.0, elapsed / duration))
+            let progress = duration > 0 ? min(1.0, max(0.0, elapsed / duration)) : 1.0
 
             // Check if activity should end
             if progress >= 1.0 {
