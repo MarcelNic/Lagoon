@@ -5,6 +5,9 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Lagoon verwendet deinen Standort, um lokale Wetterdaten abzurufen und die Wasserchemie genauer vorherzusagen.</string>

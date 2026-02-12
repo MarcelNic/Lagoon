@@ -5,6 +5,7 @@ import CoreHaptics
 struct SlideToConfirm: View {
     let label: String
     let icon: String
+    var playSuccessHaptic: Bool = true
     let action: () -> Void
 
     @State private var offset: CGFloat = 0
@@ -84,7 +85,9 @@ struct SlideToConfirm: View {
                                 let currentProgress = offset / maxOffset
 
                                 if currentProgress >= commitThreshold {
-                                    playFireworkHaptic()
+                                    if playSuccessHaptic {
+                                        playFireworkHaptic()
+                                    }
                                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                         offset = maxOffset
                                     }

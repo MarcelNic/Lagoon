@@ -7,10 +7,18 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 import BackgroundTasks
+
+class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+        return .portrait
+    }
+}
 
 @main
 struct LagoonApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @AppStorage("appearanceMode") private var appearanceMode: String = AppearanceMode.system.rawValue
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 

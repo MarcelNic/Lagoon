@@ -43,6 +43,7 @@ struct MeasurementDosingSheet: View {
     @State private var phInRange: Bool = false
     @State private var chlorineInRange: Bool = false
     @State private var particlesDissolving: Bool = false
+    @State private var allOptimalTrigger: Bool = false
 
     // Bearbeiten adjusted values
     @State private var editedPHAmount: Double = 0
@@ -288,12 +289,23 @@ struct MeasurementDosingSheet: View {
         VStack(spacing: 0) {
             if phInRange && chlorineInRange {
                 Spacer()
-                HStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                        .font(.title)
+                VStack(spacing: 12) {
+                    if allOptimalTrigger {
+                        Image(systemName: "checkmark.circle")
+                            .font(.system(size: 80, weight: .light))
+                            .foregroundStyle(.green)
+                            .transition(.symbolEffect(.drawOn.individually))
+                    }
                     Text("Alles im optimalen Bereich")
-                        .font(.subheadline.weight(.medium))
+                        .font(.title3.weight(.semibold))
+                    Text("Aktuell keine Dosierung erforderlich")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .onAppear {
+                    withAnimation {
+                        allOptimalTrigger = true
+                    }
                 }
                 Spacer()
             } else {
@@ -352,15 +364,29 @@ struct MeasurementDosingSheet: View {
                 Spacer()
             }
 
-            SlideToConfirm(
-                label: phInRange && chlorineInRange ? "Speichern" : "Dosieren",
-                icon: "chevron.right"
-            ) {
-                particlesDissolving = true
-                saveAll(phAmount: recommendedPHAmount, chlorineAmount: recommendedChlorineAmount)
+            if phInRange && chlorineInRange {
+                Button {
+                    saveMeasurementOnly()
+                } label: {
+                    Text("Okay")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                }
+                .buttonStyle(.glassProminent)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
+            } else {
+                SlideToConfirm(
+                    label: "Dosieren",
+                    icon: "chevron.right"
+                ) {
+                    particlesDissolving = true
+                    saveAll(phAmount: recommendedPHAmount, chlorineAmount: recommendedChlorineAmount)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 20)
         }
     }
 
@@ -420,7 +446,8 @@ struct MeasurementDosingSheet: View {
         Section {
             SlideToConfirm(
                 label: "Dosieren",
-                icon: "chevron.right"
+                icon: "chevron.right",
+                playSuccessHaptic: false
             ) {
                 saveAll(phAmount: editedPHAmount, chlorineAmount: editedChlorineAmount)
             }
@@ -518,8 +545,12 @@ struct MeasurementDosingSheet: View {
             )
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        if phase == .bearbeiten {
             dismiss()
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                dismiss()
+            }
         }
     }
 }

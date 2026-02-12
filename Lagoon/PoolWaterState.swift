@@ -390,8 +390,12 @@ final class PoolWaterState {
     private func loadDosingHistorySinceLastMeasurement() -> [DosingEvent] {
         guard let context = modelContext else { return [] }
 
+        // Include dosings after last measurement AND still-active dosings (within 4h mixing window)
+        let activeWindowStart = Date().addingTimeInterval(-4 * 3600)
+        let cutoff = min(lastMeasurementDate, activeWindowStart)
+
         var descriptor = FetchDescriptor<DosingEventModel>(
-            predicate: #Predicate { $0.timestamp > lastMeasurementDate },
+            predicate: #Predicate { $0.timestamp > cutoff },
             sortBy: [SortDescriptor(\.timestamp)]
         )
         descriptor.fetchLimit = 100
