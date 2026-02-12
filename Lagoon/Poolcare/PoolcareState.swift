@@ -102,7 +102,6 @@ final class PoolcareState {
         task.completedAt = Date()
         try? modelContext?.save()
 
-        let taskId = task.persistentModelID
         let intervalDays = task.intervalDays
         let careTaskId = task.id
 

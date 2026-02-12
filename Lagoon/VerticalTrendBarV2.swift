@@ -137,13 +137,8 @@ struct VerticalTrendBarV2: View {
                                 .fill(Color(light: barColor.opacity(0.8), dark: barColor.opacity(0.5)))
                                 .frame(width: barWidth, height: barHeight)
 
-                            // Marker-Kreis (nur visuell, ohne Text)
+                            // Marker-Kreis mit Wert
                             markerCircle
-                                .offset(y: markerYPosition - markerTotalHeight / 2)
-                                .animation(.smooth, value: value)
-
-                            // Wert-Label (getrennt, eigene Animation)
-                            markerLabel
                                 .offset(y: markerYPosition - markerTotalHeight / 2)
                                 .animation(.smooth, value: value)
 
@@ -215,19 +210,14 @@ struct VerticalTrendBarV2: View {
                     )
                     .padding(0.5)
             }
+            .overlay {
+                Text(formatValue(value))
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(.white)
+                    .contentTransition(.identity)
+            }
             .padding(markerPadding)
-    }
-
-    // MARK: - Marker Label (getrennt für saubere Animation)
-
-    private var markerLabel: some View {
-        Text(formatValue(value))
-            .font(.system(size: 18, weight: .bold, design: .rounded))
-            .monospacedDigit()
-            .foregroundStyle(.white)
-            .contentTransition(.numericText())
-            .animation(.smooth, value: value)
-            .frame(width: markerDiameter + 2 * markerPadding, height: markerDiameter + 2 * markerPadding)
     }
 
     // MARK: - Skala Markierungen
