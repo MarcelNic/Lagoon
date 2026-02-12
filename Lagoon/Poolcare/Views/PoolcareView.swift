@@ -192,6 +192,14 @@ struct PoolcareView: View {
     @ViewBuilder
     private func taskContextMenu(for task: CareTask) -> some View {
         Button {
+            withAnimation {
+                state.completeTask(task)
+            }
+        } label: {
+            Label("Erledigt", systemImage: "checkmark.circle")
+        }
+
+        Button {
             editingTask = task
         } label: {
             Label("Bearbeiten", systemImage: "pencil")

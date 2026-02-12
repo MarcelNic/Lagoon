@@ -96,8 +96,8 @@ struct DashboardTabView: View {
         guard anySheetPresented else { return 1.0 }
         if showMeasurementDosing {
             switch measurementDosingPhase {
-            case 1: return 0.85   // dosieren – kleines sheet
-            case 2: return 0.65   // bearbeiten – großes sheet
+            case 1: return 0.85   // dosieren
+            case 2: return 0.65   // bearbeiten
             default: return 0.80  // messen
             }
         }
@@ -108,7 +108,7 @@ struct DashboardTabView: View {
         if showMeasurementDosing {
             switch measurementDosingPhase {
             case 1: return -110   // empfehlung
-            case 2: return -100   // anpassen – weniger nach oben
+            case 2: return -100   // anpassen
             default: return -120  // messen
             }
         }

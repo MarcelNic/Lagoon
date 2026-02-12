@@ -216,6 +216,12 @@ final class PoolcareState {
             endRobotLiveActivity()
         }
         activeActions.removeAll { $0.id == action.id }
+
+        // Mark the underlying task as completed
+        if let context = modelContext,
+           let task = try? context.fetch(FetchDescriptor<CareTask>()).first(where: { $0.id == action.taskId }) {
+            completeTask(task)
+        }
     }
 
     // MARK: - Timer Updates
