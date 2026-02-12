@@ -4,7 +4,7 @@ import UserNotifications
 @Observable
 final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
-    static let quickMeasureActionID = "QUICK_MEASURE"
+    static let measurementDosingActionID = "QUICK_MEASURE"
     static let categoryID = "DAILY_MEASURE"
 
     private(set) var isAuthorized = false
@@ -34,7 +34,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     private func registerCategory() {
         let measureAction = UNNotificationAction(
-            identifier: Self.quickMeasureActionID,
+            identifier: Self.measurementDosingActionID,
             title: "Jetzt messen",
             options: .foreground
         )
@@ -97,7 +97,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     ) async {
         if response.notification.request.content.categoryIdentifier == Self.categoryID {
             await MainActor.run {
-                NotificationCenter.default.post(name: .openQuickMeasure, object: nil)
+                NotificationCenter.default.post(name: .openMeasurementDosing, object: nil)
             }
         }
     }
@@ -106,5 +106,5 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 // MARK: - Notification Name
 
 extension Notification.Name {
-    static let openQuickMeasure = Notification.Name("openQuickMeasure")
+    static let openMeasurementDosing = Notification.Name("openMeasurementDosing")
 }

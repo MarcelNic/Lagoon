@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct QuickMeasureSheet: View {
+struct MeasurementDosingSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(PoolWaterState.self) private var poolWaterState
 
@@ -16,7 +16,7 @@ struct QuickMeasureSheet: View {
     }
 
     @State private var phase: Phase = .messen
-    @State private var currentDetent: PresentationDetent = QuickMeasureSheet.messenDetent
+    @State private var currentDetent: PresentationDetent = MeasurementDosingSheet.messenDetent
 
     // Messen values
     @State private var phValue: Double = 7.4
@@ -100,7 +100,7 @@ struct QuickMeasureSheet: View {
         return Color(hue: hue, saturation: 0.75, brightness: 0.9)
     }
 
-    private static let messenDetent = PresentationDetent.height(360)
+    private static let messenDetent = PresentationDetent.height(415)
 
     private static let dosierenDetent = PresentationDetent.height(380)
 
@@ -121,7 +121,8 @@ struct QuickMeasureSheet: View {
                 switch phase {
                 case .messen:
                     Form { messenSections }
-                        .contentMargins(.top, 16)
+                        .contentMargins(.top, 0)
+                        .scrollDisabled(true)
                 case .dosieren:
                     dosierenView
                         .ignoresSafeArea(edges: .bottom)
@@ -134,10 +135,15 @@ struct QuickMeasureSheet: View {
             }
             .navigationTitle(headerTitle)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(phase == .messen ? .hidden : .visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    if phase != .messen {
+                    if phase == .messen {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                    } else {
                         Button {
                             withAnimation {
                                 if phase == .bearbeiten {
@@ -155,7 +161,13 @@ struct QuickMeasureSheet: View {
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    if phase == .dosieren {
+                    if phase == .messen {
+                        Button {
+                            saveMeasurementOnly()
+                        } label: {
+                            Image(systemName: "arrow.up")
+                        }
+                    } else if phase == .dosieren {
                         Button {
                             prepareEditValues()
                             withAnimation {
@@ -193,7 +205,7 @@ struct QuickMeasureSheet: View {
 
     private var headerTitle: String {
         switch phase {
-        case .messen: return ""
+        case .messen: return "Messen"
         case .dosieren: return "Empfehlung"
         case .bearbeiten: return "Anpassen"
         }
@@ -258,7 +270,7 @@ struct QuickMeasureSheet: View {
                     currentDetent = Self.dosierenDetent
                 }
             } label: {
-                Text("Messen")
+                Text("Dosieren")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
@@ -464,6 +476,15 @@ struct QuickMeasureSheet: View {
         editedPHAmount = recommendedPHAmount
         editedChlorineAmount = recommendedChlorineAmount
         editedDate = Date()
+    }
+
+    private func saveMeasurementOnly() {
+        poolWaterState.recordMeasurement(
+            chlorine: chlorineValue,
+            pH: phValue,
+            waterTemperature: waterTemperature
+        )
+        dismiss()
     }
 
     private func saveAll(phAmount: Double, chlorineAmount: Double) {

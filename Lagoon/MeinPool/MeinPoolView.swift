@@ -12,7 +12,7 @@ struct MeinPoolView: View {
     @Environment(PoolWaterState.self) private var poolWaterState
     @State private var meinPoolState = MeinPoolState()
     @Binding var showSettings: Bool
-    @State private var selectedTimeRange: ChartTimeRange = .threeDays
+    @State private var selectedTimeRange: ChartTimeRange = .sevenDays
     @State private var showLogbookList = false
     init(showSettings: Binding<Bool> = .constant(false)) {
         self._showSettings = showSettings

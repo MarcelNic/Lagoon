@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var activeTab: LagoonTab = .home
-    @State private var showQuickMeasure = false
+    @State private var showMeasurementDosing = false
     @State private var showSettings = false
     @State private var showAddTaskSheet = false
     @State private var poolcareState = PoolcareState()
@@ -19,7 +19,7 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $activeTab) {
             Tab(value: .home) {
-                DashboardTabView(showQuickMeasure: $showQuickMeasure)
+                DashboardTabView(showMeasurementDosing: $showMeasurementDosing)
                     .lagoonTabBarSafeAreaPadding()
                     .toolbarVisibility(.hidden, for: .tabBar)
             }
@@ -48,7 +48,7 @@ struct MainTabView: View {
             ],
             action: LagoonTabBarAction(systemImage: activeTab == .pool ? "gear" : "plus", accessibilityLabel: "Aktion") {
                 switch activeTab {
-                case .home: showQuickMeasure = true
+                case .home: showMeasurementDosing = true
                 case .care: showAddTaskSheet = true
                 case .pool: showSettings = true
                 }
@@ -80,12 +80,12 @@ struct DashboardTabView: View {
     @AppStorage("cupGrams") private var cupGrams: Double = 50.0
     @AppStorage("barStyle") private var barStyle: String = "classic"
 
-    @Binding var showQuickMeasure: Bool
-    @State private var quickMeasurePhase: Int = 0
+    @Binding var showMeasurementDosing: Bool
+    @State private var measurementDosingPhase: Int = 0
     @State private var timeOffsetSelection: Int = 0
 
     private var anySheetPresented: Bool {
-        showQuickMeasure
+        showMeasurementDosing
     }
 
     private var showDosingPill: Bool {
@@ -94,14 +94,25 @@ struct DashboardTabView: View {
 
     private var barScale: CGFloat {
         guard anySheetPresented else { return 1.0 }
-        if showQuickMeasure {
-            switch quickMeasurePhase {
-            case 1: return 1.0    // dosieren – kleines sheet
+        if showMeasurementDosing {
+            switch measurementDosingPhase {
+            case 1: return 0.85   // dosieren – kleines sheet
             case 2: return 0.65   // bearbeiten – großes sheet
             default: return 0.80  // messen
             }
         }
         return 0.80
+    }
+
+    private var barSheetOffset: CGFloat {
+        if showMeasurementDosing {
+            switch measurementDosingPhase {
+            case 1: return -110   // empfehlung
+            case 2: return -100   // anpassen – weniger nach oben
+            default: return -120  // messen
+            }
+        }
+        return -120
     }
 
     private var recentDosingLabel: String {
@@ -227,14 +238,14 @@ struct DashboardTabView: View {
                     }
                 }
                 .scaleEffect(barScale, anchor: .top)
-                .offset(y: anySheetPresented ? -80 : (showDosingPill ? -44 : -40))
+                .offset(y: anySheetPresented ? barSheetOffset : (showDosingPill ? -44 : -40))
                 .animation(.smooth, value: anySheetPresented)
-                .animation(.smooth, value: quickMeasurePhase)
+                .animation(.smooth, value: measurementDosingPhase)
                 .animation(.smooth(duration: 0.35), value: showDosingPill)
 
                 // Dosing status pill
                 if poolWaterState.recentDosingActive {
-                    Button { showQuickMeasure = true } label: {
+                    Button { showMeasurementDosing = true } label: {
                         InfoPill(
                             icon: "checkmark.circle.fill",
                             text: recentDosingLabel
@@ -247,7 +258,7 @@ struct DashboardTabView: View {
                     .padding(.top, 8)
                     .offset(y: -24)
                 } else if poolWaterState.dosingNeeded {
-                    Button { showQuickMeasure = true } label: {
+                    Button { showMeasurementDosing = true } label: {
                         InfoPill(
                             icon: "exclamationmark.triangle.fill",
                             text: "Dosierung",
@@ -307,11 +318,11 @@ struct DashboardTabView: View {
             }
             .animation(.smooth(duration: 0.35), value: showDosingPill)
         }
-        .sheet(isPresented: $showQuickMeasure, onDismiss: { quickMeasurePhase = 0 }) {
-            QuickMeasureSheet(externalPhase: $quickMeasurePhase)
+        .sheet(isPresented: $showMeasurementDosing, onDismiss: { measurementDosingPhase = 0 }) {
+            MeasurementDosingSheet(externalPhase: $measurementDosingPhase)
         }
-        .onReceive(NotificationCenter.default.publisher(for: .openQuickMeasure)) { _ in
-            showQuickMeasure = true
+        .onReceive(NotificationCenter.default.publisher(for: .openMeasurementDosing)) { _ in
+            showMeasurementDosing = true
         }
         .onAppear {
             poolWaterState.setModelContext(modelContext)

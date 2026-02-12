@@ -179,8 +179,8 @@ struct PoolChartView: View {
             // Selection rule line
             if let selectedPoint = selectedDataPoint {
                 RuleMark(x: .value("Selected", selectedPoint.timestamp))
-                    .foregroundStyle(.secondary.opacity(0.5))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                    .foregroundStyle(lineColor)
+                    .lineStyle(StrokeStyle(lineWidth: 1))
             }
         }
         .chartXSelection(value: $selectedDate)
@@ -269,12 +269,7 @@ struct PoolChartView: View {
     }
 
     private func formattedDate(_ date: Date) -> String {
-        switch timeRange {
-        case .twentyFourHours:
-            return date.formatted(.dateTime.hour(.defaultDigits(amPM: .omitted)).minute())
-        default:
-            return date.formatted(.dateTime.day().month(.defaultDigits))
-        }
+        date.formatted(.dateTime.day().month(.defaultDigits))
     }
     
     private func formattedSelectionDate(_ date: Date) -> String {
@@ -292,11 +287,10 @@ struct PoolChartView: View {
 
     private var xAxisDesiredCount: Int {
         switch timeRange {
-        case .twentyFourHours: return 6
-        case .twoDays: return 4
         case .threeDays: return 4
-        case .fiveDays: return 5
-        case .tenDays: return 5
+        case .sevenDays: return 5
+        case .fourteenDays: return 5
+        case .thirtyDays: return 6
         }
     }
 }

@@ -461,7 +461,9 @@ final class PoolWaterState {
         let simulationDate = Date().addingTimeInterval(simulationOffsetHours * 3600)
         let pendingEvents = dosingHistory.filter { event in
             let hoursSince = simulationDate.timeIntervalSince(event.timestamp) / 3600.0
-            return hoursSince >= 0 && hoursSince < 4.0
+            // Allow small negative values: dosing timestamp can be slightly in the future
+            // (e.g. MeasurementDosing sets it +1s after measurement for sort ordering)
+            return hoursSince > -0.01 && hoursSince < 4.0
         }
 
         if pendingEvents.contains(where: { $0.kind == .chlorine }) {

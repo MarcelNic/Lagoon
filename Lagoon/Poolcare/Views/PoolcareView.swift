@@ -254,7 +254,6 @@ private struct RegularTaskRow: View {
 private struct ActionTaskRow: View {
     let task: CareTask
     @Bindable var state: PoolcareState
-    @State private var showTimerPicker = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -272,26 +271,15 @@ private struct ActionTaskRow: View {
             Spacer()
 
             Button {
-                showTimerPicker = true
+                withAnimation {
+                    state.startAction(task, duration: task.actionDurationSeconds)
+                }
             } label: {
                 Image(systemName: "play.circle.fill")
                     .font(.title2)
                     .symbolRenderingMode(.hierarchical)
             }
             .buttonStyle(.plain)
-        }
-        .sheet(isPresented: $showTimerPicker) {
-            TimerPickerSheet(
-                title: task.title,
-                iconName: task.iconName,
-                isCustomIcon: task.isCustomIcon,
-                defaultDuration: task.actionDurationSeconds
-            ) { duration in
-                withAnimation {
-                    state.startAction(task, duration: duration)
-                }
-            }
-            .presentationDetents([.medium])
         }
     }
 }

@@ -154,7 +154,7 @@ struct VerticalTrendBarV2: View {
                             if trend != .stable {
                                 Image(systemName: trend == .up ? "chevron.up" : "chevron.down")
                                     .font(.system(size: 14, weight: .bold))
-                                    .foregroundStyle(.white.opacity(0.8))
+                                    .foregroundStyle(idealRangeColor)
                                     .offset(y: trend == .up
                                         ? markerYPosition - markerTotalHeight / 2 - 18
                                         : markerYPosition + markerTotalHeight / 2 + 4)
@@ -195,13 +195,31 @@ struct VerticalTrendBarV2: View {
 
     // MARK: - Marker Circle (nur Kreis, kein Text)
 
+    private var markerBorderColor: Color {
+        colorScheme == .dark ? markerBorderColorDark : markerBorderColorLight
+    }
+
     private var markerCircle: some View {
         Circle()
             .fill(idealRangeColor)
             .frame(width: markerDiameter, height: markerDiameter)
             .overlay {
                 Circle()
-                    .strokeBorder(colorScheme == .dark ? markerBorderColorDark : markerBorderColorLight, lineWidth: 1)
+                    .stroke(
+                        AngularGradient(
+                            stops: [
+                                .init(color: markerBorderColor.opacity(0.6), location: 0.0),    // top (12 o'clock)
+                                .init(color: markerBorderColor.opacity(1.0), location: 0.125),  // top-right (1:30)
+                                .init(color: markerBorderColor.opacity(0.2), location: 0.375),  // bottom-right (4:30)
+                                .init(color: markerBorderColor.opacity(1.0), location: 0.625),  // bottom-left (7:30)
+                                .init(color: markerBorderColor.opacity(0.2), location: 0.875),  // top-left (10:30)
+                                .init(color: markerBorderColor.opacity(0.6), location: 1.0),    // back to top
+                            ],
+                            center: .center
+                        ),
+                        lineWidth: 1
+                    )
+                    .padding(0.5)
             }
             .padding(markerPadding)
     }
