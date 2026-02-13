@@ -14,6 +14,7 @@ final class CareScenario {
     var sortOrder: Int
     var isBuiltIn: Bool        // Sommer/Winter/Urlaub nicht löschbar
     var nextScenarioId: UUID?  // Folge-Szenario wenn alle Aufgaben erledigt
+    var pausedAt: Date?        // Zeitpunkt der Pausierung (nil = aktiv)
 
     @Relationship(deleteRule: .cascade, inverse: \CareTask.scenario)
     var tasks: [CareTask] = []

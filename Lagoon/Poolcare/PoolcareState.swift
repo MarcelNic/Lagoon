@@ -17,6 +17,10 @@ final class PoolcareState {
     var showSwitchScenarioAlert = false
     var pendingNextScenario: CareScenario?
 
+    // Pause-Alert beim manuellen Szenariowechsel
+    var showPauseAlert = false
+    var pendingSwitchScenario: CareScenario?
+
     // MARK: - Active Timers (in-memory)
 
     private(set) var activeActions: [ActiveAction] = []
@@ -86,9 +90,51 @@ final class PoolcareState {
         return scenario
     }
 
+    /// Manueller Szenariowechsel aus dem Menü — zeigt Pause-Alert
+    func requestScenarioSwitch(to scenario: CareScenario) {
+        guard scenario.id != currentScenarioId else { return }
+        pendingSwitchScenario = scenario
+        showPauseAlert = true
+    }
+
+    /// Führt den Szenariowechsel durch (pauseOld bestimmt ob altes Szenario pausiert wird)
+    func switchScenario(to newScenario: CareScenario, pauseOld: Bool) {
+        let oldScenario = currentScenario()
+
+        // 1. Benachrichtigungen des alten Szenarios canceln
+        if let old = oldScenario {
+            notificationManager?.cancelAllCareTaskReminders(for: old)
+        }
+
+        // 2. Altes Szenario ggf. pausieren
+        if pauseOld, let old = oldScenario {
+            old.pausedAt = Date()
+        }
+
+        // 3. Wechsel durchführen
+        currentScenarioId = newScenario.id
+
+        // 4. Neues Szenario ggf. entpausieren (dueDates verschieben)
+        if let pausedAt = newScenario.pausedAt {
+            let pausedDuration = Date().timeIntervalSince(pausedAt)
+            for task in newScenario.tasks {
+                if let dueDate = task.dueDate {
+                    task.dueDate = dueDate.addingTimeInterval(pausedDuration)
+                }
+            }
+            newScenario.pausedAt = nil
+        }
+
+        try? modelContext?.save()
+
+        // 5. Benachrichtigungen für neues Szenario schedulen
+        notificationManager?.scheduleAllCareTaskReminders(for: newScenario)
+    }
+
+    /// Auto-Switch wenn alle Aufgaben erledigt (Folge-Szenario)
     func confirmScenarioSwitch() {
         guard let next = pendingNextScenario else { return }
-        currentScenarioId = next.id
+        switchScenario(to: next, pauseOld: false)
         pendingNextScenario = nil
     }
 
@@ -131,8 +177,10 @@ final class PoolcareState {
                 task.completedAt = nil
                 try? context.save()
 
-                // Schedule reminder for next occurrence
-                self.notificationManager?.scheduleCareTaskReminder(task: task)
+                // Nur Notification schedulen wenn Task zum aktiven Szenario gehört
+                if task.scenario?.id == self.currentScenarioId {
+                    self.notificationManager?.scheduleCareTaskReminder(task: task)
+                }
             } else {
                 // One-time task: delete
                 context.delete(task)
@@ -187,7 +235,10 @@ final class PoolcareState {
         modelContext?.insert(task)
         try? modelContext?.save()
 
-        notificationManager?.scheduleCareTaskReminder(task: task)
+        // Nur Notification schedulen wenn Task zum aktiven Szenario gehört
+        if scenario.id == currentScenarioId {
+            notificationManager?.scheduleCareTaskReminder(task: task)
+        }
     }
 
     func updateTask(
@@ -207,11 +258,13 @@ final class PoolcareState {
         if let isCustomIcon { task.isCustomIcon = isCustomIcon }
         try? modelContext?.save()
 
-        // Reschedule notification with updated data
-        if task.reminderTime != nil {
-            notificationManager?.scheduleCareTaskReminder(task: task)
-        } else {
-            notificationManager?.cancelCareTaskReminder(taskId: task.id)
+        // Nur Notification schedulen wenn Task zum aktiven Szenario gehört
+        if task.scenario?.id == currentScenarioId {
+            if task.reminderTime != nil {
+                notificationManager?.scheduleCareTaskReminder(task: task)
+            } else {
+                notificationManager?.cancelCareTaskReminder(taskId: task.id)
+            }
         }
     }
 

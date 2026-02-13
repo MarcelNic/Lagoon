@@ -120,6 +120,18 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
     }
 
+    func cancelAllCareTaskReminders(for scenario: CareScenario) {
+        let identifiers = scenario.tasks.map { "careTask-\($0.id.uuidString)" }
+        guard !identifiers.isEmpty else { return }
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
+    }
+
+    func scheduleAllCareTaskReminders(for scenario: CareScenario) {
+        for task in scenario.tasks {
+            scheduleCareTaskReminder(task: task)
+        }
+    }
+
     func scheduleTimerExpiredNotification(taskTitle: String, taskId: UUID) {
         guard isAuthorized else { return }
 

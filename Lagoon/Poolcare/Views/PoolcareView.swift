@@ -112,7 +112,7 @@ struct PoolcareView: View {
                     Menu {
                         ForEach(scenarios) { s in
                             Button {
-                                state.currentScenarioId = s.id
+                                state.requestScenarioSwitch(to: s)
                             } label: {
                                 Label(s.name, systemImage: s.icon)
                             }
@@ -188,6 +188,26 @@ struct PoolcareView: View {
                 Button("Abbrechen", role: .cancel) { }
             } message: { next in
                 Text("Möchtest du jetzt zu \"\(next.name)\" wechseln?")
+            }
+            .alert(
+                "Szenario wechseln",
+                isPresented: $state.showPauseAlert,
+                presenting: state.pendingSwitchScenario
+            ) { next in
+                Button("Unterbrechen") {
+                    state.switchScenario(to: next, pauseOld: true)
+                    state.pendingSwitchScenario = nil
+                }
+                Button("Weiterlaufen lassen") {
+                    state.switchScenario(to: next, pauseOld: false)
+                    state.pendingSwitchScenario = nil
+                }
+                Button("Abbrechen", role: .cancel) {
+                    state.pendingSwitchScenario = nil
+                }
+            } message: { _ in
+                let name = scenario?.name ?? "aktuelles Szenario"
+                Text("Benachrichtigungen werden auf das neue Szenario umgestellt. Sollen die Intervalle von \"\(name)\" unterbrochen werden? Dann wird beim Zurückwechseln nichts überfällig.")
             }
         }
     }
