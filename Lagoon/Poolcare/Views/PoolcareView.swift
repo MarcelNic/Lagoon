@@ -383,32 +383,20 @@ struct TaskIconView: View {
 let customTaskIconNames: Set<String> = ["Robi"]
 
 let taskIconOptions = [
-    // Wasser / Chemie
-    "drop.fill", "water.waves", "testtube.2", "flask.fill",
-    // Reinigung / Pflege
-    "paintbrush.fill", "leaf.fill", "arrow.circlepath",
-    // Pool
-    "figure.pool.swim", "aqi.medium",
-    // Temperatur
-    "thermometer.medium", "flame.fill",
-    // Wetter
-    "sun.max.fill", "snowflake", "wind",
-    // Technik / Wartung
-    "gearshape.fill", "gauge.with.dots.needle.50percent",
-    "fuel.filter.water", "power", "lightbulb.fill",
-    // Wasser / Kreislauf
-    "arrow.up.and.down.circle", "arrow.counterclockwise.circle",
-    // Zeit / Erinnerung
-    "clock.fill",
-    // Abdeckung
-    "custom.inset.filled.lefthalf.rectangle", "custom.inset.filled.rectangle",
-    // Custom Symbols
-    "custom.arrow.up.trash.fill", "custom.bubbles.and.sparkles.fill",
-    "custom.cloud.bolt.rain.fill", "custom.fan", "custom.figure.hunting",
-    "custom.screwdriver", "custom.spigot",
-    "custom.water.waves.and.arrow.trianglehead.down", "custom.xmark.bin",
-    // Allgemein
-    "checkmark.circle", "basket.fill", "pipe.and.drop", "bolt.circle.fill",
+    // Reihe 1: Wasser & Chemie
+    "drop.fill", "water.waves", "testtube.2", "flask.fill", "bubbles.and.sparkles",
+    // Reihe 2: Reinigung & Pflege
+    "paintbrush.fill", "leaf.fill", "arrow.up.trash", "xmark.bin.fill", "figure.pool.swim",
+    // Reihe 3: Technik & Wartung
+    "gearshape.fill", "screwdriver.fill", "fuel.filter.water", "spigot.fill", "pipe.and.drop",
+    // Reihe 4: Geräte & Steuerung
+    "fan.fill", "power", "lightbulb.fill", "bolt.circle.fill", "gauge.with.dots.needle.50percent",
+    // Reihe 5: Wetter & Temperatur
+    "thermometer.medium", "flame.fill", "sun.max.fill", "snowflake", "cloud.bolt.rain.fill",
+    // Reihe 6: Abläufe & Allgemein
+    "arrow.circlepath", "arrow.counterclockwise.circle", "arrow.up.and.down.circle", "water.waves.and.arrow.trianglehead.down", "clock.fill",
+    // Reihe 7 (mit Robi = 6): Status & Abdeckung
+    "checkmark.circle", "basket.fill", "figure.hunting", "rectangle.lefthalf.inset.filled", "rectangle.inset.filled",
 ]
 
 #Preview {
