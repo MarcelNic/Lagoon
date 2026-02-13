@@ -5,6 +5,52 @@
 
 import SwiftUI
 
+struct TaskTemplate: Identifiable {
+    let id = UUID()
+    let title: String
+    let icon: String
+    let isCustomIcon: Bool
+    let isAction: Bool
+    let intervalDays: Int
+    let durationSeconds: Double // nur für Aktionen
+
+    init(title: String, icon: String, isCustomIcon: Bool = false, isAction: Bool = false, intervalDays: Int = 0, durationSeconds: Double = 0) {
+        self.title = title
+        self.icon = icon
+        self.isCustomIcon = isCustomIcon
+        self.isAction = isAction
+        self.intervalDays = intervalDays
+        self.durationSeconds = durationSeconds
+    }
+}
+
+let taskTemplates: [TaskTemplate] = [
+    // Tägliche Aufgaben
+    TaskTemplate(title: "Käschern", icon: "leaf.fill", intervalDays: 1),
+    TaskTemplate(title: "Skimmer leeren", icon: "xmark.bin.fill", intervalDays: 7),
+    TaskTemplate(title: "Pumpenkorb leeren", icon: "basket.fill", intervalDays: 7),
+    TaskTemplate(title: "Wasserstand prüfen", icon: "arrow.up.and.down.circle", intervalDays: 7),
+    TaskTemplate(title: "Filterdruck prüfen", icon: "gauge.with.dots.needle.50percent", intervalDays: 7),
+    TaskTemplate(title: "Wasserlinie bürsten", icon: "bubbles.and.sparkles", intervalDays: 14),
+    TaskTemplate(title: "Boden saugen", icon: "water.waves", intervalDays: 7),
+    TaskTemplate(title: "Abdeckung prüfen", icon: "checkmark.circle", intervalDays: 30),
+    // Aktionen (mit Timer)
+    TaskTemplate(title: "Roboter", icon: "Robi", isCustomIcon: true, isAction: true, intervalDays: 2, durationSeconds: 7200),
+    TaskTemplate(title: "Rückspülen", icon: "arrow.counterclockwise.circle", isAction: true, intervalDays: 7, durationSeconds: 180),
+    TaskTemplate(title: "Stoßchloren", icon: "bolt.circle.fill"),
+    TaskTemplate(title: "Wasser nachfüllen", icon: "spigot.fill", isAction: true, durationSeconds: 3600),
+    TaskTemplate(title: "Wasser ablassen", icon: "water.waves.and.arrow.trianglehead.down"),
+    TaskTemplate(title: "Wasser einlassen", icon: "drop.fill"),
+    // Einmalige Aufgaben
+    TaskTemplate(title: "Heizung anschalten", icon: "flame.fill"),
+    TaskTemplate(title: "Ventil öffnen", icon: "pipe.and.drop"),
+    TaskTemplate(title: "Ventil schließen", icon: "arrow.up.and.down.circle"),
+    TaskTemplate(title: "Poollicht", icon: "lightbulb.fill"),
+    TaskTemplate(title: "Kärchern", icon: "figure.hunting"),
+    TaskTemplate(title: "Abdeckung schließen", icon: "rectangle.inset.filled"),
+    TaskTemplate(title: "Abdeckung öffnen", icon: "rectangle.lefthalf.inset.filled"),
+]
+
 struct AddItemSheet: View {
     @Bindable var state: PoolcareState
     @Environment(\.dismiss) private var dismiss
@@ -12,6 +58,7 @@ struct AddItemSheet: View {
     @State private var itemType: ItemType = .task
     @State private var title = ""
     @State private var selectedIcon = "water.waves"
+    @State private var showTemplates = false
     @State private var dueDate = Date()
     @State private var intervalDays = 0
     @State private var reminderEnabled = true
@@ -44,6 +91,11 @@ struct AddItemSheet: View {
             Form {
                 Section {
                     TextField("Name", text: $title)
+                    Button {
+                        showTemplates = true
+                    } label: {
+                        Label("Vorlagen", systemImage: "list.bullet")
+                    }
                 }
 
                 Section("Symbol") {
@@ -157,6 +209,43 @@ struct AddItemSheet: View {
                     .disabled(title.isEmpty)
                 }
             }
+        }
+        .sheet(isPresented: $showTemplates) {
+            NavigationStack {
+                List(taskTemplates) { template in
+                    Button {
+                        title = template.title
+                        selectedIcon = template.icon
+                        itemType = template.isAction ? .action : .task
+                        intervalDays = template.intervalDays
+                        let totalSeconds = Int(template.durationSeconds)
+                        actionHours = totalSeconds / 3600
+                        actionMinutes = (totalSeconds % 3600) / 60
+                        showTemplates = false
+                    } label: {
+                        HStack(spacing: 12) {
+                            if template.isCustomIcon {
+                                Image(template.icon)
+                                    .resizable()
+                                    .renderingMode(.template)
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 20, height: 20)
+                            } else {
+                                Image(systemName: template.icon)
+                            }
+                            Text(template.title)
+                        }
+                    }
+                }
+                .navigationTitle("Vorlage")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Abbrechen") { showTemplates = false }
+                    }
+                }
+            }
+            .presentationDetents([.medium])
         }
     }
 

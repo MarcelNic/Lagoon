@@ -391,10 +391,10 @@ let taskIconOptions = [
     "gearshape.fill", "screwdriver.fill", "fuel.filter.water", "spigot.fill", "pipe.and.drop",
     // Reihe 4: Geräte & Steuerung
     "fan.fill", "power", "lightbulb.fill", "bolt.circle.fill", "gauge.with.dots.needle.50percent",
-    // Reihe 5: Wetter & Temperatur
-    "thermometer.medium", "flame.fill", "sun.max.fill", "snowflake", "cloud.bolt.rain.fill",
+    // Reihe 5: Wetter & Umgebung
+    "thermometer.medium", "flame.fill", "sun.max.fill", "snowflake", "aqi.medium",
     // Reihe 6: Abläufe & Allgemein
-    "arrow.circlepath", "arrow.counterclockwise.circle", "arrow.up.and.down.circle", "water.waves.and.arrow.trianglehead.down", "clock.fill",
+    "arrow.counterclockwise.circle", "arrow.up.and.down.circle", "water.waves.and.arrow.trianglehead.down", "clock.fill", "cloud.bolt.rain.fill",
     // Reihe 7 (mit Robi = 6): Status & Abdeckung
     "checkmark.circle", "basket.fill", "figure.hunting", "rectangle.lefthalf.inset.filled", "rectangle.inset.filled",
 ]

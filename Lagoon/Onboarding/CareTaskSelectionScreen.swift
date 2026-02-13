@@ -10,15 +10,9 @@ struct CareTaskSelectionScreen: View {
     private let careTasks: [Chip] = [
         Chip(title: "Roboter", icon: "figure.pool.swim", color: .cyan),
         Chip(title: "Skimmer leeren", icon: "tray.fill", color: .blue),
-        Chip(title: "Wasserlinie bürsten", icon: "bubbles.and.sparkles", color: .teal),
-        Chip(title: "Boden saugen", icon: "water.waves", color: .indigo),
         Chip(title: "Rückspülen", icon: "arrow.trianglehead.2.clockwise.rotate.90", color: .cyan),
-        Chip(title: "Filterdruck prüfen", icon: "gauge.medium", color: .orange),
-        Chip(title: "Pumpenkorb leeren", icon: "basket.fill", color: .purple),
-        Chip(title: "Wasserstand prüfen", icon: "ruler.fill", color: .green),
-        Chip(title: "Abdeckung prüfen", icon: "shield.fill", color: .brown),
-        Chip(title: "Pool bürsten", icon: "paintbrush.fill", color: .mint),
-        Chip(title: "Leiter reinigen", icon: "stairs", color: .gray)
+        Chip(title: "Käschern", icon: "leaf.fill", color: .teal),
+        Chip(title: "Wasser nachfüllen", icon: "spigot.fill", color: .blue),
     ]
 
     var body: some View {
