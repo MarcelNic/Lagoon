@@ -384,24 +384,29 @@ let customTaskIconNames: Set<String> = ["Robi"]
 
 let taskIconOptions = [
     // Wasser / Chemie
-    "drop.fill", "drop.triangle.fill", "water.waves", "testtube.2", "flask.fill",
+    "drop.fill", "water.waves", "testtube.2", "flask.fill",
     // Reinigung / Pflege
-    "sparkles", "paintbrush.fill", "leaf.fill", "arrow.circlepath",
+    "paintbrush.fill", "leaf.fill", "arrow.circlepath",
     // Pool
-    "figure.pool.swim", "eye", "aqi.medium",
+    "figure.pool.swim", "aqi.medium",
     // Temperatur
-    "thermometer.medium", "thermometer.sun", "thermometer.snowflake", "flame.fill",
+    "thermometer.medium", "flame.fill",
     // Wetter
     "sun.max.fill", "snowflake", "wind",
     // Technik / Wartung
-    "wrench.fill", "gearshape.fill", "gauge.with.dots.needle.50percent",
+    "gearshape.fill", "gauge.with.dots.needle.50percent",
     "fuel.filter.water", "power", "lightbulb.fill",
     // Wasser / Kreislauf
     "arrow.up.and.down.circle", "arrow.counterclockwise.circle",
     // Zeit / Erinnerung
-    "clock.fill", "calendar",
+    "clock.fill",
     // Abdeckung
-    "window.shade.open", "window.shade.closed",
+    "custom.inset.filled.lefthalf.rectangle", "custom.inset.filled.rectangle",
+    // Custom Symbols
+    "custom.arrow.up.trash.fill", "custom.bubbles.and.sparkles.fill",
+    "custom.cloud.bolt.rain.fill", "custom.fan", "custom.figure.hunting",
+    "custom.screwdriver", "custom.spigot",
+    "custom.water.waves.and.arrow.trianglehead.down", "custom.xmark.bin",
     // Allgemein
     "checkmark.circle", "basket.fill", "pipe.and.drop", "bolt.circle.fill",
 ]
