@@ -4,14 +4,15 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct SettingsView: View {
     @AppStorage("appearanceMode") private var appearanceMode: String = "system"
     @AppStorage("barStyle") private var barStyle: String = "classic"
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("hasSeenDashboardOverlay") private var hasSeenDashboardOverlay = false
-    @Environment(\.dismiss) private var dismiss
-    @State private var showOnboarding = false
+    @Environment(\.modelContext) private var modelContext
+    @State private var showResetConfirmation = false
 
     var body: some View {
         Form {
@@ -57,23 +58,46 @@ struct SettingsView: View {
             }
 
             Section {
-                Button {
-                    showOnboarding = true
+                Button(role: .destructive) {
+                    showResetConfirmation = true
                 } label: {
-                    Label("Onboarding anzeigen", systemImage: "hand.wave")
+                    Label("App zurücksetzen", systemImage: "arrow.counterclockwise")
                 }
             }
         }
         .navigationTitle("Einstellungen")
-        .fullScreenCover(isPresented: $showOnboarding) {
-            OnboardingStartView(onComplete: {
-                showOnboarding = false
-                hasSeenDashboardOverlay = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    dismiss()
-                }
-            })
+        .confirmationDialog("Alle Daten löschen und zum Onboarding zurückkehren?", isPresented: $showResetConfirmation, titleVisibility: .visible) {
+            Button("Zurücksetzen", role: .destructive) {
+                resetApp()
+            }
         }
+    }
+
+    private func resetApp() {
+        // Clear SwiftData
+        try? modelContext.delete(model: Measurement.self)
+        try? modelContext.delete(model: DosingEventModel.self)
+        try? modelContext.delete(model: WeatherInputModel.self)
+        try? modelContext.delete(model: PoolSettings.self)
+        try? modelContext.delete(model: CareTaskModel.self)
+        try? modelContext.delete(model: CareScenario.self)
+        try? modelContext.delete(model: CareTask.self)
+        try? modelContext.save()
+
+        // Clear UserDefaults
+        let keys = ["hasFirstMeasurement", "hasSeenDashboardOverlay", "hasCompletedOnboarding",
+                     "lastChlorine", "lastPH", "lastMeasurementDate",
+                     "poolVolume", "hasCover", "hasHeating", "pumpRuntime",
+                     "idealPHMin", "idealPHMax", "idealChlorineMin", "idealChlorineMax",
+                     "phMin", "phMax", "chlorineMin", "chlorineMax",
+                     "dosingUnit", "cupGrams", "reminderHour", "reminderMinute",
+                     "latitude", "longitude", "locationName", "selectedCareTasks"]
+        for key in keys {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+
+        // Back to onboarding
+        hasCompletedOnboarding = false
     }
 }
 

@@ -8,12 +8,11 @@ struct CareTaskSelectionScreen: View {
     @State private var selectedTasks: Set<String> = []
 
     private let careTasks: [Chip] = [
-        // Standard care tasks
         Chip(title: "Roboter", icon: "figure.pool.swim", color: .cyan),
         Chip(title: "Skimmer leeren", icon: "tray.fill", color: .blue),
         Chip(title: "Wasserlinie bürsten", icon: "bubbles.and.sparkles", color: .teal),
         Chip(title: "Boden saugen", icon: "water.waves", color: .indigo),
-        Chip(title: "Filter rückspülen", icon: "arrow.trianglehead.2.clockwise.rotate.90", color: .cyan),
+        Chip(title: "Rückspülen", icon: "arrow.trianglehead.2.clockwise.rotate.90", color: .cyan),
         Chip(title: "Filterdruck prüfen", icon: "gauge.medium", color: .orange),
         Chip(title: "Pumpenkorb leeren", icon: "basket.fill", color: .purple),
         Chip(title: "Wasserstand prüfen", icon: "ruler.fill", color: .green),

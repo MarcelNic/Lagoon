@@ -65,6 +65,17 @@ final class PoolWaterState {
     private(set) var idealChlorineMin: Double = 0.5
     private(set) var idealChlorineMax: Double = 1.5
 
+    // MARK: - Demo Mode
+
+    /// True once the user has recorded at least one real measurement
+    private(set) var hasFirstMeasurement: Bool = UserDefaults.standard.bool(forKey: "hasFirstMeasurement")
+
+    /// True when no real measurement exists yet
+    var isDemoMode: Bool { !hasFirstMeasurement }
+
+    /// True while sine-wave demo values are shown, false for "--" idle state
+    var demoActive: Bool = false
+
     // MARK: - Error State
 
     /// Letzte Fehlermeldung beim Speichern (nil = kein Fehler)
@@ -133,6 +144,13 @@ final class PoolWaterState {
             saveContext(context, operation: "Messung")
         }
 
+        // Exit demo mode permanently
+        if !hasFirstMeasurement {
+            hasFirstMeasurement = true
+            UserDefaults.standard.set(true, forKey: "hasFirstMeasurement")
+            demoActive = false
+        }
+
         // Refresh cache and recalculate
         refreshCache()
         recalculate()
@@ -196,6 +214,7 @@ final class PoolWaterState {
 
     /// Reload settings from UserDefaults and recalculate
     func reloadSettings() {
+        hasFirstMeasurement = UserDefaults.standard.bool(forKey: "hasFirstMeasurement")
         loadSettingsFromUserDefaults()
         refreshCache()
         recalculate()
@@ -267,6 +286,53 @@ final class PoolWaterState {
     /// Recalculate estimated state based on current conditions.
     /// Uses cached engine input — lightweight enough to call on every tick.
     func recalculate() {
+        // Demo mode: generate fake values or idle state
+        if isDemoMode {
+            if demoActive {
+                let t = simulationOffsetHours
+
+                // smoothstep for 0...3h transition
+                let s = min(max(t / 3.0, 0), 1)
+                let ease = s * s * (3 - 2 * s)
+
+                // pH: 7.8 → 7.2 over 3h, then very slowly rises (max ~7.45 at 48h)
+                if t <= 3 {
+                    estimatedPH = 7.8 - 0.6 * ease
+                    phTrend = .down
+                } else {
+                    estimatedPH = min(7.2 + 0.005 * (t - 3), 7.5)
+                    phTrend = .up
+                }
+
+                // Chlorine: 0.0 → 1.0 over 3h, then very slowly drops (min ~0.78 at 48h)
+                if t <= 3 {
+                    estimatedChlorine = 1.0 * ease
+                    chlorineTrend = .up
+                } else {
+                    estimatedChlorine = max(1.0 - 0.005 * (t - 3), 0.5)
+                    chlorineTrend = .down
+                }
+
+                // At exactly t=0, no trend
+                if t == 0 {
+                    phTrend = .stable
+                    chlorineTrend = .stable
+                }
+            } else {
+                // Idle: markers to target position
+                estimatedPH = 7.4
+                estimatedChlorine = 1.5
+                chlorineTrend = .stable
+                phTrend = .stable
+            }
+
+            chlorineRecommendation = nil
+            phRecommendation = nil
+            confidence = .low
+            confidenceReason = "Keine Messung vorhanden"
+            return
+        }
+
         // Rebuild cache if no engine input exists yet
         if cachedEngineInput == nil {
             refreshCache()
@@ -355,6 +421,12 @@ final class PoolWaterState {
                 lastWaterTemperature = temp
             }
             lastMeasurementDate = latest.timestamp
+
+            // Measurements exist — ensure demo mode is off
+            if !hasFirstMeasurement {
+                hasFirstMeasurement = true
+                UserDefaults.standard.set(true, forKey: "hasFirstMeasurement")
+            }
         }
 
         // Load pool settings (if exists)

@@ -43,16 +43,22 @@ final class PoolcareState {
     func configure(modelContext context: ModelContext, notificationManager: NotificationManager) {
         self.modelContext = context
         self.notificationManager = notificationManager
+        ensureData()
+    }
 
-        // Seed default data if needed
+    /// Seed default scenarios if none exist, and validate currentScenarioId.
+    /// Safe to call multiple times (idempotent).
+    func ensureData() {
+        guard let context = modelContext else { return }
+
         let descriptor = FetchDescriptor<CareScenario>()
         let count = (try? context.fetchCount(descriptor)) ?? 0
         if count == 0 {
             seedDefaultData()
         }
 
-        // Select first scenario if none selected
-        if currentScenarioId == nil {
+        // Select first scenario if none selected or current no longer exists
+        if currentScenario() == nil {
             currentScenarioId = fetchScenarios().first?.id
         }
     }
@@ -364,23 +370,42 @@ final class PoolcareState {
         let now = Date()
         let calendar = Calendar.current
 
-        // Sommer
+        // Sommer — only tasks selected during onboarding
         let sommer = CareScenario(name: "Sommer", icon: "sun.max.fill", sortOrder: 0, isBuiltIn: true)
         context.insert(sommer)
 
-        let sommerTasks: [(String, Int, Bool, Double, String?, Bool)] = [
-            ("Roboter", 2, true, 2 * 60 * 60, "Robi", true),
-            ("Rückspülen", 7, true, 3 * 60, "arrow.circlepath", false),
-            ("Skimmer leeren", 1, false, 0, "basket.fill", false),
-            ("Wasserlinie bürsten", 7, false, 0, "paintbrush.fill", false),
-            ("Filterdruck prüfen", 7, false, 0, "gauge.with.dots.needle.50percent", false),
-            ("Boden saugen", 14, false, 0, "sparkles", false),
+        // All possible Sommer tasks with their configuration
+        // (title, intervalDays, isAction, durationSeconds, iconName, isCustomIcon)
+        let allSommerTasks: [(String, Int, Bool, Double, String?, Bool)] = [
+            ("Roboter",              2,  true,  2 * 60 * 60, "Robi", true),
+            ("Skimmer leeren",       1,  false, 0, "basket.fill", false),
+            ("Wasserlinie bürsten",  7,  false, 0, "paintbrush.fill", false),
+            ("Boden saugen",         14, false, 0, "sparkles", false),
+            ("Rückspülen",           7,  true,  3 * 60, "arrow.circlepath", false),
+            ("Filterdruck prüfen",   7,  false, 0, "gauge.with.dots.needle.50percent", false),
+            ("Pumpenkorb leeren",    7,  false, 0, "basket.fill", false),
+            ("Wasserstand prüfen",   7,  false, 0, "ruler.fill", false),
+            ("Abdeckung prüfen",     7,  false, 0, "shield.fill", false),
+            ("Pool bürsten",         7,  false, 0, "paintbrush.fill", false),
+            ("Leiter reinigen",      14, false, 0, "stairs", false),
         ]
 
-        for (i, (title, interval, isAction, duration, icon, isCustom)) in sommerTasks.enumerated() {
+        // Decode onboarding selection
+        let selectedTitles: Set<String>
+        let data = UserDefaults.standard.data(forKey: "selectedCareTasks") ?? Data()
+        if let decoded = try? JSONDecoder().decode([String].self, from: data), !decoded.isEmpty {
+            selectedTitles = Set(decoded)
+        } else {
+            // Fallback: use first 6 tasks if nothing was selected
+            selectedTitles = Set(allSommerTasks.prefix(6).map(\.0))
+        }
+
+        var dayOffset = 0
+        for (title, interval, isAction, duration, icon, isCustom) in allSommerTasks {
+            guard selectedTitles.contains(title) else { continue }
             let task = CareTask(
                 title: title,
-                dueDate: calendar.date(byAdding: .day, value: i == 0 ? 0 : i, to: now),
+                dueDate: calendar.date(byAdding: .day, value: dayOffset, to: now),
                 intervalDays: interval,
                 isAction: isAction,
                 actionDurationSeconds: duration,
@@ -389,6 +414,7 @@ final class PoolcareState {
             )
             task.scenario = sommer
             context.insert(task)
+            dayOffset += 1
         }
 
         // Winter

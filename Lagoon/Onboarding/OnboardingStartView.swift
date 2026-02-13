@@ -3,6 +3,7 @@ import SwiftUI
 struct OnboardingStartView: View {
     @State var currentIndex = 0
     @State private var previousIndex = 0
+    @State private var isTransitioning = false
     @Environment(NotificationManager.self) private var notificationManager
     var onComplete: () -> Void
     let totalViews = 7
@@ -12,14 +13,22 @@ struct OnboardingStartView: View {
     }
 
     private func goToNext() {
+        guard !isTransitioning else { return }
+        isTransitioning = true
         previousIndex = currentIndex
         currentIndex += 1
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+            isTransitioning = false
+        }
     }
 
     private func goBack() {
-        if currentIndex > 0 {
-            previousIndex = currentIndex
-            currentIndex -= 1
+        guard !isTransitioning, currentIndex > 0 else { return }
+        isTransitioning = true
+        previousIndex = currentIndex
+        currentIndex -= 1
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+            isTransitioning = false
         }
     }
 
@@ -31,9 +40,9 @@ struct OnboardingStartView: View {
                     case 0: FirstScreen(action: goToNext)
                     case 1: ChemistryExplanationScreen(action: goToNext)
                     case 2: PoolProfileScreen(action: goToNext)
-                    case 3: LocationWeatherScreen(action: goToNext)
-                    case 4: NotificationScreen(action: goToNext)
-                    case 5: GoalsUnitsScreen(action: goToNext)
+                    case 3: GoalsUnitsScreen(action: goToNext)
+                    case 4: LocationWeatherScreen(action: goToNext)
+                    case 5: NotificationScreen(action: goToNext)
                     case 6: CareTaskSelectionScreen(action: { onComplete() })
                     default: EmptyView()
                     }
@@ -42,6 +51,7 @@ struct OnboardingStartView: View {
                     insertion: .offset(x: isMovingForward ? 60 : -60).combined(with: .opacity),
                     removal: .offset(x: isMovingForward ? -60 : 60).combined(with: .opacity)
                 ))
+                .allowsHitTesting(!isTransitioning)
             }
             .animation(.spring(duration: 0.5, bounce: 0.0, blendDuration: 0.3), value: currentIndex)
             .contentShape(Rectangle())
@@ -58,14 +68,14 @@ struct OnboardingStartView: View {
                     }
             )
             .overlay(alignment: .top) {
-                if currentIndex > 0 && currentIndex < totalViews - 1 {
+                if currentIndex > 0 {
                     let shiftedIndex = Binding<Int>(
                         get: { max(0, currentIndex - 1) },
                         set: { newValue in
                             currentIndex = newValue + 1
                         }
                     )
-                    OnboardingProgressView(steps: totalViews - 2, currentStep: shiftedIndex)
+                    OnboardingProgressView(steps: totalViews - 1, currentStep: shiftedIndex)
                         .padding(.horizontal, 80)
                         .offset(y: 20)
                 }

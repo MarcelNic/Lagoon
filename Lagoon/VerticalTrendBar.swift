@@ -55,6 +55,7 @@ struct VerticalTrendBar: View {
     let scalePosition: ScalePosition
     let prediction: PredictionData?
     let scalePoints: [Double]?
+    var displayOverrideText: String? = nil
     var compact: Bool = false
 
     @State private var showPredictionPopover = false
@@ -100,6 +101,7 @@ struct VerticalTrendBar: View {
         scalePosition: ScalePosition = .leading,
         prediction: PredictionData? = nil,
         scalePoints: [Double]? = nil,
+        displayOverrideText: String? = nil,
         compact: Bool = false
     ) {
         self.title = title
@@ -115,6 +117,7 @@ struct VerticalTrendBar: View {
         self.scalePosition = scalePosition
         self.prediction = prediction
         self.scalePoints = scalePoints
+        self.displayOverrideText = displayOverrideText
         self.compact = compact
     }
 
@@ -367,7 +370,7 @@ struct VerticalTrendBar: View {
                 showPredictionPopover = true
             }
         } label: {
-            Text(formatValue(value) + (unit.isEmpty ? "" : " \(unit)"))
+            Text(displayOverrideText ?? (formatValue(value) + (unit.isEmpty ? "" : " \(unit)")))
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .contentTransition(.numericText())

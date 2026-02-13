@@ -23,6 +23,7 @@ struct VerticalTrendBarV2: View {
     let prediction: PredictionData?
     let scalePoints: [Double]?
     let markerBorderColor: Color
+    var displayOverrideText: String? = nil
     var compact: Bool = false
 
     @Environment(\.colorScheme) private var colorScheme
@@ -65,6 +66,7 @@ struct VerticalTrendBarV2: View {
         prediction: PredictionData? = nil,
         scalePoints: [Double]? = nil,
         markerBorderColor: Color = .white,
+        displayOverrideText: String? = nil,
         compact: Bool = false
     ) {
         self.title = title
@@ -81,6 +83,7 @@ struct VerticalTrendBarV2: View {
         self.prediction = prediction
         self.scalePoints = scalePoints
         self.markerBorderColor = markerBorderColor
+        self.displayOverrideText = displayOverrideText
         self.compact = compact
     }
 
@@ -211,8 +214,8 @@ struct VerticalTrendBarV2: View {
                     .padding(0.5)
             }
             .overlay {
-                Text(formatValue(value))
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                Text(displayOverrideText ?? formatValue(value))
+                    .font(.system(size: displayOverrideText != nil ? 22 : 18, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(.white)
                     .contentTransition(.identity)

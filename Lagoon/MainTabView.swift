@@ -55,17 +55,14 @@ struct MainTabView: View {
                 }
             }
         )
-        .overlay {
-            if !hasSeenDashboardOverlay {
-                DashboardTutorialOverlay(onDismiss: {
-                    withAnimation(.smooth(duration: 0.4)) {
-                        hasSeenDashboardOverlay = true
-                    }
-                })
-            }
-        }
         .onAppear {
             poolcareState.configure(modelContext: modelContext, notificationManager: notificationManager)
+        }
+        .onChange(of: hasSeenDashboardOverlay) { old, seen in
+            if old && !seen {
+                showSettings = false
+                activeTab = .home
+            }
         }
     }
 }
@@ -81,16 +78,28 @@ struct DashboardTabView: View {
     @AppStorage("cupGrams") private var cupGrams: Double = 50.0
     @AppStorage("barStyle") private var barStyle: String = "classic"
 
+    @AppStorage("hasSeenDashboardOverlay") private var hasSeenDashboardOverlay = false
+
     @Binding var showMeasurementDosing: Bool
     @State private var measurementDosingPhase: Int = 0
     @State private var timeOffsetSelection: Int = 0
+    @State private var showSwipeHint = false
+    @State private var demoEndTimer: Timer?
+    @State private var demoTimerFired = false
+    @State private var demoReleaseWork: DispatchWorkItem?
 
     private var anySheetPresented: Bool {
         showMeasurementDosing
     }
 
     private var showDosingPill: Bool {
-        poolWaterState.recentDosingActive || poolWaterState.dosingNeeded
+        guard !poolWaterState.isDemoMode else { return false }
+        return poolWaterState.recentDosingActive || poolWaterState.dosingNeeded
+    }
+
+    private var demoDisplayText: String? {
+        guard poolWaterState.isDemoMode, !poolWaterState.demoActive else { return nil }
+        return "--"
     }
 
     private var barScale: CGFloat {
@@ -178,8 +187,9 @@ struct DashboardTabView: View {
                             idealRangeColor: .phIdealColor,
                             trend: poolWaterState.phTrend,
                             scalePosition: .leading,
-                            prediction: poolWaterState.phPrediction,
+                            prediction: poolWaterState.isDemoMode ? nil : poolWaterState.phPrediction,
                             markerBorderColor: .phMarkerBorderColor,
+                            displayOverrideText: demoDisplayText,
                             compact: anySheetPresented
                         )
                         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -195,9 +205,10 @@ struct DashboardTabView: View {
                             idealRangeColor: .chlorineIdealColor,
                             trend: poolWaterState.chlorineTrend,
                             scalePosition: .trailing,
-                            prediction: poolWaterState.chlorinePrediction,
+                            prediction: poolWaterState.isDemoMode ? nil : poolWaterState.chlorinePrediction,
                             scalePoints: [0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0],
                             markerBorderColor: .chlorineMarkerBorderColor,
+                            displayOverrideText: demoDisplayText,
                             compact: anySheetPresented
                         )
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -213,7 +224,8 @@ struct DashboardTabView: View {
                             idealRangeColor: .phIdealColor,
                             trend: poolWaterState.phTrend,
                             scalePosition: .leading,
-                            prediction: poolWaterState.phPrediction,
+                            prediction: poolWaterState.isDemoMode ? nil : poolWaterState.phPrediction,
+                            displayOverrideText: demoDisplayText,
                             compact: anySheetPresented
                         )
                         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -229,8 +241,9 @@ struct DashboardTabView: View {
                             idealRangeColor: .chlorineIdealColor,
                             trend: poolWaterState.chlorineTrend,
                             scalePosition: .trailing,
-                            prediction: poolWaterState.chlorinePrediction,
+                            prediction: poolWaterState.isDemoMode ? nil : poolWaterState.chlorinePrediction,
                             scalePoints: [0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0],
+                            displayOverrideText: demoDisplayText,
                             compact: anySheetPresented
                         )
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -308,9 +321,38 @@ struct DashboardTabView: View {
                 .opacity(anySheetPresented ? 0 : 1)
                 .animation(.smooth, value: anySheetPresented)
                 .animation(.smooth(duration: 0.35), value: showDosingPill)
+                .overlay {
+                    if showSwipeHint {
+                        SwipeHintView()
+                            .allowsHitTesting(false)
+                            .transition(.opacity)
+                    }
+                }
                 .onChange(of: timeOffsetSelection) { _, newValue in
                     poolWaterState.simulationOffsetHours = Double(newValue)
                     poolWaterState.recalculate()
+
+                    // Swipe hint: disappear after 15 ticks, start 5s demo-end timer
+                    if !hasSeenDashboardOverlay && abs(newValue) >= 15 {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            showSwipeHint = false
+                        }
+                        hasSeenDashboardOverlay = true
+                        startDemoEndTimer()
+                    }
+
+                    // After 5s timer: detect release via debounce → end demo
+                    if demoTimerFired && poolWaterState.isDemoMode && poolWaterState.demoActive {
+                        demoReleaseWork?.cancel()
+                        let work = DispatchWorkItem {
+                            withAnimation(.smooth(duration: 0.8)) {
+                                poolWaterState.demoActive = false
+                                poolWaterState.recalculate()
+                            }
+                        }
+                        demoReleaseWork = work
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: work)
+                    }
                 }
 
                 Spacer(minLength: 30)
@@ -325,6 +367,25 @@ struct DashboardTabView: View {
         }
         .onAppear {
             poolWaterState.setModelContext(modelContext)
+            poolWaterState.reloadSettings()
+            if poolWaterState.isDemoMode {
+                if !hasSeenDashboardOverlay {
+                    // Fresh after onboarding: activate demo + show swipe hint
+                    poolWaterState.demoActive = true
+                    demoTimerFired = false
+                    demoEndTimer?.invalidate()
+                    demoReleaseWork?.cancel()
+                    poolWaterState.recalculate()
+                    withAnimation(.easeOut(duration: 0.4).delay(0.6)) {
+                        showSwipeHint = true
+                    }
+                }
+                // Hint already seen (e.g. app restart) → stay at "--"
+            }
+        }
+        .onDisappear {
+            demoEndTimer?.invalidate()
+            demoReleaseWork?.cancel()
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
@@ -339,6 +400,50 @@ struct DashboardTabView: View {
         } message: {
             Text(poolWaterState.lastSaveError ?? "")
         }
+    }
+
+    private func startDemoEndTimer() {
+        demoEndTimer?.invalidate()
+        demoEndTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
+            Task { @MainActor in
+                demoTimerFired = true
+                // If not swiping, end demo after 1s
+                demoReleaseWork?.cancel()
+                let work = DispatchWorkItem {
+                    withAnimation(.smooth(duration: 0.8)) {
+                        poolWaterState.demoActive = false
+                        poolWaterState.recalculate()
+                    }
+                }
+                demoReleaseWork = work
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: work)
+            }
+        }
+    }
+}
+
+// MARK: - Swipe Hint
+
+private struct SwipeHintView: View {
+    // Phases: idle → swipe → reset (loops via PhaseAnimator, no recursion)
+    enum Phase: CaseIterable {
+        case idle, swipe, pause
+    }
+
+    var body: some View {
+        PhaseAnimator(Phase.allCases) { phase in
+            Image(systemName: "hand.point.up.left.fill")
+                .font(.system(size: 32))
+                .foregroundStyle(.secondary)
+                .offset(x: phase == .swipe ? -60 : 0)
+        } animation: { phase in
+            switch phase {
+            case .idle: .easeOut(duration: 0.25)
+            case .swipe: .easeInOut(duration: 2.0)
+            case .pause: .easeOut(duration: 0.8)
+            }
+        }
+        .offset(x: 12, y: 52)
     }
 }
 
@@ -363,110 +468,6 @@ struct AdaptiveBackgroundGradient: View {
                 endPoint: .bottom
             )
         }
-    }
-}
-
-// MARK: - Dashboard Tutorial Overlay
-
-struct DashboardTutorialOverlay: View {
-    var onDismiss: () -> Void
-    @State private var currentStep = 0
-    private let totalSteps = 4
-
-    private var stepIcon: String {
-        switch currentStep {
-        case 0: "chart.bar.fill"
-        case 1: "hand.tap.fill"
-        case 2: "slider.horizontal.3"
-        default: "checkmark.circle.fill"
-        }
-    }
-
-    private var stepTitle: String {
-        switch currentStep {
-        case 0: "Die Balken"
-        case 1: "Werte antippen"
-        case 2: "Zeitleiste"
-        default: "Alles bereit!"
-        }
-    }
-
-    private var stepDescription: String {
-        switch currentStep {
-        case 0: "Die Balken zeigen pH und Chlor. Der farbige Bereich markiert den Idealbereich."
-        case 1: "Tippe auf den aktuellen Wert für Details und Dosierempfehlungen."
-        case 2: "Schiebe die Zeitleiste, um die Wasserwerte in der Zukunft zu simulieren."
-        default: "Dein Dashboard ist bereit. Viel Spaß mit Lagoon!"
-        }
-    }
-
-    private var isLastStep: Bool {
-        currentStep == totalSteps - 1
-    }
-
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.5)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    if isLastStep {
-                        onDismiss()
-                    } else {
-                        withAnimation(.smooth(duration: 0.4)) {
-                            currentStep += 1
-                        }
-                    }
-                }
-
-            VStack(spacing: 20) {
-                Image(systemName: stepIcon)
-                    .font(.system(size: 48))
-                    .foregroundStyle(isLastStep ? .green : .white.opacity(0.9))
-                    .contentTransition(.symbolEffect(.replace))
-
-                Text(stepTitle)
-                    .font(.system(size: 26, weight: .bold))
-
-                Text(stepDescription)
-                    .font(.body)
-                    .foregroundStyle(.white.opacity(0.8))
-                    .multilineTextAlignment(.center)
-                    .frame(minHeight: 50)
-
-                if isLastStep {
-                    Button {
-                        onDismiss()
-                    } label: {
-                        Text("Los geht's")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.white.opacity(0.2))
-                    .padding(.top, 8)
-                } else {
-                    // Step indicator dots
-                    HStack(spacing: 8) {
-                        ForEach(0..<totalSteps - 1, id: \.self) { index in
-                            Circle()
-                                .fill(index == currentStep ? .white : .white.opacity(0.3))
-                                .frame(width: 8, height: 8)
-                        }
-                    }
-                    .padding(.top, 8)
-
-                    Text("Tippe, um fortzufahren")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.4))
-                }
-            }
-            .padding(30)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24))
-            .padding(.horizontal, 40)
-            .foregroundStyle(.white)
-        }
-        .transition(.opacity)
     }
 }
 

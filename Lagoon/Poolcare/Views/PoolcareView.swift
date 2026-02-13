@@ -174,6 +174,9 @@ struct PoolcareView: View {
                         .presentationDetents([.large])
                 }
             }
+            .onAppear {
+                state.ensureData()
+            }
             .alert(
                 "Alle Aufgaben erledigt",
                 isPresented: $state.showSwitchScenarioAlert,
