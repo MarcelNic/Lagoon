@@ -12,7 +12,7 @@ struct DosingFormatter {
     static func format(grams: Double, unit: String, cupGrams: Double) -> String {
         if unit == "becher" && cupGrams > 0 {
             let cups = grams / cupGrams
-            return "\(formatCups(cups)) Becher"
+            return "\(formatCups(cups)) Bch."
         }
         return String(format: "%.0f g", grams)
     }
