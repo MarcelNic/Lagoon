@@ -27,11 +27,12 @@ struct PoolcareView: View {
 
     private var sortedTasks: [CareTask] {
         let tasks = scenario?.sortedTasks ?? []
+        let activeTaskIds = Set(state.activeActions.map(\.taskId))
         switch taskFilter {
         case .all:
-            return tasks.filter { !$0.isCompleted }
+            return tasks.filter { !$0.isCompleted && !activeTaskIds.contains($0.id) }
         case .today:
-            return tasks.filter { !$0.isCompleted && $0.urgency <= .dueToday }
+            return tasks.filter { !$0.isCompleted && !activeTaskIds.contains($0.id) && $0.urgency <= .dueToday }
         case .completed:
             return tasks.filter { $0.isCompleted }
         }
