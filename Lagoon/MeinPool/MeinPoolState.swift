@@ -130,7 +130,9 @@ final class MeinPoolState {
                     DosingItem(productId: d.productId, productName: d.productName, amount: d.amount, unit: d.unit)
                 }
                 let summaryParts = items.map { item in
-                    "\(item.shortName) \(DosingFormatter.format(grams: item.amount, unit: dosingUnit, cupGrams: effectiveCupGrams))"
+                    let formatted = DosingFormatter.format(grams: item.amount, unit: dosingUnit, cupGrams: effectiveCupGrams)
+                        .replacingOccurrences(of: " Becher", with: " B")
+                    return "\(item.shortName) \(formatted)"
                 }
                 let entry = LogbookEntry(
                     type: .dosieren,

@@ -175,6 +175,7 @@ extension DosingEventModel {
         let cupGrams = UserDefaults.standard.double(forKey: "cupGrams")
         let effectiveCupGrams = cupGrams > 0 ? cupGrams : 50.0
         let formattedAmount = DosingFormatter.format(grams: amount, unit: dosingUnit, cupGrams: effectiveCupGrams)
+            .replacingOccurrences(of: " Becher", with: " B")
 
         let item = DosingItem(productId: productId, productName: productName, amount: amount, unit: unit)
         return LogbookEntry(
