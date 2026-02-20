@@ -29,6 +29,13 @@ enum LogbookEntryType: String, CaseIterable, Identifiable {
     }
 }
 
+struct DosingItem: Equatable {
+    var productId: String    // "ph_minus", "ph_plus", "chlorine"
+    var productName: String  // "pH-Minus", "pH-Plus", "Chlorgranulat"
+    var amount: Double
+    var unit: String
+}
+
 struct LogbookEntry: Identifiable, Equatable {
     let id: UUID
     var type: LogbookEntryType
@@ -41,9 +48,7 @@ struct LogbookEntry: Identifiable, Equatable {
     var waterTemperature: Double?
 
     // Dosieren fields
-    var product: String?
-    var amount: Double?
-    var unit: String?
+    var dosings: [DosingItem]
 
     // Poolpflege fields
     var description: String?
@@ -56,9 +61,7 @@ struct LogbookEntry: Identifiable, Equatable {
         phValue: Double? = nil,
         chlorineValue: Double? = nil,
         waterTemperature: Double? = nil,
-        product: String? = nil,
-        amount: Double? = nil,
-        unit: String? = nil,
+        dosings: [DosingItem] = [],
         description: String? = nil
     ) {
         self.id = id
@@ -68,9 +71,7 @@ struct LogbookEntry: Identifiable, Equatable {
         self.phValue = phValue
         self.chlorineValue = chlorineValue
         self.waterTemperature = waterTemperature
-        self.product = product
-        self.amount = amount
-        self.unit = unit
+        self.dosings = dosings
         self.description = description
     }
 }
@@ -100,9 +101,7 @@ extension LogbookEntry {
                 type: .dosieren,
                 timestamp: calendar.date(byAdding: .hour, value: -5, to: now)!,
                 summary: "50 g pH-Minus",
-                product: "pH-Minus",
-                amount: 50,
-                unit: "g"
+                dosings: [DosingItem(productId: "ph_minus", productName: "pH-Minus", amount: 50, unit: "g")]
             ),
             // Diese Woche
             LogbookEntry(
@@ -123,9 +122,7 @@ extension LogbookEntry {
                 type: .dosieren,
                 timestamp: calendar.date(byAdding: .day, value: -4, to: now)!,
                 summary: "200 g Chlorgranulat",
-                product: "Chlorgranulat",
-                amount: 200,
-                unit: "g"
+                dosings: [DosingItem(productId: "chlorine", productName: "Chlorgranulat", amount: 200, unit: "g")]
             ),
             // Älter
             LogbookEntry(
@@ -174,9 +171,7 @@ extension DosingEventModel {
             type: .dosieren,
             timestamp: timestamp,
             summary: "\(formattedAmount) \(productName)",
-            product: productName,
-            amount: amount,
-            unit: unit
+            dosings: [DosingItem(productId: productId, productName: productName, amount: amount, unit: unit)]
         )
     }
 }

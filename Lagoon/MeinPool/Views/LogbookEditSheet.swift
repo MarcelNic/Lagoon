@@ -150,9 +150,14 @@ struct LogbookEditSheet: View {
 
     @ViewBuilder
     private var dosierenFields: some View {
+        let first = editedEntry.dosings.first
         Picker("Produkt", selection: Binding(
-            get: { editedEntry.product ?? "pH-Minus" },
-            set: { editedEntry.product = $0 }
+            get: { first?.productName ?? "pH-Minus" },
+            set: { newName in
+                let productId = newName == "pH-Minus" ? "ph_minus" : newName == "pH-Plus" ? "ph_plus" : "chlorine"
+                let item = DosingItem(productId: productId, productName: newName, amount: first?.amount ?? 50, unit: first?.unit ?? "g")
+                editedEntry.dosings = [item]
+            }
         )) {
             Text("pH-Minus").tag("pH-Minus")
             Text("pH-Plus").tag("pH-Plus")
@@ -166,14 +171,17 @@ struct LogbookEditSheet: View {
             HStack {
                 Text("Menge")
                 Spacer()
-                Text("\(Int(editedEntry.amount ?? 50)) \(editedEntry.unit ?? "g")")
+                Text("\(Int(first?.amount ?? 50)) \(first?.unit ?? "g")")
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
             Slider(
                 value: Binding(
-                    get: { editedEntry.amount ?? 50 },
-                    set: { editedEntry.amount = $0 }
+                    get: { first?.amount ?? 50 },
+                    set: { newAmount in
+                        let item = DosingItem(productId: first?.productId ?? "ph_minus", productName: first?.productName ?? "pH-Minus", amount: newAmount, unit: first?.unit ?? "g")
+                        editedEntry.dosings = [item]
+                    }
                 ),
                 in: 10...500,
                 step: 10
@@ -181,8 +189,11 @@ struct LogbookEditSheet: View {
         }
 
         Picker("Einheit", selection: Binding(
-            get: { editedEntry.unit ?? "g" },
-            set: { editedEntry.unit = $0 }
+            get: { first?.unit ?? "g" },
+            set: { newUnit in
+                let item = DosingItem(productId: first?.productId ?? "ph_minus", productName: first?.productName ?? "pH-Minus", amount: first?.amount ?? 50, unit: newUnit)
+                editedEntry.dosings = [item]
+            }
         )) {
             Text("g").tag("g")
             Text("ml").tag("ml")
@@ -210,9 +221,10 @@ struct LogbookEditSheet: View {
             let cl = String(format: "%.1f", editedEntry.chlorineValue ?? 1.0)
             editedEntry.summary = "pH \(ph) · Cl \(cl) mg/l"
         case .dosieren:
-            let amount = Int(editedEntry.amount ?? 50)
-            let unit = editedEntry.unit ?? "g"
-            let product = editedEntry.product ?? ""
+            let first = editedEntry.dosings.first
+            let amount = Int(first?.amount ?? 50)
+            let unit = first?.unit ?? "g"
+            let product = first?.productName ?? ""
             editedEntry.summary = "\(amount) \(unit) \(product)"
         case .poolpflege:
             editedEntry.summary = editedEntry.description ?? ""

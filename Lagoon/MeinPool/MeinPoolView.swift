@@ -253,9 +253,10 @@ struct EditDosierenSheet: View {
         self.entry = entry
         self.state = state
         if let entry = entry {
-            _selectedProduct = State(initialValue: entry.product ?? "pH-Minus")
-            _amount = State(initialValue: entry.amount ?? 50)
-            _unit = State(initialValue: entry.unit ?? "g")
+            let first = entry.dosings.first
+            _selectedProduct = State(initialValue: first?.productName ?? "pH-Minus")
+            _amount = State(initialValue: first?.amount ?? 50)
+            _unit = State(initialValue: first?.unit ?? "g")
             _dosingDate = State(initialValue: entry.timestamp)
         }
     }
@@ -330,11 +331,9 @@ struct EditDosierenSheet: View {
         let summary = "\(Int(amount)) \(unit) \(selectedProduct)"
 
         if var existingEntry = entry {
-            existingEntry.product = selectedProduct
-            existingEntry.amount = amount
-            existingEntry.unit = unit
+            existingEntry.dosings = [DosingItem(productId: selectedProduct == "pH-Minus" ? "ph_minus" : selectedProduct == "pH-Plus" ? "ph_plus" : "chlorine", productName: selectedProduct, amount: amount, unit: unit)]
             existingEntry.timestamp = dosingDate
-            existingEntry.summary = summary
+            existingEntry.summary = "\(Int(amount)) \(unit) \(selectedProduct)"
             state.updateEntry(existingEntry)
         }
     }
