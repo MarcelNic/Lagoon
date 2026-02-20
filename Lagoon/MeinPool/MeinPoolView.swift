@@ -221,7 +221,8 @@ struct EditMessenSheet: View {
     private func saveEntry() {
         let ph = String(format: "%.1f", phValue).replacingOccurrences(of: ".", with: ",")
         let cl = String(format: "%.1f", chlorineValue).replacingOccurrences(of: ".", with: ",")
-        let summary = "pH \(ph) · Cl \(cl) mg/l"
+        let temp = String(format: "%.0f", waterTemperature)
+        let summary = "pH \(ph) · Cl \(cl) mg/l · \(temp) °C"
 
         if var existingEntry = entry {
             existingEntry.phValue = phValue

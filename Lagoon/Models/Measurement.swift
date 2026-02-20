@@ -39,10 +39,13 @@ final class Measurement {
         var parts: [String] = []
 
         if let pH = pH {
-            parts.append("pH \(String(format: "%.1f", pH))")
+            parts.append("pH \(String(format: "%.1f", pH).replacingOccurrences(of: ".", with: ","))")
         }
         if let chlorine = chlorine {
-            parts.append("Cl \(String(format: "%.1f", chlorine)) mg/l")
+            parts.append("Cl \(String(format: "%.1f", chlorine).replacingOccurrences(of: ".", with: ",")) mg/l")
+        }
+        if let temp = waterTemperature {
+            parts.append(String(format: "%.0f °C", temp))
         }
 
         return parts.joined(separator: " · ")

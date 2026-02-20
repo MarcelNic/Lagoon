@@ -22,8 +22,8 @@ enum LogbookEntryType: String, CaseIterable, Identifiable {
 
     var color: Color {
         switch self {
-        case .messen: return Color(light: Color(hex: "0AAAC6"), dark: Color(hex: "42edfe"))
-        case .dosieren: return Color(light: Color(hex: "1FBF4A"), dark: Color(hex: "5df66d"))
+        case .messen: return .blue
+        case .dosieren: return .red
         case .poolpflege: return .orange
         }
     }
@@ -34,6 +34,15 @@ struct DosingItem: Equatable {
     var productName: String  // "pH-Minus", "pH-Plus", "Chlorgranulat"
     var amount: Double
     var unit: String
+
+    var shortName: String {
+        switch productId {
+        case "ph_minus": return "pH-"
+        case "ph_plus":  return "pH+"
+        case "chlorine": return "Chlor"
+        default:         return productName
+        }
+    }
 }
 
 struct LogbookEntry: Identifiable, Equatable {
@@ -167,11 +176,12 @@ extension DosingEventModel {
         let effectiveCupGrams = cupGrams > 0 ? cupGrams : 50.0
         let formattedAmount = DosingFormatter.format(grams: amount, unit: dosingUnit, cupGrams: effectiveCupGrams)
 
+        let item = DosingItem(productId: productId, productName: productName, amount: amount, unit: unit)
         return LogbookEntry(
             type: .dosieren,
             timestamp: timestamp,
-            summary: "\(formattedAmount) \(productName)",
-            dosings: [DosingItem(productId: productId, productName: productName, amount: amount, unit: unit)]
+            summary: "\(item.shortName) \(formattedAmount)",
+            dosings: [item]
         )
     }
 }
