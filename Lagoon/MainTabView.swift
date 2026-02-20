@@ -87,6 +87,11 @@ struct DashboardTabView: View {
     @State private var demoEndTimer: Timer?
     @State private var demoTimerFired = false
     @State private var demoReleaseWork: DispatchWorkItem?
+    @State private var barsShifted = false
+    @State private var currentBarPhase: Int = 0
+    @State private var showDosingChangeAlert = false
+    @State private var showFutureDosingAlert = false
+    @State private var sheetInitialPhase: MeasurementDosingSheet.Phase = .messen
 
     private var anySheetPresented: Bool {
         showMeasurementDosing
@@ -103,26 +108,20 @@ struct DashboardTabView: View {
     }
 
     private var barScale: CGFloat {
-        guard anySheetPresented else { return 1.0 }
-        if showMeasurementDosing {
-            switch measurementDosingPhase {
-            case 1: return 0.85   // dosieren
-            case 2: return 0.65   // bearbeiten
-            default: return 0.80  // messen
-            }
+        guard barsShifted else { return 1.0 }
+        switch currentBarPhase {
+        case 1: return 0.85   // dosieren
+        case 2: return 0.65   // bearbeiten
+        default: return 0.80  // messen
         }
-        return 0.80
     }
 
     private var barSheetOffset: CGFloat {
-        if showMeasurementDosing {
-            switch measurementDosingPhase {
-            case 1: return -110   // empfehlung
-            case 2: return -100   // anpassen
-            default: return -120  // messen
-            }
+        switch currentBarPhase {
+        case 1: return -110   // empfehlung
+        case 2: return -100   // anpassen
+        default: return -120  // messen
         }
-        return -120
     }
 
     private var recentDosingLabel: String {
@@ -190,7 +189,7 @@ struct DashboardTabView: View {
                             prediction: poolWaterState.isDemoMode ? nil : poolWaterState.phPrediction,
                             markerBorderColor: .phMarkerBorderColor,
                             displayOverrideText: demoDisplayText,
-                            compact: anySheetPresented
+                            compact: barsShifted
                         )
                         .frame(maxWidth: .infinity, alignment: .trailing)
 
@@ -209,7 +208,7 @@ struct DashboardTabView: View {
                             scalePoints: [0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0],
                             markerBorderColor: .chlorineMarkerBorderColor,
                             displayOverrideText: demoDisplayText,
-                            compact: anySheetPresented
+                            compact: barsShifted
                         )
                         .frame(maxWidth: .infinity, alignment: .leading)
                     } else {
@@ -226,7 +225,7 @@ struct DashboardTabView: View {
                             scalePosition: .leading,
                             prediction: poolWaterState.isDemoMode ? nil : poolWaterState.phPrediction,
                             displayOverrideText: demoDisplayText,
-                            compact: anySheetPresented
+                            compact: barsShifted
                         )
                         .frame(maxWidth: .infinity, alignment: .trailing)
 
@@ -244,20 +243,18 @@ struct DashboardTabView: View {
                             prediction: poolWaterState.isDemoMode ? nil : poolWaterState.chlorinePrediction,
                             scalePoints: [0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0],
                             displayOverrideText: demoDisplayText,
-                            compact: anySheetPresented
+                            compact: barsShifted
                         )
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
                 .scaleEffect(barScale, anchor: .top)
-                .offset(y: anySheetPresented ? barSheetOffset : (showDosingPill ? -44 : -40))
-                .animation(.smooth, value: anySheetPresented)
-                .animation(.smooth, value: measurementDosingPhase)
+                .offset(y: barsShifted ? barSheetOffset : (showDosingPill ? -44 : -40))
                 .animation(.smooth(duration: 0.35), value: showDosingPill)
 
                 // Dosing status pill
                 if poolWaterState.recentDosingActive {
-                    Button { showMeasurementDosing = true } label: {
+                    Button { showDosingChangeAlert = true } label: {
                         InfoPill(
                             icon: "checkmark.circle.fill",
                             text: recentDosingLabel
@@ -270,7 +267,13 @@ struct DashboardTabView: View {
                     .padding(.top, 8)
                     .offset(y: -24)
                 } else if poolWaterState.dosingNeeded {
-                    Button { showMeasurementDosing = true } label: {
+                    Button {
+                        if timeOffsetSelection > 0 {
+                            showFutureDosingAlert = true
+                        } else {
+                            showMeasurementDosing = true
+                        }
+                    } label: {
                         InfoPill(
                             icon: "exclamationmark.triangle.fill",
                             text: "Dosierung",
@@ -359,8 +362,38 @@ struct DashboardTabView: View {
             }
             .animation(.smooth(duration: 0.35), value: showDosingPill)
         }
-        .sheet(isPresented: $showMeasurementDosing, onDismiss: { measurementDosingPhase = 0 }) {
-            MeasurementDosingSheet(externalPhase: $measurementDosingPhase)
+        .onChange(of: showMeasurementDosing) { _, newValue in
+            withAnimation(.smooth) {
+                barsShifted = newValue
+                if !newValue { currentBarPhase = 0 }
+            }
+        }
+        .onChange(of: measurementDosingPhase) { _, newValue in
+            withAnimation(.smooth) {
+                currentBarPhase = newValue
+            }
+        }
+        .sheet(isPresented: $showMeasurementDosing, onDismiss: {
+            measurementDosingPhase = 0
+            sheetInitialPhase = .messen
+        }) {
+            MeasurementDosingSheet(externalPhase: $measurementDosingPhase, initialPhase: sheetInitialPhase)
+        }
+        .alert("Jetzt dosieren?", isPresented: $showFutureDosingAlert) {
+            Button("Trotzdem dosieren") { showMeasurementDosing = true }
+            Button("Abbrechen", role: .cancel) { }
+        } message: {
+            Text("Die Dosierung wird erst um \(simulationTimeLabel) nötig. Möchtest du trotzdem jetzt dosieren?")
+        }
+        .alert("Dosierung ändern?", isPresented: $showDosingChangeAlert) {
+            Button("Ändern") {
+                sheetInitialPhase = .bearbeiten
+                measurementDosingPhase = 2
+                showMeasurementDosing = true
+            }
+            Button("Abbrechen", role: .cancel) { }
+        } message: {
+            Text("Möchtest du die letzte Dosierung anpassen?")
         }
         .onReceive(NotificationCenter.default.publisher(for: .openMeasurementDosing)) { _ in
             showMeasurementDosing = true

@@ -93,7 +93,7 @@ final class PoolWaterState {
 
     // MARK: - Cached Data (avoid SwiftData fetches during simulation scrolling)
 
-    private var cachedDosingHistory: [DosingEvent] = []
+    private(set) var cachedDosingHistory: [DosingEvent] = []
     private var cachedWeatherTemperature: Double = 25.0
     private var cachedWeatherUV: UVExposureLevel = .medium
     private var cachedEngineInput: PoolWaterEngineInput?

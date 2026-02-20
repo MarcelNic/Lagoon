@@ -15,8 +15,18 @@ struct MeasurementDosingSheet: View {
         case bearbeiten = 2
     }
 
-    @State private var phase: Phase = .messen
-    @State private var currentDetent: PresentationDetent = MeasurementDosingSheet.messenDetent
+    @State private var phase: Phase
+    @State private var currentDetent: PresentationDetent
+
+    init(externalPhase: Binding<Int>, initialPhase: Phase = .messen) {
+        self._externalPhase = externalPhase
+        self._phase = State(initialValue: initialPhase)
+        switch initialPhase {
+        case .messen:     self._currentDetent = State(initialValue: MeasurementDosingSheet.messenDetent)
+        case .dosieren:   self._currentDetent = State(initialValue: MeasurementDosingSheet.dosierenDetent)
+        case .bearbeiten: self._currentDetent = State(initialValue: .height(470))
+        }
+    }
 
     // Messen values
     @State private var phValue: Double = 7.4
@@ -161,8 +171,8 @@ struct MeasurementDosingSheet: View {
             }
         }
         .presentationDetents([Self.messenDetent, Self.dosierenDetent, .height(470)], selection: $currentDetent)
-        .presentationDragIndicator(phase == .messen ? .visible : .hidden)
-        .interactiveDismissDisabled(phase != .messen)
+        .presentationDragIndicator(.visible)
+        .interactiveDismissDisabled(false)
         .onChange(of: currentDetent) { _, newDetent in
             if newDetent != targetDetent {
                 currentDetent = targetDetent
@@ -175,6 +185,10 @@ struct MeasurementDosingSheet: View {
             let estCl = poolWaterState.estimatedChlorine
             if let idx = chlorineSteps.enumerated().min(by: { abs($0.element - estCl) < abs($1.element - estCl) })?.offset {
                 chlorineIndex = Double(idx)
+            }
+            if phase == .bearbeiten {
+                calculateRecommendation()
+                prepareEditValues()
             }
         }
         .onChange(of: phase) { _, newPhase in
@@ -448,9 +462,10 @@ struct MeasurementDosingSheet: View {
             poolVolume_m3: poolWaterState.poolVolume,
             lastChlorine_ppm: chlorineValue,
             lastPH: phValue,
-            lastMeasurementISO: ISO8601DateFormatter().string(from: Date()),
+            lastMeasurementISO: ISO8601DateFormatter().string(from: poolWaterState.lastMeasurementDate),
             poolCovered: poolWaterState.hasCover,
             filterRuntime: poolWaterState.pumpRuntime,
+            dosingHistory: poolWaterState.cachedDosingHistory,
             idealRanges: WaterTargets(
                 freeChlorine: ChlorineTargets(
                     min_ppm: poolWaterState.idealChlorineMin,

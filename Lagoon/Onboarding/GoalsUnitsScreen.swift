@@ -4,12 +4,12 @@ struct GoalsUnitsScreen: View {
     var action: () -> Void
 
     // pH Range
-    @AppStorage("idealPHMin") private var idealPHMin: Double = 7.0
-    @AppStorage("idealPHMax") private var idealPHMax: Double = 7.4
+    @AppStorage("phMin") private var idealPHMin: Double = 7.0
+    @AppStorage("phMax") private var idealPHMax: Double = 7.4
 
     // Chlorine Range
-    @AppStorage("idealChlorineMin") private var idealChlorineMin: Double = 0.5
-    @AppStorage("idealChlorineMax") private var idealChlorineMax: Double = 1.0
+    @AppStorage("chlorineMin") private var idealChlorineMin: Double = 0.5
+    @AppStorage("chlorineMax") private var idealChlorineMax: Double = 1.5
 
     // Dosing Unit
     @AppStorage("dosingUnit") private var dosingUnit: String = "gramm"
@@ -84,11 +84,11 @@ struct GoalsUnitsScreen: View {
                 Section("Dosiereinheit") {
                     Picker("Einheit", selection: $dosingUnit) {
                         Text("Gramm").tag("gramm")
-                        Text("Messbecher/Tabs").tag("messbecher")
+                        Text("Messbecher/Tabs").tag("becher")
                     }
                     .listRowBackground(Color(.systemGray6))
 
-                    if dosingUnit == "messbecher" {
+                    if dosingUnit == "becher" {
                         HStack {
                             Text("Gramm pro Becher")
                             Spacer()
