@@ -138,7 +138,7 @@ struct DashboardTabView: View {
                 .replacingOccurrences(of: " g", with: "g")
             parts.append("\(formatted) \(poolWaterState.lastDosingPHType)")
         }
-        return parts.isEmpty ? "Dosiert" : parts.joined(separator: " ")
+        return parts.isEmpty ? "Dosiert" : parts.joined(separator: " · ")
     }
 
     private var simulationTimeLabel: String {
