@@ -89,12 +89,14 @@ struct PoolcareView: View {
                                 .contextMenu {
                                     taskContextMenu(for: task)
                                 }
+                                .transition(.move(edge: .top).combined(with: .opacity))
                                 if task.id != sortedTasks.last?.id {
                                     Divider()
                                         .padding(.leading, 16)
                                 }
                             }
                         }
+                        .animation(.smooth, value: sortedTasks.map(\.id))
                         .glassEffect(.clear, in: .rect(cornerRadius: 24))
                     }
                 }
@@ -244,16 +246,25 @@ private struct RegularTaskRow: View {
     let task: CareTask
     @Bindable var state: PoolcareState
 
+    private var isCompleting: Bool {
+        state.completingTaskIds.contains(task.id)
+    }
+
+    private var showCompleted: Bool {
+        task.isCompleted || isCompleting
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             Button {
-                withAnimation {
-                    state.completeTask(task)
-                }
+                guard !isCompleting else { return }
+                state.completeTask(task)
             } label: {
-                Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
+                Image(systemName: showCompleted ? "checkmark.circle.fill" : "circle")
                     .font(.title2)
-                    .foregroundStyle(task.isCompleted ? Color.green : Color.secondary.opacity(0.5))
+                    .foregroundStyle(showCompleted ? Color.green : Color.secondary.opacity(0.5))
+                    .contentTransition(.symbolEffect(.replace.byLayer))
+                    .animation(.smooth, value: showCompleted)
             }
             .buttonStyle(.plain)
 
@@ -262,12 +273,12 @@ private struct RegularTaskRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(task.title)
-                    .strikethrough(task.isCompleted)
-                    .foregroundStyle(task.isCompleted ? .secondary : .primary)
+                    .strikethrough(showCompleted)
+                    .foregroundStyle(showCompleted ? .secondary : .primary)
 
                 Text(task.subtitleText)
                     .font(.subheadline)
-                    .foregroundStyle(task.isCompleted ? .secondary : subtitleColor)
+                    .foregroundStyle(showCompleted ? .secondary : subtitleColor)
             }
 
             Spacer()

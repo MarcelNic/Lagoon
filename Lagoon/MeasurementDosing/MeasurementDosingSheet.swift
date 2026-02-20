@@ -265,7 +265,14 @@ struct MeasurementDosingSheet: View {
 
     private var dosierenView: some View {
         VStack(spacing: 0) {
-            if phInRange && chlorineInRange {
+            // Pre-compute whether each parameter has a displayable recommendation
+            let phAmount = DosingFormatter.formatAmount(grams: recommendedPHAmount, unit: dosingUnit, cupGrams: cupGrams)
+            let clAmount = DosingFormatter.formatAmount(grams: recommendedChlorineAmount, unit: dosingUnit, cupGrams: cupGrams)
+            let hasVisiblePH = !phInRange && recommendedPHAmount > 0 && phAmount != "0"
+            let hasVisibleCl = !chlorineInRange && recommendedChlorineAmount > 0 && clAmount != "0"
+            let allOptimal = !hasVisiblePH && !hasVisibleCl
+
+            if allOptimal {
                 Spacer()
                 VStack(spacing: 12) {
                     if allOptimalTrigger {
@@ -288,10 +295,8 @@ struct MeasurementDosingSheet: View {
                 Spacer()
             } else {
                 Spacer()
-                let showPH = !phInRange && recommendedPHAmount > 0
-                let showCl = !chlorineInRange && recommendedChlorineAmount > 0
-                let phAmount = DosingFormatter.formatAmount(grams: recommendedPHAmount, unit: dosingUnit, cupGrams: cupGrams)
-                let clAmount = DosingFormatter.formatAmount(grams: recommendedChlorineAmount, unit: dosingUnit, cupGrams: cupGrams)
+                let showPH = hasVisiblePH
+                let showCl = hasVisibleCl
                 let unitLabel = DosingFormatter.formatUnit(unit: dosingUnit)
 
                 // Labels row
@@ -342,7 +347,7 @@ struct MeasurementDosingSheet: View {
                 Spacer()
             }
 
-            if phInRange && chlorineInRange {
+            if allOptimal {
                 Button {
                     saveMeasurementOnly()
                 } label: {

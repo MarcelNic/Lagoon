@@ -151,46 +151,66 @@ final class PoolcareState {
     // MARK: - Task Management
 
     func completeTask(_ task: CareTask) {
-        task.completedAt = Date()
-        try? modelContext?.save()
-
         let intervalDays = task.intervalDays
         let careTaskId = task.id
 
         // Cancel current reminder
         notificationManager?.cancelCareTaskReminder(taskId: careTaskId)
 
-        // After delay: reschedule or delete
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(0.8))
-            guard let context = self.modelContext else { return }
+        if intervalDays > 0 {
+            // Recurring task: reschedule after short delay so user sees the checkmark
+            // Don't set completedAt — task stays in the list and slides to new position
+            completingTaskIds.insert(careTaskId)
 
-            // Safely re-fetch task (context.model(for:) can fault-crash if deleted)
-            let fetchId = careTaskId
-            var descriptor = FetchDescriptor<CareTask>(predicate: #Predicate { $0.id == fetchId })
-            descriptor.fetchLimit = 1
-            guard let task = try? context.fetch(descriptor).first else { return }
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(0.6))
+                guard let context = self.modelContext else { return }
 
-            if intervalDays > 0 {
-                // Reschedule: move to next due date
-                task.dueDate = Calendar.current.date(byAdding: .day, value: intervalDays, to: Date())
-                task.completedAt = nil
-                try? context.save()
+                let fetchId = careTaskId
+                var descriptor = FetchDescriptor<CareTask>(predicate: #Predicate { $0.id == fetchId })
+                descriptor.fetchLimit = 1
+                guard let task = try? context.fetch(descriptor).first else { return }
 
-                // Nur Notification schedulen wenn Task zum aktiven Szenario gehört
+                withAnimation(.smooth(duration: 0.5)) {
+                    task.dueDate = Calendar.current.date(byAdding: .day, value: intervalDays, to: Date())
+                    self.completingTaskIds.remove(careTaskId)
+                    try? context.save()
+                }
+
                 if task.scenario?.id == self.currentScenarioId {
                     self.notificationManager?.scheduleCareTaskReminder(task: task)
                 }
-            } else {
-                // One-time task: delete
-                context.delete(task)
-                try? context.save()
+
+                self.checkAllTasksCompleted()
+            }
+        } else {
+            // One-time task: mark completed, then delete after delay
+            withAnimation(.smooth) {
+                task.completedAt = Date()
+                try? modelContext?.save()
             }
 
-            // Check if all tasks in scenario are completed → offer switch
-            self.checkAllTasksCompleted()
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(0.8))
+                guard let context = self.modelContext else { return }
+
+                let fetchId = careTaskId
+                var descriptor = FetchDescriptor<CareTask>(predicate: #Predicate { $0.id == fetchId })
+                descriptor.fetchLimit = 1
+                guard let task = try? context.fetch(descriptor).first else { return }
+
+                withAnimation(.smooth) {
+                    context.delete(task)
+                    try? context.save()
+                }
+
+                self.checkAllTasksCompleted()
+            }
         }
     }
+
+    /// Task IDs currently in the "completing" visual state (shows checkmark briefly before rescheduling)
+    var completingTaskIds: Set<UUID> = []
 
     private func checkAllTasksCompleted() {
         guard let scenario = currentScenario(),
