@@ -119,7 +119,27 @@ final class MeinPoolState {
         )
         dosingDescriptor.fetchLimit = 200
         if let dosings = try? context.fetch(dosingDescriptor) {
-            allEntries.append(contentsOf: dosings.map { $0.toLogbookEntry() })
+            let dosingUnit = UserDefaults.standard.string(forKey: "dosingUnit") ?? "gramm"
+            let cupGrams = UserDefaults.standard.double(forKey: "cupGrams")
+            let effectiveCupGrams = cupGrams > 0 ? cupGrams : 50.0
+
+            // Group by exact timestamp — simultaneous dosings (pH + Chlor) share the same timestamp
+            let grouped = Dictionary(grouping: dosings, by: { $0.timestamp })
+            for (timestamp, group) in grouped {
+                let items = group.map { d in
+                    DosingItem(productId: d.productId, productName: d.productName, amount: d.amount, unit: d.unit)
+                }
+                let summaryParts = items.map { item in
+                    "\(DosingFormatter.format(grams: item.amount, unit: dosingUnit, cupGrams: effectiveCupGrams)) \(item.productName)"
+                }
+                let entry = LogbookEntry(
+                    type: .dosieren,
+                    timestamp: timestamp,
+                    summary: summaryParts.joined(separator: " · "),
+                    dosings: items
+                )
+                allEntries.append(entry)
+            }
         }
 
         // Load care tasks (last 90 days, max 200)
@@ -180,8 +200,26 @@ final class MeinPoolState {
         guard let index = entries.firstIndex(where: { $0.id == updatedEntry.id }) else { return }
         entries[index] = updatedEntry
 
-        // Note: In a full implementation, we would also update the corresponding SwiftData model
-        // This requires tracking which model each LogbookEntry came from
+        if updatedEntry.type == .dosieren {
+            updateDosingInSwiftData(updatedEntry)
+        }
+    }
+
+    private func updateDosingInSwiftData(_ entry: LogbookEntry) {
+        guard let context = modelContext else { return }
+        let timestamp = entry.timestamp
+        let descriptor = FetchDescriptor<DosingEventModel>(
+            predicate: #Predicate { $0.timestamp == timestamp }
+        )
+        guard let models = try? context.fetch(descriptor) else { return }
+        for item in entry.dosings {
+            if let match = models.first(where: { $0.productId == item.productId }) {
+                match.amount = item.amount
+                match.productId = item.productId
+                match.productName = item.productName
+            }
+        }
+        try? context.save()
     }
 
     func deleteEntry(_ entry: LogbookEntry) {
@@ -206,8 +244,8 @@ final class MeinPoolState {
             let descriptor = FetchDescriptor<DosingEventModel>(
                 predicate: #Predicate { $0.timestamp == timestamp }
             )
-            if let match = try? context.fetch(descriptor).first {
-                context.delete(match)
+            if let matches = try? context.fetch(descriptor) {
+                matches.forEach { context.delete($0) }
             }
         case .poolpflege:
             let descriptor = FetchDescriptor<CareTaskModel>(
