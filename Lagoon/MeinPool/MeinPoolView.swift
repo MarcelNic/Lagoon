@@ -241,60 +241,88 @@ struct EditDosierenSheet: View {
     let entry: LogbookEntry?
     @Bindable var state: MeinPoolState
 
-    @State private var selectedProduct: String = "pH-Minus"
-    @State private var amount: Double = 50
-    @State private var unit: String = "g"
-    @State private var dosingDate: Date = Date()
+    @AppStorage("dosingUnit") private var dosingUnit: String = "gramm"
+    @AppStorage("cupGrams") private var cupGrams: Double = 50.0
 
-    let products = ["pH-Minus", "pH-Plus", "Chlorgranulat", "Chlortabletten", "Algizid", "Flockmittel"]
-    let units = ["g", "ml", "Tabletten"]
+    @State private var editedPHAmount: Double = 0
+    @State private var editedChlorineAmount: Double = 0
+    @State private var phType: EditDosierenPHType = .minus
+    @State private var editedDate: Date = Date()
+
+    private var hasPH: Bool {
+        entry?.dosings.contains(where: { $0.productId == "ph_minus" || $0.productId == "ph_plus" }) ?? false
+    }
+    private var hasChlor: Bool {
+        entry?.dosings.contains(where: { $0.productId == "chlorine" }) ?? false
+    }
+    private var effectiveCupGrams: Double { cupGrams > 0 ? cupGrams : 50.0 }
+    private var stepSize: Double { dosingUnit == "becher" ? effectiveCupGrams : 10 }
+    private var maxPHAmount: Double { 500 }
+    private var maxChlorAmount: Double { 1000 }
 
     init(entry: LogbookEntry? = nil, state: MeinPoolState) {
         self.entry = entry
         self.state = state
         if let entry = entry {
-            let first = entry.dosings.first
-            _selectedProduct = State(initialValue: first?.productName ?? "pH-Minus")
-            _amount = State(initialValue: first?.amount ?? 50)
-            _unit = State(initialValue: first?.unit ?? "g")
-            _dosingDate = State(initialValue: entry.timestamp)
+            _editedDate = State(initialValue: entry.timestamp)
+            if let ph = entry.dosings.first(where: { $0.productId == "ph_minus" || $0.productId == "ph_plus" }) {
+                _editedPHAmount = State(initialValue: ph.amount)
+                _phType = State(initialValue: ph.productId == "ph_plus" ? .plus : .minus)
+            }
+            if let cl = entry.dosings.first(where: { $0.productId == "chlorine" }) {
+                _editedChlorineAmount = State(initialValue: cl.amount)
+            }
         }
     }
 
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    Picker("Produkt", selection: $selectedProduct) {
-                        ForEach(products, id: \.self) { product in
-                            Text(product).tag(product)
+                if hasPH {
+                    Section {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("pH")
+                                Spacer()
+                                Text(DosingFormatter.format(grams: editedPHAmount, unit: dosingUnit, cupGrams: effectiveCupGrams))
+                                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                                    .monospacedDigit()
+                                    .contentTransition(.numericText())
+                                    .animation(.snappy, value: editedPHAmount)
+                            }
+                            Picker("pH", selection: $phType) {
+                                Text("pH-").tag(EditDosierenPHType.minus)
+                                Text("pH+").tag(EditDosierenPHType.plus)
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
+                            Slider(value: $editedPHAmount, in: 0...maxPHAmount, step: stepSize)
+                                .tint(.phIdealColor)
                         }
                     }
+                }
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Label("Menge", systemImage: "scalemass")
-                            Spacer()
-                            Text("\(Int(amount)) \(unit)")
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                                .contentTransition(.numericText())
-                                .animation(.snappy, value: amount)
-                        }
-                        Slider(value: $amount, in: 10...500, step: 10)
-                            .tint(.chlorineIdealColor)
-                    }
-
-                    Picker("Einheit", selection: $unit) {
-                        ForEach(units, id: \.self) { u in
-                            Text(u).tag(u)
+                if hasChlor {
+                    Section {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Chlor")
+                                Spacer()
+                                Text(DosingFormatter.format(grams: editedChlorineAmount, unit: dosingUnit, cupGrams: effectiveCupGrams))
+                                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                                    .monospacedDigit()
+                                    .contentTransition(.numericText())
+                                    .animation(.snappy, value: editedChlorineAmount)
+                            }
+                            Slider(value: $editedChlorineAmount, in: 0...maxChlorAmount, step: stepSize)
+                                .tint(.chlorineIdealColor)
                         }
                     }
                 }
 
                 Section {
                     DatePicker(
-                        selection: $dosingDate,
+                        selection: $editedDate,
                         in: ...Date(),
                         displayedComponents: [.date, .hourAndMinute]
                     ) {
@@ -304,13 +332,11 @@ struct EditDosierenSheet: View {
                 }
             }
             .contentMargins(.top, 0)
-            .navigationTitle(entry == nil ? "Dosieren" : "Dosierung bearbeiten")
+            .navigationTitle("Dosierung bearbeiten")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button {
-                        dismiss()
-                    } label: {
+                    Button { dismiss() } label: {
                         Image(systemName: "xmark")
                     }
                 }
@@ -328,14 +354,35 @@ struct EditDosierenSheet: View {
     }
 
     private func saveEntry() {
-        let summary = "\(Int(amount)) \(unit) \(selectedProduct)"
+        guard var existingEntry = entry else { return }
+        var updatedDosings = existingEntry.dosings
 
-        if var existingEntry = entry {
-            existingEntry.dosings = [DosingItem(productId: selectedProduct == "pH-Minus" ? "ph_minus" : selectedProduct == "pH-Plus" ? "ph_plus" : "chlorine", productName: selectedProduct, amount: amount, unit: unit)]
-            existingEntry.timestamp = dosingDate
-            existingEntry.summary = "\(Int(amount)) \(unit) \(selectedProduct)"
-            state.updateEntry(existingEntry)
+        if hasPH, let idx = updatedDosings.firstIndex(where: { $0.productId == "ph_minus" || $0.productId == "ph_plus" }) {
+            updatedDosings[idx].amount = editedPHAmount
+            updatedDosings[idx].productId = phType.productId
+            updatedDosings[idx].productName = phType.productName
         }
+        if hasChlor, let idx = updatedDosings.firstIndex(where: { $0.productId == "chlorine" }) {
+            updatedDosings[idx].amount = editedChlorineAmount
+        }
+
+        let summaryParts = updatedDosings.map { item in
+            "\(DosingFormatter.format(grams: item.amount, unit: dosingUnit, cupGrams: effectiveCupGrams)) \(item.productName)"
+        }
+        existingEntry.dosings = updatedDosings
+        existingEntry.timestamp = editedDate
+        existingEntry.summary = summaryParts.joined(separator: " · ")
+        state.updateEntry(existingEntry)
+    }
+}
+
+private enum EditDosierenPHType {
+    case minus, plus
+    var productId: String {
+        switch self { case .minus: return "ph_minus"; case .plus: return "ph_plus" }
+    }
+    var productName: String {
+        switch self { case .minus: return "pH-Minus"; case .plus: return "pH-Plus" }
     }
 }
 

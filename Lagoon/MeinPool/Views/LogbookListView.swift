@@ -53,7 +53,7 @@ struct LogbookListView: View {
         }
         .sheet(isPresented: $showDosierenSheet) {
             EditDosierenSheet(entry: entryToEdit, state: state)
-                .presentationDetents([.medium])
+                .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showPflegeSheet) {
             if let entry = entryToEdit {
